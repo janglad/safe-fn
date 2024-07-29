@@ -1,2 +1,5 @@
 node_modules/
 tsconfig.vitest-temp.json
+
+.DS_Store
+coverage
