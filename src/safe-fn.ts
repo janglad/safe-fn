@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { Err } from "./result";
+import { Err, Ok, type Result } from "./result";
 import type {
   AnySafeFnActionFn,
   SafeFnActionFn,
   SafeFnInput,
   SafeFnReturn,
   SafeFnRunArgs,
+  SchemaOutputOrFallback,
 } from "./types";
 
 export class SafeFn<
@@ -122,4 +123,46 @@ export class SafeFn<
   // ******************************
   // *****    Internal    *********
   // ******************************
+
+  async _parseInput(
+    input: unknown,
+  ): Promise<
+    Result<
+      SchemaOutputOrFallback<TInputSchema, never>,
+      z.ZodError<TInputSchema>
+    >
+  > {
+    if (this._inputSchema === undefined) {
+      throw new Error("No input schema defined");
+    }
+
+    const res = await this._inputSchema.safeParseAsync(input);
+
+    if (res.success) {
+      return Ok(res.data);
+    }
+
+    return Err(res.error);
+  }
+
+  async _parseOutput(
+    output: unknown,
+  ): Promise<
+    Result<
+      SchemaOutputOrFallback<TOutputSchema, never>,
+      z.ZodError<TOutputSchema>
+    >
+  > {
+    if (this._outputSchema === undefined) {
+      throw new Error("No output schema defined");
+    }
+
+    const res = await this._outputSchema.safeParseAsync(output);
+
+    if (res.success) {
+      return Ok(res.data);
+    }
+
+    return Err(res.error);
+  }
 }
