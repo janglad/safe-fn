@@ -27,7 +27,7 @@ export class SafeFn<
   }
 
   // ******************************
-  // *****       Build      *********
+  // *****       Build      *******
   // ******************************
   static new(): SafeFn<undefined, undefined, AnySafeFnActionFn> {
     return new SafeFn({
@@ -91,4 +91,8 @@ export class SafeFn<
   ): Promise<SafeFnReturnData<TOutputSchema, TActionFn>> {
     return await this._actionFn(args);
   }
+
+  // ******************************
+  // *****    Internal    *********
+  // ******************************
 }
