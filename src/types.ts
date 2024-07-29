@@ -29,4 +29,4 @@ export type SafeFnActionFn<
   args: SafeFnActionArgs<TInputSchema>,
 ) => MaybePromise<SafeFnActionReturn<TOutputSchema>>;
 
-export type AnySafeActionFn = SafeFnActionFn<any, any>;
+export type AnySafeFnActionFn = SafeFnActionFn<any, any>;

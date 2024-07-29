@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { AnySafeActionFn, SafeFnActionFn, SafeFnInput } from "./types";
+import type { AnySafeFnActionFn, SafeFnActionFn, SafeFnInput } from "./types";
 
 export class SafeFn<
   TInputSchema extends SafeFnInput,
@@ -20,7 +20,7 @@ export class SafeFn<
     this._actionFn = args.actionFn;
   }
 
-  static new(): SafeFn<undefined, undefined, AnySafeActionFn> {
+  static new(): SafeFn<undefined, undefined, AnySafeFnActionFn> {
     return new SafeFn({
       inputSchema: undefined,
       outputSchema: undefined,
