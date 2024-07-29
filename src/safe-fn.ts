@@ -26,6 +26,9 @@ export class SafeFn<
     this._actionFn = args.actionFn;
   }
 
+  // ******************************
+  // *****       Build      *********
+  // ******************************
   static new(): SafeFn<undefined, undefined, AnySafeFnActionFn> {
     return new SafeFn({
       inputSchema: undefined,
@@ -77,6 +80,10 @@ export class SafeFn<
       actionFn,
     });
   }
+
+  // ******************************
+  // *****       Run      *********
+  // ******************************
 
   // TODO: implement more than success type
   async run(
