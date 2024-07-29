@@ -123,6 +123,62 @@ describe("action", () => {
         z.output<typeof inputSchema>
       >();
     });
+
+    test("should type unparsed input as unknown without input schema", () => {
+      const safeFn = SafeFn.new();
+      type ActionFn = Parameters<typeof safeFn.action>[0];
+      type ActionFnArgs = Parameters<ActionFn>[0];
+
+      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<unknown>();
+    });
+
+    test("should type unparsed input as inputSchema for primitives", () => {
+      const inputSchema = z.string();
+      const safeFn = SafeFn.new().input(inputSchema);
+
+      type ActionFn = Parameters<typeof safeFn.action>[0];
+      type ActionFnArgs = Parameters<ActionFn>[0];
+
+      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<
+        z.input<typeof inputSchema>
+      >();
+    });
+
+    test("should type unparsed input as inputSchema for objects", () => {
+      const inputSchema = z.object({
+        test: z.string(),
+        nested: z.object({
+          value: z.number(),
+        }),
+      });
+      const safeFn = SafeFn.new().input(inputSchema);
+
+      type ActionFn = Parameters<typeof safeFn.action>[0];
+      type ActionFnArgs = Parameters<ActionFn>[0];
+
+      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<
+        z.input<typeof inputSchema>
+      >();
+    });
+
+    test("should type unparsed input as inputSchema for transformed schemas", () => {
+      const inputSchema = z
+        .object({
+          test: z.string(),
+          nested: z.object({
+            value: z.number(),
+          }),
+        })
+        .transform(({ test }) => ({ test, newProperty: "test" }));
+      const safeFn = SafeFn.new().input(inputSchema);
+
+      type ActionFn = Parameters<typeof safeFn.action>[0];
+      type ActionFnArgs = Parameters<ActionFn>[0];
+
+      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<
+        z.input<typeof inputSchema>
+      >();
+    });
   });
 
   describe("output", () => {

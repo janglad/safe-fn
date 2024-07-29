@@ -16,6 +16,7 @@ export type SchemaOutputOrFallback<
 
 type SafeFnActionArgs<TInputSchema extends SafeFnInput> = {
   parsedInput: SchemaOutputOrFallback<TInputSchema, never>;
+  unparsedInput: SchemaInputOrFallback<TInputSchema, unknown>;
 };
 
 type SafeFnActionReturn<TOutputSchema extends SafeFnOutput> =
