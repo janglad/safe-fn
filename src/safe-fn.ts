@@ -8,19 +8,23 @@ export class SafeFn<
 > {
   readonly _inputSchema: TInputSchema;
   readonly _outputSchema: TOutputSchema;
+  readonly _actionFn: TActionFn;
 
   private constructor(args: {
     inputSchema: TInputSchema;
     outputSchema: TOutputSchema;
+    actionFn: TActionFn;
   }) {
     this._inputSchema = args.inputSchema;
     this._outputSchema = args.outputSchema;
+    this._actionFn = args.actionFn;
   }
 
   static new(): SafeFn<undefined, undefined, AnySafeActionFn> {
     return new SafeFn({
       inputSchema: undefined,
       outputSchema: undefined,
+      actionFn: () => {},
     });
   }
 
@@ -34,6 +38,10 @@ export class SafeFn<
     return new SafeFn({
       inputSchema: schema,
       outputSchema: this._outputSchema,
+      // Input redefined so action args no longer match.
+      // TODO: This situation should be prevented by omit args on SafeFn class in the future.
+      // @ts-expect-error
+      actionFn: this._actionFn,
     });
   }
 
@@ -47,6 +55,10 @@ export class SafeFn<
     return new SafeFn({
       inputSchema: this._inputSchema,
       outputSchema: schema,
+      // Output redefined so action args no longer match.
+      // TODO: This situation should be prevented by omit args on SafeFn class in the future.
+      // @ts-expect-error
+      actionFn: this._actionFn,
     });
   }
 }
