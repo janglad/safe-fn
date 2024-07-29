@@ -124,12 +124,13 @@ describe("action", () => {
       >();
     });
 
-    test("should type unparsed input as unknown without input schema", () => {
+    // TODO: this should be any, but not set as to allow overriding
+    test("should type unparsed input as any without input schema", () => {
       const safeFn = SafeFn.new();
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
 
-      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<unknown>();
+      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<any>();
     });
 
     test("should type unparsed input as inputSchema for primitives", () => {
@@ -242,10 +243,15 @@ describe("action", () => {
 
 describe("run", () => {
   describe("input", () => {
-    // TODO: Infer input type without schema
-    test.todo(
-      "should infer input from actionFn if no input schema is provided",
-    );
+    // TODO: Allow passing unparsedInput as generic
+    test("should infer input from actionFn if no input schema is provided", () => {
+      const safeFn = SafeFn.new().action(
+        (args: { unparsedInput: { test: string } }) => args.unparsedInput,
+      );
+
+      type RunInput = Parameters<typeof safeFn.run>[0];
+      expectTypeOf<RunInput>().toEqualTypeOf<{ test: string }>();
+    });
 
     test("should type input as inputSchema input for primitives", () => {
       const inputSchema = z.string();
