@@ -317,3 +317,85 @@ describe("run", () => {
   // TODO: add output testing after result type is defined
   describe.todo("output");
 });
+
+describe("internals", () => {
+  describe("_parseInput", () => {
+    test("should return Result Ok as never when no input schema is defined", async () => {
+      const safeFn = SafeFn.new();
+      const res = await safeFn._parseInput("data");
+      expectTypeOf(res).toMatchTypeOf<Result<never, any>>();
+    });
+
+    test("should type Result Ok as inputSchema for transformed schemas", async () => {
+      const inputSchema = z
+        .object({
+          test: z.string(),
+          nested: z.object({
+            value: z.number(),
+          }),
+        })
+        .transform(({ test }) => ({ test, newProperty: "test" }));
+      const safeFn = SafeFn.new().input(inputSchema);
+      const res = await safeFn._parseInput("data");
+      expectTypeOf(res).toMatchTypeOf<
+        Result<z.output<typeof inputSchema>, any>
+      >();
+    });
+
+    test("should type Result Err as typed ZodError for transformed schemas", async () => {
+      const inputSchema = z
+        .object({
+          test: z.string(),
+          nested: z.object({
+            value: z.number(),
+          }),
+        })
+        .transform(({ test }) => ({ test, newProperty: "test" }));
+      const safeFn = SafeFn.new().input(inputSchema);
+      const res = await safeFn._parseInput(123);
+      expectTypeOf(res).toMatchTypeOf<
+        Result<any, z.ZodError<typeof inputSchema>>
+      >();
+    });
+  });
+
+  describe("_parseOutput", () => {
+    test("should return Result Ok as never when no output schema is defined", async () => {
+      const safeFn = SafeFn.new();
+      const res = await safeFn._parseOutput("data");
+      expectTypeOf(res).toMatchTypeOf<Result<never, any>>();
+    });
+
+    test("should type Result Ok as outputSchema for transformed schemas", async () => {
+      const outputSchema = z
+        .object({
+          test: z.string(),
+          nested: z.object({
+            value: z.number(),
+          }),
+        })
+        .transform(({ test }) => ({ test, newProperty: "test" }));
+      const safeFn = SafeFn.new().output(outputSchema);
+      const res = await safeFn._parseOutput("data");
+      expectTypeOf(res).toMatchTypeOf<
+        Result<z.output<typeof outputSchema>, any>
+      >();
+    });
+
+    test("should type Result Err as typed ZodError for transformed schemas", async () => {
+      const outputSchema = z
+        .object({
+          test: z.string(),
+          nested: z.object({
+            value: z.number(),
+          }),
+        })
+        .transform(({ test }) => ({ test, newProperty: "test" }));
+      const safeFn = SafeFn.new().output(outputSchema);
+      const res = await safeFn._parseOutput(123);
+      expectTypeOf(res).toMatchTypeOf<
+        Result<any, z.ZodError<typeof outputSchema>>
+      >();
+    });
+  });
+});
