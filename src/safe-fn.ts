@@ -1,9 +1,10 @@
 import type { z } from "zod";
-import type { SafeFnInput } from "./types";
+import type { AnySafeActionFn, SafeFnActionFn, SafeFnInput } from "./types";
 
 export class SafeFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
+  TActionFn extends SafeFnActionFn<TInputSchema, TOutputSchema>,
 > {
   readonly _inputSchema: TInputSchema;
   readonly _outputSchema: TOutputSchema;
@@ -16,7 +17,7 @@ export class SafeFn<
     this._outputSchema = args.outputSchema;
   }
 
-  static new(): SafeFn<undefined, undefined> {
+  static new(): SafeFn<undefined, undefined, AnySafeActionFn> {
     return new SafeFn({
       inputSchema: undefined,
       outputSchema: undefined,
@@ -25,7 +26,11 @@ export class SafeFn<
 
   input<TNewInputSchema extends z.ZodTypeAny>(
     schema: TNewInputSchema,
-  ): SafeFn<TNewInputSchema, TOutputSchema> {
+  ): SafeFn<
+    TNewInputSchema,
+    TOutputSchema,
+    SafeFnActionFn<TNewInputSchema, TOutputSchema>
+  > {
     return new SafeFn({
       inputSchema: schema,
       outputSchema: this._outputSchema,
@@ -34,7 +39,11 @@ export class SafeFn<
 
   output<TNewOutputSchema extends z.ZodTypeAny>(
     schema: TNewOutputSchema,
-  ): SafeFn<TInputSchema, TNewOutputSchema> {
+  ): SafeFn<
+    TInputSchema,
+    TNewOutputSchema,
+    SafeFnActionFn<TInputSchema, TNewOutputSchema>
+  > {
     return new SafeFn({
       inputSchema: this._inputSchema,
       outputSchema: schema,
