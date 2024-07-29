@@ -2,6 +2,13 @@ import { describe, expect, test } from "vitest";
 import { z } from "zod";
 import { SafeFn } from "./safe-fn";
 
+describe("SafeFn", () => {
+  test("should create a new instance", () => {
+    const safeFn = SafeFn.new();
+    expect(safeFn).toBeInstanceOf(SafeFn);
+  });
+});
+
 describe("input", () => {
   test("should set the input schema", () => {
     const inputSchema = z.string();
