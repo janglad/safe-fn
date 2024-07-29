@@ -15,7 +15,7 @@ export type SchemaOutputOrFallback<
 > = TSchema extends ZodTypeAny ? z.output<TSchema> : TFallback;
 
 type SafeFnActionArgs<TInputSchema extends SafeFnInput> = {
-  parsedInput: SchemaInputOrFallback<TInputSchema, never>;
+  parsedInput: SchemaOutputOrFallback<TInputSchema, never>;
 };
 
 type SafeFnActionReturn<TOutputSchema extends SafeFnOutput> =
