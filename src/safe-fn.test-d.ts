@@ -314,8 +314,25 @@ describe("run", () => {
     });
   });
 
-  // TODO: add output testing after result type is defined
-  describe.todo("output");
+  describe("output", () => {
+    test("should infer return type from action when no output schema is provided", async () => {
+      const safeFn = SafeFn.new().action(() => Ok("data" as const));
+
+      expectTypeOf(safeFn.run({})).resolves.toMatchTypeOf<
+        Result<"data", any>
+      >();
+    });
+
+    test("should type output as outputSchema for transformed values", async () => {
+      const outputSchema = z.string().transform((data) => data + "!");
+      const safeFn = SafeFn.new().output(outputSchema);
+
+      const res = await safeFn.run({});
+      expectTypeOf(res).toMatchTypeOf<
+        Result<z.output<typeof outputSchema>, any>
+      >();
+    });
+  });
 });
 
 describe("internals", () => {
