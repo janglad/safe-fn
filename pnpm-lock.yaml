@@ -1,8 +1,13 @@
-lockfileVersion: '6.0'
+lockfileVersion: "6.0"
 
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
+
+dependencies:
+  zod:
+    specifier: ^3.23.8
+    version: 3.23.8
 
 devDependencies:
   prettier:
@@ -16,16 +21,18 @@ devDependencies:
     version: 5.5.4
 
 packages:
-
   /prettier-plugin-organize-imports@4.0.0(prettier@3.3.3)(typescript@5.5.4):
-    resolution: {integrity: sha512-vnKSdgv9aOlqKeEFGhf9SCBsTyzDSyScy1k7E0R1Uo4L0cTcOV7c1XQaT7jfXIOc/p08WLBfN2QUQA9zDSZMxA==}
+    resolution:
+      {
+        integrity: sha512-vnKSdgv9aOlqKeEFGhf9SCBsTyzDSyScy1k7E0R1Uo4L0cTcOV7c1XQaT7jfXIOc/p08WLBfN2QUQA9zDSZMxA==,
+      }
     peerDependencies:
-      '@vue/language-plugin-pug': ^2.0.24
-      prettier: '>=2.0'
-      typescript: '>=2.9'
+      "@vue/language-plugin-pug": ^2.0.24
+      prettier: ">=2.0"
+      typescript: ">=2.9"
       vue-tsc: ^2.0.24
     peerDependenciesMeta:
-      '@vue/language-plugin-pug':
+      "@vue/language-plugin-pug":
         optional: true
       vue-tsc:
         optional: true
@@ -35,13 +42,26 @@ packages:
     dev: true
 
   /prettier@3.3.3:
-    resolution: {integrity: sha512-i2tDNA0O5IrMO757lfrdQZCc2jPNDVntV0m/+4whiDfWaTKfMNgR7Qz0NAeGz/nRqF4m5/6CLzbP4/liHt12Ew==}
-    engines: {node: '>=14'}
+    resolution:
+      {
+        integrity: sha512-i2tDNA0O5IrMO757lfrdQZCc2jPNDVntV0m/+4whiDfWaTKfMNgR7Qz0NAeGz/nRqF4m5/6CLzbP4/liHt12Ew==,
+      }
+    engines: { node: ">=14" }
     hasBin: true
     dev: true
 
   /typescript@5.5.4:
-    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
-    engines: {node: '>=14.17'}
+    resolution:
+      {
+        integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==,
+      }
+    engines: { node: ">=14.17" }
     hasBin: true
     dev: true
+
+  /zod@3.23.8:
+    resolution:
+      {
+        integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==,
+      }
+    dev: false
