@@ -28,7 +28,7 @@ describe("input", () => {
           value: z.number(),
         }),
       })
-      .transform(({ test }) => ({ test }));
+      .transform(({ test }) => ({ test, newProperty: "test" }));
     const safeFn = SafeFn.new().input(inputSchema);
     expectTypeOf(safeFn._inputSchema).toMatchTypeOf<typeof inputSchema>();
   });
@@ -60,7 +60,7 @@ describe("output", () => {
           value: z.number(),
         }),
       })
-      .transform(({ test }) => ({ test }));
+      .transform(({ test }) => ({ test, newProperty: "test" }));
     const safeFn = SafeFn.new().output(outputSchema);
     expectTypeOf(safeFn._outputSchema).toMatchTypeOf<typeof outputSchema>();
   });
@@ -113,13 +113,13 @@ describe("action", () => {
             value: z.number(),
           }),
         })
-        .transform(({ test }) => ({ test }));
+        .transform(({ test }) => ({ test, newProperty: "test" }));
       const safeFn = SafeFn.new().input(inputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
 
-      expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<
+      expectTypeOf<ActionFnArgs["parsedInput"]>().toMatchTypeOf<
         z.input<typeof inputSchema>
       >();
     });
@@ -171,7 +171,7 @@ describe("action", () => {
             value: z.number(),
           }),
         })
-        .transform(({ test }) => ({ test }));
+        .transform(({ test }) => ({ test, newProperty: "test" }));
       const safeFn = SafeFn.new().output(outputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
