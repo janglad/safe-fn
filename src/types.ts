@@ -14,9 +14,9 @@ export type SchemaOutputOrFallback<
   TFallback,
 > = TSchema extends ZodTypeAny ? z.output<TSchema> : TFallback;
 
-type SafeFnActionArgs<TInputSchema extends SafeFnInput> = {
+type SafeFnActionArgs<TInputSchema extends SafeFnInput, TUnparsedInput> = {
   parsedInput: SchemaOutputOrFallback<TInputSchema, never>;
-  unparsedInput: SchemaInputOrFallback<TInputSchema, any>;
+  unparsedInput: SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
 };
 
 type SafeFnActionReturn<TOutputSchema extends SafeFnOutput> =
@@ -25,11 +25,12 @@ type SafeFnActionReturn<TOutputSchema extends SafeFnOutput> =
 export type SafeFnActionFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
 > = (
-  args: SafeFnActionArgs<TInputSchema>,
+  args: SafeFnActionArgs<TInputSchema, TUnparsedInput>,
 ) => MaybePromise<SafeFnActionReturn<TOutputSchema>>;
 
-export type AnySafeFnActionFn = SafeFnActionFn<any, any>;
+export type AnySafeFnActionFn = SafeFnActionFn<any, any, any>;
 
 export type SafeFnReturnData<
   TOutputSchema extends SafeFnOutput,
