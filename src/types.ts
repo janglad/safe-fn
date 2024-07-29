@@ -40,7 +40,10 @@ export type AnySafeFnActionFn = SafeFnActionFn<any, any, any>;
 export type SafeFnReturnData<
   TOutputSchema extends SafeFnOutput,
   TActionFn extends AnySafeFnActionFn,
-> = SchemaOutputOrFallback<TOutputSchema, Awaited<ReturnType<TActionFn>>>;
+> = SchemaOutputOrFallback<
+  TOutputSchema,
+  Awaited<ReturnType<TActionFn>>["data"]
+>;
 
 export type SafeFnRunArgs<
   TInputSchema extends SafeFnInput,
