@@ -10,7 +10,8 @@ import type {
 export class SafeFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
-  TActionFn extends SafeFnActionFn<TInputSchema, TOutputSchema>,
+  TUnparsedInput,
+  TActionFn extends SafeFnActionFn<TInputSchema, TOutputSchema, TUnparsedInput>,
 > {
   readonly _inputSchema: TInputSchema;
   readonly _outputSchema: TOutputSchema;
@@ -29,7 +30,7 @@ export class SafeFn<
   // ******************************
   // *****       Build      *******
   // ******************************
-  static new(): SafeFn<undefined, undefined, AnySafeFnActionFn> {
+  static new(): SafeFn<undefined, undefined, unknown, AnySafeFnActionFn> {
     return new SafeFn({
       inputSchema: undefined,
       outputSchema: undefined,
@@ -42,10 +43,28 @@ export class SafeFn<
   ): SafeFn<
     TNewInputSchema,
     TOutputSchema,
-    SafeFnActionFn<TNewInputSchema, TOutputSchema>
+    TUnparsedInput,
+    SafeFnActionFn<TNewInputSchema, TOutputSchema, z.input<TNewInputSchema>>
   > {
     return new SafeFn({
       inputSchema: schema,
+      outputSchema: this._outputSchema,
+      // Input redefined so action args no longer match.
+      // TODO: This situation should be prevented by omit args on SafeFn class in the future.
+      // @ts-expect-error
+      actionFn: this._actionFn,
+    });
+  }
+
+  // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
+  unparsedInput<TNewUnparsedInput>(): SafeFn<
+    TInputSchema,
+    TOutputSchema,
+    TNewUnparsedInput,
+    SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput>
+  > {
+    return new SafeFn({
+      inputSchema: this._inputSchema,
       outputSchema: this._outputSchema,
       // Input redefined so action args no longer match.
       // TODO: This situation should be prevented by omit args on SafeFn class in the future.
@@ -59,7 +78,8 @@ export class SafeFn<
   ): SafeFn<
     TInputSchema,
     TNewOutputSchema,
-    SafeFnActionFn<TInputSchema, TNewOutputSchema>
+    TUnparsedInput,
+    SafeFnActionFn<TInputSchema, TNewOutputSchema, TUnparsedInput>
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -71,9 +91,15 @@ export class SafeFn<
     });
   }
 
-  action<TNewActionFn extends SafeFnActionFn<TInputSchema, TOutputSchema>>(
+  action<
+    TNewActionFn extends SafeFnActionFn<
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput
+    >,
+  >(
     actionFn: TNewActionFn,
-  ): SafeFn<TInputSchema, TOutputSchema, TNewActionFn> {
+  ): SafeFn<TInputSchema, TOutputSchema, TUnparsedInput, TNewActionFn> {
     return new SafeFn({
       inputSchema: this._inputSchema,
       outputSchema: this._outputSchema,
