@@ -6,7 +6,7 @@ describe("input", () => {
   test("should properly type the input schema for primitives", () => {
     const inputSchema = z.string();
     const safeFn = SafeFn.new().input(inputSchema);
-    expectTypeOf(safeFn._inputSchema).toMatchTypeOf<typeof inputSchema>();
+    expectTypeOf(safeFn._inputSchema).toEqualTypeOf<typeof inputSchema>();
   });
 
   test("should properly type the input schema for objects", () => {
@@ -17,7 +17,7 @@ describe("input", () => {
       }),
     });
     const safeFn = SafeFn.new().input(inputSchema);
-    expectTypeOf(safeFn._inputSchema).toMatchTypeOf<typeof inputSchema>();
+    expectTypeOf(safeFn._inputSchema).toEqualTypeOf<typeof inputSchema>();
   });
 
   test("should properly type the input for transformed schemas", () => {
@@ -30,7 +30,7 @@ describe("input", () => {
       })
       .transform(({ test }) => ({ test, newProperty: "test" }));
     const safeFn = SafeFn.new().input(inputSchema);
-    expectTypeOf(safeFn._inputSchema).toMatchTypeOf<typeof inputSchema>();
+    expectTypeOf(safeFn._inputSchema).toEqualTypeOf<typeof inputSchema>();
   });
 });
 
@@ -38,7 +38,7 @@ describe("output", () => {
   test("should properly type the output schema for primitives", () => {
     const outputSchema = z.string();
     const safeFn = SafeFn.new().output(outputSchema);
-    expectTypeOf(safeFn._outputSchema).toMatchTypeOf<typeof outputSchema>();
+    expectTypeOf(safeFn._outputSchema).toEqualTypeOf<typeof outputSchema>();
   });
 
   test("should properly type the output schema for objects", () => {
@@ -49,7 +49,7 @@ describe("output", () => {
       }),
     });
     const safeFn = SafeFn.new().output(outputSchema);
-    expectTypeOf(safeFn._outputSchema).toMatchTypeOf<typeof outputSchema>();
+    expectTypeOf(safeFn._outputSchema).toEqualTypeOf<typeof outputSchema>();
   });
 
   test("should properly type the output for transformed schemas", () => {
@@ -62,7 +62,7 @@ describe("output", () => {
       })
       .transform(({ test }) => ({ test, newProperty: "test" }));
     const safeFn = SafeFn.new().output(outputSchema);
-    expectTypeOf(safeFn._outputSchema).toMatchTypeOf<typeof outputSchema>();
+    expectTypeOf(safeFn._outputSchema).toEqualTypeOf<typeof outputSchema>();
   });
 });
 
@@ -74,7 +74,7 @@ describe("action", () => {
         type ActionFn = Parameters<typeof safeFn.action>[0];
         type ActionFnArgs = Parameters<ActionFn>[0];
 
-        expectTypeOf<ActionFnArgs["parsedInput"]>().toMatchTypeOf<never>();
+        expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<never>();
       };
     test("should type parsed input as inputSchema for primitives ", () => {
       const inputSchema = z.string();
@@ -83,7 +83,7 @@ describe("action", () => {
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
 
-      expectTypeOf<ActionFnArgs["parsedInput"]>().toMatchTypeOf<
+      expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<
         z.output<typeof inputSchema>
       >();
     });
@@ -100,7 +100,7 @@ describe("action", () => {
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
 
-      expectTypeOf<ActionFnArgs["parsedInput"]>().toMatchTypeOf<
+      expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<
         z.output<typeof inputSchema>
       >();
     });
@@ -119,7 +119,7 @@ describe("action", () => {
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
 
-      expectTypeOf<ActionFnArgs["parsedInput"]>().toMatchTypeOf<
+      expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<
         z.output<typeof inputSchema>
       >();
     });
@@ -141,7 +141,7 @@ describe("action", () => {
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
 
-      expectTypeOf<ActionFnReturn>().toMatchTypeOf<
+      expectTypeOf<ActionFnReturn>().toEqualTypeOf<
         z.input<typeof outputSchema>
       >();
     });
@@ -158,7 +158,7 @@ describe("action", () => {
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
 
-      expectTypeOf<ActionFnReturn>().toMatchTypeOf<
+      expectTypeOf<ActionFnReturn>().toEqualTypeOf<
         z.infer<typeof outputSchema>
       >();
     });
