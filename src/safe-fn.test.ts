@@ -98,3 +98,83 @@ describe("internals", () => {
     });
   });
 });
+
+describe("run", () => {
+  describe("input", () => {
+    test("should set parsedInput to undefined when no input schema is defined", async () => {
+      const res = await SafeFn.new()
+        .action((args) => Ok(args.parsedInput))
+        .run({});
+      expect(res).toEqual(Ok(undefined));
+    });
+
+    test("should pass unparsedInput when no input schema is defined", async () => {
+      const res = await SafeFn.new()
+        .action((args) => Ok(args.unparsedInput))
+        .run("data");
+      expect(res).toEqual(Ok("data"));
+    });
+
+    test("should pass unparsedInput when input schema is defined", async () => {
+      const inputSchema = z.any().transform((_) => undefined);
+      const res = await SafeFn.new()
+        .input(inputSchema)
+        .action((args) => Ok(args.unparsedInput))
+        .run("data");
+      expect(res).toEqual(Ok("data"));
+    });
+
+    test("should pass parsedInput when input schema is defined", async () => {
+      const inputSchema = z.any().transform((_) => "parsed");
+      const res = await SafeFn.new()
+        .input(inputSchema)
+        .action((args) => Ok(args.parsedInput))
+        .run("data");
+      expect(res).toEqual(Ok("parsed"));
+    });
+
+    test("should return Err when input is invalid", async () => {
+      const inputSchema = z.string();
+      const res = await SafeFn.new()
+        .input(inputSchema)
+        .action((args) => Ok(args.parsedInput))
+        // @ts-expect-error
+        .run(123);
+      expect(res.success).toBe(false);
+      expect(res.data).toBeUndefined();
+      expect(res.error).toBeDefined();
+      expect(res.error).toBeInstanceOf(z.ZodError);
+    });
+  });
+
+  describe("output", () => {
+    test("should return action result when no output schema is defined", async () => {
+      const res = await SafeFn.new()
+        .action((args) => Ok("data"))
+        .run({});
+      expect(res).toEqual(Ok("data"));
+    });
+
+    test("should return parsed output when output schema is defined", async () => {
+      const outputSchema = z.any().transform((_) => "parsed");
+      const res = await SafeFn.new()
+        .output(outputSchema)
+        .action((args) => Ok("Any string"))
+        .run({});
+      expect(res).toEqual(Ok("parsed"));
+    });
+
+    test("should return Err when output is invalid", async () => {
+      const outputSchema = z.string();
+      const res = await SafeFn.new()
+        .output(outputSchema)
+        // @ts-expect-error
+        .action((args) => Ok(123))
+        .run({});
+      expect(res.success).toBe(false);
+      expect(res.data).toBeUndefined();
+      expect(res.error).toBeDefined();
+      expect(res.error).toBeInstanceOf(z.ZodError);
+    });
+  });
+});

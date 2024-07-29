@@ -117,7 +117,30 @@ export class SafeFn<
   async run(
     args: SafeFnRunArgs<TInputSchema, TActionFn>,
   ): Promise<SafeFnReturn<TOutputSchema, TActionFn>> {
-    return await this._actionFn(args);
+    let parsedInput: SchemaOutputOrFallback<TInputSchema, never> =
+      undefined as never;
+    if (this._inputSchema !== undefined) {
+      const parseRes = await this._parseInput(args);
+      if (!parseRes.success) {
+        return parseRes;
+      } else {
+        parsedInput = parseRes.data;
+      }
+    }
+    const actionRes = await this._actionFn({
+      parsedInput,
+      unparsedInput: args,
+    });
+
+    if (!actionRes.success) {
+      return actionRes;
+    }
+
+    if (this._outputSchema !== undefined) {
+      return await this._parseOutput(actionRes.data);
+    }
+
+    return actionRes;
   }
 
   // ******************************
