@@ -34,13 +34,9 @@ export type AnySafeFnActionFn = SafeFnActionFn<any, any>;
 export type SafeFnReturnData<
   TOutputSchema extends SafeFnOutput,
   TActionFn extends AnySafeFnActionFn,
-> = TOutputSchema extends SafeFnOutput
-  ? SafeFnActionFn<undefined, TOutputSchema>
-  : Awaited<ReturnType<TActionFn>>;
+> = SchemaOutputOrFallback<TOutputSchema, Awaited<ReturnType<TActionFn>>>;
 
 export type SafeFnRunArgs<
   TInputSchema extends SafeFnInput,
   TActionFn extends AnySafeFnActionFn,
-> = TInputSchema extends z.ZodTypeAny
-  ? z.input<TInputSchema>
-  : Parameters<TActionFn>[0];
+> = SchemaInputOrFallback<TInputSchema, Parameters<TActionFn>[0]>;
