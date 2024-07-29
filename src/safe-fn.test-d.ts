@@ -84,7 +84,7 @@ describe("action", () => {
       type ActionFnArgs = Parameters<ActionFn>[0];
 
       expectTypeOf<ActionFnArgs["parsedInput"]>().toMatchTypeOf<
-        z.output<typeof inputSchema>
+        z.input<typeof inputSchema>
       >();
     });
 
@@ -101,7 +101,7 @@ describe("action", () => {
       type ActionFnArgs = Parameters<ActionFn>[0];
 
       expectTypeOf<ActionFnArgs["parsedInput"]>().toMatchTypeOf<
-        z.output<typeof inputSchema>
+        z.input<typeof inputSchema>
       >();
     });
 
@@ -177,7 +177,7 @@ describe("action", () => {
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
 
-      expectTypeOf<ActionFnReturn>().toMatchTypeOf<
+      expectTypeOf<ActionFnReturn>().toEqualTypeOf<
         z.infer<typeof outputSchema>
       >();
     });
