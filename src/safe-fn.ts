@@ -1,9 +1,10 @@
-import type { z } from "zod";
+import { z } from "zod";
+import { Err } from "./result";
 import type {
   AnySafeFnActionFn,
   SafeFnActionFn,
   SafeFnInput,
-  SafeFnReturnData,
+  SafeFnReturn,
   SafeFnRunArgs,
 } from "./types";
 
@@ -34,7 +35,7 @@ export class SafeFn<
     return new SafeFn({
       inputSchema: undefined,
       outputSchema: undefined,
-      actionFn: () => {},
+      actionFn: () => Err("No action provided" as const),
     });
   }
 
@@ -114,7 +115,7 @@ export class SafeFn<
   // TODO: implement more than success type
   async run(
     args: SafeFnRunArgs<TInputSchema, TActionFn>,
-  ): Promise<SafeFnReturnData<TOutputSchema, TActionFn>> {
+  ): Promise<SafeFnReturn<TOutputSchema, TActionFn>> {
     return await this._actionFn(args);
   }
 

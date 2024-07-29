@@ -1,5 +1,6 @@
 import { describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
+import { Ok, type Result } from "./result";
 import { SafeFn } from "./safe-fn";
 
 describe("input", () => {
@@ -200,7 +201,7 @@ describe("action", () => {
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
 
-      expectTypeOf<ActionFnReturn>().toEqualTypeOf<any>();
+      expectTypeOf<ActionFnReturn>().toEqualTypeOf<Result<any, any>>();
     });
 
     test("should type output as outputSchema for primitives", () => {
@@ -211,7 +212,7 @@ describe("action", () => {
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
 
       expectTypeOf<ActionFnReturn>().toEqualTypeOf<
-        z.input<typeof outputSchema>
+        Result<z.input<typeof outputSchema>, any>
       >();
     });
 
@@ -228,7 +229,7 @@ describe("action", () => {
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
 
       expectTypeOf<ActionFnReturn>().toEqualTypeOf<
-        z.infer<typeof outputSchema>
+        Result<z.infer<typeof outputSchema>, any>
       >();
     });
 
@@ -247,7 +248,7 @@ describe("action", () => {
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
 
       expectTypeOf<ActionFnReturn>().toEqualTypeOf<
-        z.infer<typeof outputSchema>
+        Result<z.infer<typeof outputSchema>, any>
       >();
     });
   });
@@ -259,8 +260,8 @@ describe("run", () => {
     test("should infer input from actionFn if no input schema is provided", () => {
       const safeFn = SafeFn.new()
         .unparsedInput<any>()
-        .action(
-          (args: { unparsedInput: { test: string } }) => args.unparsedInput,
+        .action((args: { unparsedInput: { test: string } }) =>
+          Ok(args.unparsedInput),
         );
 
       type RunInput = Parameters<typeof safeFn.run>[0];
@@ -271,7 +272,7 @@ describe("run", () => {
       const inputSchema = z.string();
       const safeFn = SafeFn.new()
         .input(inputSchema)
-        .action((args) => args.parsedInput);
+        .action((args) => Ok(args.parsedInput));
 
       type RunInput = Parameters<typeof safeFn.run>[0];
 
@@ -287,7 +288,7 @@ describe("run", () => {
       });
       const safeFn = SafeFn.new()
         .input(inputSchema)
-        .action((args) => args.parsedInput);
+        .action((args) => Ok(args.parsedInput));
 
       type RunInput = Parameters<typeof safeFn.run>[0];
 
@@ -305,7 +306,7 @@ describe("run", () => {
         .transform(({ test }) => ({ test, newProperty: "test" }));
       const safeFn = SafeFn.new()
         .input(inputSchema)
-        .action((args) => args.parsedInput);
+        .action((args) => Ok(args.parsedInput));
 
       type RunInput = Parameters<typeof safeFn.run>[0];
 

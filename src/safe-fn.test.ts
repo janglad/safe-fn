@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
+import { Ok } from "./result";
 import { SafeFn } from "./safe-fn";
 
 describe("SafeFn", () => {
@@ -27,7 +28,7 @@ describe("output", () => {
 
 describe("action", () => {
   test("should set the action function", () => {
-    const actionFn = () => {};
+    const actionFn = () => Ok("data");
     const safeFn = SafeFn.new().action(actionFn);
     expect(safeFn._actionFn).toEqual(actionFn);
   });

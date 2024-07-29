@@ -1,4 +1,7 @@
 import type { ZodTypeAny, z } from "zod";
+import type { Result } from "./result";
+
+type TODO = any;
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -19,8 +22,10 @@ type SafeFnActionArgs<TInputSchema extends SafeFnInput, TUnparsedInput> = {
   unparsedInput: SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
 };
 
-type SafeFnActionReturn<TOutputSchema extends SafeFnOutput> =
-  SchemaOutputOrFallback<TOutputSchema, any>;
+type SafeFnActionReturn<TOutputSchema extends SafeFnOutput> = Result<
+  SchemaOutputOrFallback<TOutputSchema, any>,
+  TODO
+>;
 
 export type SafeFnActionFn<
   TInputSchema extends SafeFnInput,
@@ -44,3 +49,8 @@ export type SafeFnRunArgs<
   TInputSchema,
   Parameters<TActionFn>[0]["unparsedInput"]
 >;
+
+export type SafeFnReturn<
+  TOutputSchema extends SafeFnOutput,
+  TActionFn extends AnySafeFnActionFn,
+> = Result<SafeFnReturnData<TOutputSchema, TActionFn>, TODO>;
