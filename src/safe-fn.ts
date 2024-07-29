@@ -1,13 +1,16 @@
 import type { z } from "zod";
 import type { SafeFnInput } from "./types";
 
-export class SafeFn<TInputSchema extends SafeFnInput, SafeFnOutput> {
+export class SafeFn<
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnInput,
+> {
   readonly _inputSchema: TInputSchema;
-  readonly _outputSchema: SafeFnOutput;
+  readonly _outputSchema: TOutputSchema;
 
   private constructor(args: {
     inputSchema: TInputSchema;
-    outputSchema: SafeFnOutput;
+    outputSchema: TOutputSchema;
   }) {
     this._inputSchema = args.inputSchema;
     this._outputSchema = args.outputSchema;
@@ -22,7 +25,7 @@ export class SafeFn<TInputSchema extends SafeFnInput, SafeFnOutput> {
 
   input<TNewInputSchema extends z.ZodTypeAny>(
     schema: TNewInputSchema,
-  ): SafeFn<TNewInputSchema, SafeFnOutput> {
+  ): SafeFn<TNewInputSchema, TOutputSchema> {
     return new SafeFn({
       inputSchema: schema,
       outputSchema: this._outputSchema,
