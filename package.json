@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +12,8 @@
   "devDependencies": {
     "prettier": "^3.3.3",
     "prettier-plugin-organize-imports": "^4.0.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.4"
   },
   "dependencies": {
     "zod": "^3.23.8"
