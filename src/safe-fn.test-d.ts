@@ -239,3 +239,60 @@ describe("action", () => {
     });
   });
 });
+
+describe("run", () => {
+  describe("input", () => {
+    // TODO: Infer input type without schema
+    test.todo(
+      "should infer input from actionFn if no input schema is provided",
+    );
+
+    test("should type input as inputSchema input for primitives", () => {
+      const inputSchema = z.string();
+      const safeFn = SafeFn.new()
+        .input(inputSchema)
+        .action((args) => args.parsedInput);
+
+      type RunInput = Parameters<typeof safeFn.run>[0];
+
+      expectTypeOf<RunInput>().toEqualTypeOf<z.input<typeof inputSchema>>();
+    });
+
+    test("should type input as inputSchema input for objects", () => {
+      const inputSchema = z.object({
+        test: z.string(),
+        nested: z.object({
+          value: z.number(),
+        }),
+      });
+      const safeFn = SafeFn.new()
+        .input(inputSchema)
+        .action((args) => args.parsedInput);
+
+      type RunInput = Parameters<typeof safeFn.run>[0];
+
+      expectTypeOf<RunInput>().toEqualTypeOf<z.input<typeof inputSchema>>();
+    });
+
+    test("should type input as inputSchema input for transformed schemas", () => {
+      const inputSchema = z
+        .object({
+          test: z.string(),
+          nested: z.object({
+            value: z.number(),
+          }),
+        })
+        .transform(({ test }) => ({ test, newProperty: "test" }));
+      const safeFn = SafeFn.new()
+        .input(inputSchema)
+        .action((args) => args.parsedInput);
+
+      type RunInput = Parameters<typeof safeFn.run>[0];
+
+      expectTypeOf<RunInput>().toEqualTypeOf<z.input<typeof inputSchema>>();
+    });
+
+    // TODO: add output testing after result type is defined
+    describe.todo("output");
+  });
+});

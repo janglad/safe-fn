@@ -1,5 +1,11 @@
 import type { z } from "zod";
-import type { AnySafeFnActionFn, SafeFnActionFn, SafeFnInput } from "./types";
+import type {
+  AnySafeFnActionFn,
+  SafeFnActionFn,
+  SafeFnInput,
+  SafeFnReturnData,
+  SafeFnRunArgs,
+} from "./types";
 
 export class SafeFn<
   TInputSchema extends SafeFnInput,
@@ -70,5 +76,12 @@ export class SafeFn<
       outputSchema: this._outputSchema,
       actionFn,
     });
+  }
+
+  // TODO: implement more than success type
+  async run(
+    args: SafeFnRunArgs<TInputSchema, TActionFn>,
+  ): Promise<SafeFnReturnData<TOutputSchema, TActionFn>> {
+    return await this._actionFn(args);
   }
 }
