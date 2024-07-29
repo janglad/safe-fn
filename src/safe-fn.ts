@@ -61,4 +61,14 @@ export class SafeFn<
       actionFn: this._actionFn,
     });
   }
+
+  action<TNewActionFn extends SafeFnActionFn<TInputSchema, TOutputSchema>>(
+    actionFn: TNewActionFn,
+  ): SafeFn<TInputSchema, TOutputSchema, TNewActionFn> {
+    return new SafeFn({
+      inputSchema: this._inputSchema,
+      outputSchema: this._outputSchema,
+      actionFn,
+    });
+  }
 }
