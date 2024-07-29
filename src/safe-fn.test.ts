@@ -24,3 +24,11 @@ describe("output", () => {
     expect(safeFn._outputSchema).toEqual(outputSchema);
   });
 });
+
+describe("action", () => {
+  test("should set the action function", () => {
+    const actionFn = () => {};
+    const safeFn = SafeFn.new().action(actionFn);
+    expect(safeFn._actionFn).toEqual(actionFn);
+  });
+});
