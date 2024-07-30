@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Err, Ok, type Result } from "./result";
 import type {
   AnySafeFnActionFn,
+  AnySafeFnThrownHandler,
   SafeFnActionFn,
   SafeFnInput,
   SafeFnReturn,
@@ -14,10 +15,12 @@ export class SafeFn<
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
   TActionFn extends SafeFnActionFn<TInputSchema, TOutputSchema, TUnparsedInput>,
+  TThrownHandler extends AnySafeFnThrownHandler,
 > {
   readonly _inputSchema: TInputSchema;
   readonly _outputSchema: TOutputSchema;
   readonly _actionFn: TActionFn;
+  readonly _uncaughtErrorHandler = (error: unknown) => {};
 
   private constructor(args: {
     inputSchema: TInputSchema;
@@ -32,7 +35,13 @@ export class SafeFn<
   // ******************************
   // *****       Build      *******
   // ******************************
-  static new(): SafeFn<undefined, undefined, unknown, AnySafeFnActionFn> {
+  static new(): SafeFn<
+    undefined,
+    undefined,
+    unknown,
+    AnySafeFnActionFn,
+    AnySafeFnThrownHandler
+  > {
     return new SafeFn({
       inputSchema: undefined,
       outputSchema: undefined,
@@ -46,7 +55,8 @@ export class SafeFn<
     TNewInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    SafeFnActionFn<TNewInputSchema, TOutputSchema, z.input<TNewInputSchema>>
+    SafeFnActionFn<TNewInputSchema, TOutputSchema, z.input<TNewInputSchema>>,
+    TThrownHandler
   > {
     return new SafeFn({
       inputSchema: schema,
@@ -63,7 +73,8 @@ export class SafeFn<
     TInputSchema,
     TOutputSchema,
     TNewUnparsedInput,
-    SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput>
+    SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput>,
+    TThrownHandler
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -81,7 +92,8 @@ export class SafeFn<
     TInputSchema,
     TNewOutputSchema,
     TUnparsedInput,
-    SafeFnActionFn<TInputSchema, TNewOutputSchema, TUnparsedInput>
+    SafeFnActionFn<TInputSchema, TNewOutputSchema, TUnparsedInput>,
+    TThrownHandler
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -101,7 +113,13 @@ export class SafeFn<
     >,
   >(
     actionFn: TNewActionFn,
-  ): SafeFn<TInputSchema, TOutputSchema, TUnparsedInput, TNewActionFn> {
+  ): SafeFn<
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    TNewActionFn,
+    TThrownHandler
+  > {
     return new SafeFn({
       inputSchema: this._inputSchema,
       outputSchema: this._outputSchema,

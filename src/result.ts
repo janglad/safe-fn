@@ -18,6 +18,7 @@ export const Ok = <TData>(data: TData): Ok<TData> => ({
 });
 
 export type Err<TError> = Result<never, TError>;
+export type AnyErr = Err<any>;
 export const Err = <TError>(error: TError): Err<TError> => ({
   success: false,
   error,
