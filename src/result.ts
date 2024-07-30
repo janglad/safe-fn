@@ -1,4 +1,5 @@
 export type Result<TData, TError> = Ok<TData> | Err<TError>;
+export type AnyResult = Result<any, any>;
 
 export type Ok<TData> = {
   success: true;

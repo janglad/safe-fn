@@ -1,5 +1,5 @@
 import type { ZodTypeAny, z } from "zod";
-import type { AnyErr, Result } from "./result";
+import type { AnyResult, Result } from "./result";
 
 type TODO = any;
 
@@ -58,4 +58,6 @@ export type SafeFnReturn<
   TActionFn extends AnySafeFnActionFn,
 > = Result<SafeFnReturnData<TOutputSchema, TActionFn>, TODO>;
 
-export type AnySafeFnThrownHandler = (error: unknown) => MaybePromise<AnyErr>;
+export type AnySafeFnThrownHandler = (
+  error: unknown,
+) => MaybePromise<AnyResult>;
