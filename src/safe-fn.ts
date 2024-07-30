@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { Err, Ok, type Result } from "./result";
 import type {
-  AnySafeFnActionFn,
   AnySafeFnThrownHandler,
   SafeFnActionFn,
+  SafeFnDefaultActionFn,
+  SafeFnDefaultThrowHandler,
   SafeFnInput,
   SafeFnReturn,
   SafeFnRunArgs,
@@ -41,8 +42,8 @@ export class SafeFn<
     undefined,
     undefined,
     unknown,
-    AnySafeFnActionFn,
-    AnySafeFnThrownHandler
+    SafeFnDefaultActionFn,
+    SafeFnDefaultThrowHandler
   > {
     return new SafeFn({
       inputSchema: undefined,
@@ -158,7 +159,9 @@ export class SafeFn<
   // TODO: implement more than success type
   async run(
     args: SafeFnRunArgs<TInputSchema, TActionFn>,
-  ): Promise<SafeFnReturn<TOutputSchema, TActionFn>> {
+  ): Promise<
+    SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
+  > {
     try {
       let parsedInput: SchemaOutputOrFallback<TInputSchema, never> =
         undefined as never;

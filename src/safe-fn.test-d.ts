@@ -1,7 +1,11 @@
 import { describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
-import { Err, Ok, type Result } from "./result";
+import { Err, Ok, type InferErrError, type Result } from "./result";
 import { SafeFn } from "./safe-fn";
+import type {
+  SafeFnDefaultActionMessage,
+  SafeFnDefaultThrownHandlerMessage,
+} from "./types";
 
 describe("input", () => {
   test("should properly type the input schema for primitives", () => {
@@ -315,7 +319,18 @@ describe("run", () => {
   });
 
   describe("output", () => {
-    test("should infer return type from action when no output schema is provided", async () => {
+    test("should infer return type as Res<never,default error> when no action is set", async () => {
+      const safeFn = SafeFn.new().error(() => {
+        throw new Error();
+      });
+      type Res = Awaited<ReturnType<typeof safeFn.run>>;
+      type inferred = InferErrError<Res>;
+
+      expectTypeOf<Res>().toEqualTypeOf<
+        Result<never, typeof SafeFnDefaultActionMessage>
+      >();
+    });
+    test("should infer success return type from action when no output schema is provided", async () => {
       const safeFn = SafeFn.new().action(() => Ok("data" as const));
 
       expectTypeOf(safeFn.run({})).resolves.toMatchTypeOf<
@@ -323,7 +338,7 @@ describe("run", () => {
       >();
     });
 
-    test("should type output as outputSchema for transformed values", async () => {
+    test("should type output as Ok<outputSchema> for transformed values", async () => {
       const outputSchema = z.string().transform((data) => data + "!");
       const safeFn = SafeFn.new().output(outputSchema);
 
@@ -331,6 +346,40 @@ describe("run", () => {
       expectTypeOf(res).toMatchTypeOf<
         Result<z.output<typeof outputSchema>, any>
       >();
+    });
+  });
+
+  describe("error", () => {
+    test("should infer Err return as default when no error function is set", async () => {
+      const safeFn = SafeFn.new().action(() => Ok("data" as const));
+
+      type Res = Awaited<ReturnType<typeof safeFn.run>>;
+      type InferredErrError = InferErrError<Res>;
+      expectTypeOf<InferredErrError>().toEqualTypeOf<
+        typeof SafeFnDefaultThrownHandlerMessage
+      >();
+    });
+
+    test("should infer Err return type from action when no error function is set", async () => {
+      const safeFn = SafeFn.new().action(() => Err("my error" as const));
+      type Res = Awaited<ReturnType<typeof safeFn.run>>;
+      type InferredErrError = InferErrError<Res>;
+      expectTypeOf<InferredErrError>().toEqualTypeOf<
+        "my error" | typeof SafeFnDefaultThrownHandlerMessage
+      >();
+    });
+
+    test("should infer Err return type from action when error function is set", async () => {
+      const safeFn = SafeFn.new()
+        .action(() => {
+          return Err("error" as const);
+        })
+        .error(() => Err("thrown" as const));
+
+      type Res = Awaited<ReturnType<typeof safeFn.run>>;
+      type InferredErrError = InferErrError<Res>;
+
+      expectTypeOf<InferredErrError>().toEqualTypeOf<"error" | "thrown">();
     });
   });
 });

@@ -6,6 +6,8 @@ export type Ok<TData> = {
   data: TData;
   error: never;
 };
+export type InferOkData<T> = T extends Ok<infer TData> ? TData : never;
+
 export const Ok = <TData>(data: TData): Ok<TData> => ({
   success: true,
   data,
@@ -17,6 +19,8 @@ export type Err<TError> = {
   error: TError;
   data: never;
 };
+export type InferErrError<T> = T extends Err<infer TError> ? TError : never;
+
 export type AnyErr = Err<any>;
 export const Err = <TError>(error: TError): Err<TError> => ({
   success: false,
