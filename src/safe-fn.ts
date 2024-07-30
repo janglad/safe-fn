@@ -55,7 +55,7 @@ export class SafeFn<
 ||                            ||
 ################################
 */
-  static new<TNewParent extends AnySafeFn>(
+  static new<TNewParent extends AnySafeFn | undefined = undefined>(
     parent?: TNewParent,
   ): SafeFn<
     TNewParent,

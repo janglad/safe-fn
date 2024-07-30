@@ -1,4 +1,4 @@
-import type { ZodTypeAny, z } from "zod";
+import type { AnyZodObject, ZodObject, ZodTypeAny, objectUtil, z } from "zod";
 import type {
   AnyResult,
   Err,
@@ -6,7 +6,7 @@ import type {
   InferOkData,
   Result,
 } from "./result";
-import type { AnySafeFn } from "./safe-fn";
+import type { AnySafeFn, SafeFn } from "./safe-fn";
 
 /*
 ################################
@@ -18,6 +18,26 @@ import type { AnySafeFn } from "./safe-fn";
 
 type TODO = any;
 export type MaybePromise<T> = T | Promise<T>;
+export type InferInputSchema<T> =
+  T extends SafeFn<any, infer T, any, any, any, any> ? T : never;
+export type InferOutputSchema<T> =
+  T extends SafeFn<any, any, infer T, any, any, any> ? T : never;
+
+// Adopted from https://github.com/IdoPesok/zsa/blob/main/packages/zsa/src/types.ts
+export type TZodMerge<
+  T1 extends z.ZodType | undefined,
+  T2 extends z.ZodType | undefined,
+> = T1 extends AnyZodObject
+  ? T2 extends AnyZodObject
+    ? ZodObject<
+        objectUtil.extendShape<T1["shape"], T2["shape"]>,
+        T2["_def"]["unknownKeys"],
+        T2["_def"]["catchall"]
+      >
+    : T2 extends undefined
+      ? T1 // only return T1 if T2 is undefined
+      : T2
+  : T2;
 
 /*
 ################################
@@ -91,11 +111,17 @@ export type SafeFnDefaultActionFn = () => Err<{
 type SafeFnActionArgs<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
-  TCtx,
+  TParent extends AnySafeFn | undefined,
 > = {
-  parsedInput: SchemaOutputOrFallback<TInputSchema, never>;
+  // TODO: clean this up
+  parsedInput: TParent extends AnySafeFn
+    ? z.output<TZodMerge<TInputSchema, InferInputSchema<TParent>>>
+    : SchemaOutputOrFallback<TInputSchema, never>;
   unparsedInput: SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
-  ctx: TCtx;
+  ctx: TParent extends AnySafeFn
+    ? // TODO: clean this up
+      InferOkData<Awaited<ReturnType<TParent["run"]>>>
+    : undefined;
 };
 
 /**
@@ -120,14 +146,7 @@ export type SafeFnActionFn<
   TUnparsedInput,
   TParent extends AnySafeFn | undefined,
 > = (
-  args: SafeFnActionArgs<
-    TInputSchema,
-    TUnparsedInput,
-    TParent extends AnySafeFn
-      ? // TODO: clean this up
-        InferOkData<Awaited<ReturnType<TParent["run"]>>>
-      : undefined
-  >,
+  args: SafeFnActionArgs<TInputSchema, TUnparsedInput, TParent>,
 ) => MaybePromise<SafeFnActionReturn<TOutputSchema>>;
 
 export type AnySafeFnActionFn = SafeFnActionFn<any, any, any, any>;
