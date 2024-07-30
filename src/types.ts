@@ -100,11 +100,11 @@ export type AnySafeFnThrownHandler = (
   error: unknown,
 ) => MaybePromise<AnyResult>;
 
-export const SafeFnDefaultThrownHandlerMessage = "Uncaught error" as const;
-export type SafeFnDefaultThrowHandler = () => Err<
-  typeof SafeFnDefaultThrownHandlerMessage
->;
-export const SafeFnDefaultActionMessage = "No action provided" as const;
-export type SafeFnDefaultActionFn = () => Err<
-  typeof SafeFnDefaultActionMessage
->;
+export type SafeFnDefaultThrowHandler = (error: unknown) => Err<{
+  code: "UNCAUGHT_ERROR";
+  error: unknown;
+}>;
+
+export type SafeFnDefaultActionFn = () => Err<{
+  code: "NO_ACTION";
+}>;

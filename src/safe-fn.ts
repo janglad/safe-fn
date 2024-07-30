@@ -50,8 +50,15 @@ export class SafeFn<
     return new SafeFn({
       inputSchema: undefined,
       outputSchema: undefined,
-      actionFn: () => Err("No action provided" as const),
-      uncaughtErrorHandler: () => Err("Uncaught error" as const),
+      actionFn: () =>
+        Err({
+          code: "NO_ACTION",
+        } as const),
+      uncaughtErrorHandler: (error: unknown) =>
+        Err({
+          code: "UNCAUGHT_ERROR",
+          error,
+        } as const),
     });
   }
 

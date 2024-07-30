@@ -3,8 +3,8 @@ import { z } from "zod";
 import { Err, Ok, type InferErrError, type Result } from "./result";
 import { SafeFn } from "./safe-fn";
 import type {
-  SafeFnDefaultActionMessage,
-  SafeFnDefaultThrownHandlerMessage,
+  SafeFnDefaultActionFn,
+  SafeFnDefaultThrowHandler,
   SafeFnInputParseError,
   SafeFnOutputParseError,
 } from "./types";
@@ -329,7 +329,7 @@ describe("run", () => {
       type inferred = InferErrError<Res>;
 
       expectTypeOf<Res>().toEqualTypeOf<
-        Result<never, typeof SafeFnDefaultActionMessage>
+        Result<never, ReturnType<SafeFnDefaultActionFn>["error"]>
       >();
     });
     test("should infer success return type from action when no output schema is provided", async () => {
@@ -358,7 +358,7 @@ describe("run", () => {
       type Res = Awaited<ReturnType<typeof safeFn.run>>;
       type InferredErrError = InferErrError<Res>;
       expectTypeOf<InferredErrError>().toEqualTypeOf<
-        typeof SafeFnDefaultThrownHandlerMessage
+        ReturnType<SafeFnDefaultThrowHandler>["error"]
       >();
     });
 
@@ -367,7 +367,7 @@ describe("run", () => {
       type Res = Awaited<ReturnType<typeof safeFn.run>>;
       type InferredErrError = InferErrError<Res>;
       expectTypeOf<InferredErrError>().toEqualTypeOf<
-        "my error" | typeof SafeFnDefaultThrownHandlerMessage
+        "my error" | ReturnType<SafeFnDefaultThrowHandler>["error"]
       >();
     });
 
@@ -482,10 +482,11 @@ describe("internals", () => {
 
 describe("error", () => {
   test("should properly type the _uncaughtErrorHandler function", () => {
-    const safeFn = SafeFn.new().error((error) => Err("hello"));
+    const safeFn = SafeFn.new().error((error) => Err("hello" as const));
 
+    type res = ReturnType<typeof safeFn._uncaughtErrorHandler>;
     expectTypeOf(safeFn._uncaughtErrorHandler).toEqualTypeOf<
-      (error: unknown) => Err<string>
+      (error: unknown) => Err<"hello">
     >();
   });
 });
