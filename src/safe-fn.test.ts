@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { assert, describe, expect, test } from "vitest";
 import { z } from "zod";
 import { Err, Ok } from "./result";
 import { SafeFn } from "./safe-fn";
@@ -210,6 +210,8 @@ describe("run", () => {
 
       expect(res.success).toBe(false);
       expect(res.error).toBeInstanceOf(Error);
+      // Double assert for type checking
+      assert(res.error instanceof Error);
       expect(res.error.message).toBe("a new error");
     });
   });
