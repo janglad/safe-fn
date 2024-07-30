@@ -22,8 +22,10 @@ export type InferInputSchema<T> =
   T extends SafeFn<any, infer T, any, any, any, any> ? T : never;
 export type InferOutputSchema<T> =
   T extends SafeFn<any, any, infer T, any, any, any> ? T : never;
-
+export type InferUnparsedInput<T> =
+  T extends SafeFn<any, any, any, infer T, any, any> ? T : never;
 // Adopted from https://github.com/IdoPesok/zsa/blob/main/packages/zsa/src/types.ts
+// Does not work with transforms
 export type TZodMerge<
   T1 extends z.ZodType | undefined,
   T2 extends z.ZodType | undefined,
@@ -113,11 +115,19 @@ type SafeFnActionArgs<
   TUnparsedInput,
   TParent extends AnySafeFn | undefined,
 > = {
-  // TODO: clean this up
+  // TODO: clean this up.
   parsedInput: TParent extends AnySafeFn
-    ? z.output<TZodMerge<TInputSchema, InferInputSchema<TParent>>>
+    ? SchemaOutputOrFallback<
+        TZodMerge<TInputSchema, InferInputSchema<TParent>>,
+        undefined
+      >
     : SchemaOutputOrFallback<TInputSchema, never>;
-  unparsedInput: SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
+  unparsedInput: TParent extends AnySafeFn
+    ? SchemaInputOrFallback<
+        TZodMerge<TInputSchema, InferInputSchema<TParent>>,
+        TUnparsedInput & InferUnparsedInput<TParent>
+      >
+    : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
   ctx: TParent extends AnySafeFn
     ? // TODO: clean this up
       InferOkData<Awaited<ReturnType<TParent["run"]>>>
