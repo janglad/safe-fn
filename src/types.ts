@@ -7,9 +7,24 @@ import type {
   Result,
 } from "./result";
 
-type TODO = any;
+/*
+################################
+||                            ||
+||            Util            ||
+||                            ||
+################################
+*/
 
+type TODO = any;
 export type MaybePromise<T> = T | Promise<T>;
+
+/*
+################################
+||                            ||
+||           Schema           ||
+||                            ||
+################################
+*/
 
 export type SafeFnInput = z.ZodTypeAny | undefined;
 export type SafeFnOutput = z.ZodTypeAny | undefined;
@@ -22,6 +37,36 @@ export type SchemaOutputOrFallback<
   TSchema extends SafeFnOutput,
   TFallback,
 > = TSchema extends ZodTypeAny ? z.output<TSchema> : TFallback;
+
+/*
+################################
+||                            ||
+||           Error            ||
+||                            ||
+################################
+*/
+
+export type AnySafeFnThrownHandler = (
+  error: unknown,
+) => MaybePromise<AnyResult>;
+
+export type SafeFnDefaultThrowHandler = (error: unknown) => Err<{
+  code: "UNCAUGHT_ERROR";
+  error: unknown;
+}>;
+
+export type SafeFnDefaultActionFn = () => Err<{
+  code: "NO_ACTION";
+}>;
+
+/*
+################################
+||                            ||
+||           Action           ||
+||                            ||
+################################
+
+*/
 
 type SafeFnActionArgs<TInputSchema extends SafeFnInput, TUnparsedInput> = {
   parsedInput: SchemaOutputOrFallback<TInputSchema, never>;
@@ -42,6 +87,14 @@ export type SafeFnActionFn<
 ) => MaybePromise<SafeFnActionReturn<TOutputSchema>>;
 
 export type AnySafeFnActionFn = SafeFnActionFn<any, any, any>;
+
+/* 
+################################
+||                            ||
+||            Run             ||
+||                            ||
+################################
+*/
 
 export type SafeFnReturnData<
   TOutputSchema extends SafeFnOutput,
@@ -95,16 +148,3 @@ export type SafeFnReturn<
   SafeFnReturnData<TOutputSchema, TActionFn>,
   SafeFnReturnError<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
 >;
-
-export type AnySafeFnThrownHandler = (
-  error: unknown,
-) => MaybePromise<AnyResult>;
-
-export type SafeFnDefaultThrowHandler = (error: unknown) => Err<{
-  code: "UNCAUGHT_ERROR";
-  error: unknown;
-}>;
-
-export type SafeFnDefaultActionFn = () => Err<{
-  code: "NO_ACTION";
-}>;
