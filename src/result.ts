@@ -10,13 +10,15 @@ export type Result<TData, TError> =
       data: never;
     };
 
-export const Ok = <TData>(data: TData): Result<TData, never> => ({
+export type Ok<TData> = Result<TData, never>;
+export const Ok = <TData>(data: TData): Ok<TData> => ({
   success: true,
   data,
   error: undefined as never,
 });
 
-export const Err = <TError>(error: TError): Result<never, TError> => ({
+export type Err<TError> = Result<never, TError>;
+export const Err = <TError>(error: TError): Err<TError> => ({
   success: false,
   error,
   data: undefined as never,
