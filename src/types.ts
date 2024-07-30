@@ -58,7 +58,25 @@ export type SafeFnReturnError<
   TThrownHandler extends AnySafeFnThrownHandler,
 > =
   | InferErrError<Awaited<ReturnType<TActionFn>>>
-  | InferErrError<Awaited<ReturnType<TThrownHandler>>>;
+  | InferErrError<Awaited<ReturnType<TThrownHandler>>>
+  | SafeFnInputParseError<TInputSchema>
+  | SafeFnOutputParseError<TOutputSchema>;
+
+export type SafeFnInputParseError<TInputSchema extends SafeFnInput> =
+  TInputSchema extends z.ZodTypeAny
+    ? {
+        code: "INPUT_PARSING";
+        cause: z.ZodError<TInputSchema>;
+      }
+    : never;
+
+export type SafeFnOutputParseError<TOutputSchema extends SafeFnOutput> =
+  TOutputSchema extends z.ZodTypeAny
+    ? {
+        code: "OUTPUT_PARSING";
+        cause: z.ZodError<TOutputSchema>;
+      }
+    : never;
 
 export type SafeFnRunArgs<
   TInputSchema extends SafeFnInput,

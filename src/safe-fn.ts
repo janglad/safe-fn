@@ -6,6 +6,8 @@ import type {
   SafeFnDefaultActionFn,
   SafeFnDefaultThrowHandler,
   SafeFnInput,
+  SafeFnInputParseError,
+  SafeFnOutputParseError,
   SafeFnReturn,
   SafeFnRunArgs,
   SchemaOutputOrFallback,
@@ -155,8 +157,6 @@ export class SafeFn<
   // ******************************
   // *****       Run      *********
   // ******************************
-
-  // TODO: implement more than success type
   async run(
     args: SafeFnRunArgs<TInputSchema, TActionFn>,
   ): Promise<
@@ -201,7 +201,7 @@ export class SafeFn<
   ): Promise<
     Result<
       SchemaOutputOrFallback<TInputSchema, never>,
-      z.ZodError<TInputSchema>
+      SafeFnInputParseError<TInputSchema>
     >
   > {
     if (this._inputSchema === undefined) {
@@ -214,7 +214,10 @@ export class SafeFn<
       return Ok(res.data);
     }
 
-    return Err(res.error);
+    return Err({
+      code: "INPUT_PARSING",
+      cause: res.error,
+    }) as Err<SafeFnInputParseError<TInputSchema>>;
   }
 
   async _parseOutput(
@@ -222,7 +225,7 @@ export class SafeFn<
   ): Promise<
     Result<
       SchemaOutputOrFallback<TOutputSchema, never>,
-      z.ZodError<TOutputSchema>
+      SafeFnOutputParseError<TOutputSchema>
     >
   > {
     if (this._outputSchema === undefined) {
@@ -235,6 +238,9 @@ export class SafeFn<
       return Ok(res.data);
     }
 
-    return Err(res.error);
+    return Err({
+      code: "OUTPUT_PARSING",
+      cause: res.error,
+    }) as Err<SafeFnOutputParseError<TOutputSchema>>;
   }
 }

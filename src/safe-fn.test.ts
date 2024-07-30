@@ -56,7 +56,7 @@ describe("internals", () => {
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
       expect(res.error).toBeDefined();
-      expect(res.error).toBeInstanceOf(z.ZodError);
+      expect(res.error.cause).toBeInstanceOf(z.ZodError);
     });
 
     test("should transform input", async () => {
@@ -87,7 +87,7 @@ describe("internals", () => {
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
       expect(res.error).toBeDefined();
-      expect(res.error).toBeInstanceOf(z.ZodError);
+      expect(res.error.cause).toBeInstanceOf(z.ZodError);
     });
 
     test("should transform output", async () => {
@@ -140,10 +140,16 @@ describe("run", () => {
         .action((args) => Ok(args.parsedInput))
         // @ts-expect-error
         .run(123);
+
+      if (!res.success) {
+        type test = typeof res.error;
+      }
+
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
       expect(res.error).toBeDefined();
-      expect(res.error).toBeInstanceOf(z.ZodError);
+      assert(res.error !== undefined);
+      expect(res.error.cause).toBeInstanceOf(z.ZodError);
     });
   });
 
@@ -174,7 +180,7 @@ describe("run", () => {
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
       expect(res.error).toBeDefined();
-      expect(res.error).toBeInstanceOf(z.ZodError);
+      expect(res.error.cause).toBeInstanceOf(z.ZodError);
     });
   });
 

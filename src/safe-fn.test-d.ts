@@ -5,6 +5,8 @@ import { SafeFn } from "./safe-fn";
 import type {
   SafeFnDefaultActionMessage,
   SafeFnDefaultThrownHandlerMessage,
+  SafeFnInputParseError,
+  SafeFnOutputParseError,
 } from "./types";
 
 describe("input", () => {
@@ -408,6 +410,12 @@ describe("internals", () => {
       >();
     });
 
+    test("should type Result Err as never without input schema", async () => {
+      const safeFn = SafeFn.new();
+      const res = await safeFn._parseInput(123);
+      expectTypeOf(res).toEqualTypeOf<Result<never, never>>();
+    });
+
     test("should type Result Err as typed ZodError for transformed schemas", async () => {
       const inputSchema = z
         .object({
@@ -420,7 +428,7 @@ describe("internals", () => {
       const safeFn = SafeFn.new().input(inputSchema);
       const res = await safeFn._parseInput(123);
       expectTypeOf(res).toMatchTypeOf<
-        Result<any, z.ZodError<typeof inputSchema>>
+        Result<any, SafeFnInputParseError<typeof inputSchema>>
       >();
     });
   });
@@ -448,6 +456,12 @@ describe("internals", () => {
       >();
     });
 
+    test("should type Result Err as never without output schema", async () => {
+      const safeFn = SafeFn.new();
+      const res = await safeFn._parseOutput(123);
+      expectTypeOf(res).toEqualTypeOf<Result<never, never>>();
+    });
+
     test("should type Result Err as typed ZodError for transformed schemas", async () => {
       const outputSchema = z
         .object({
@@ -460,7 +474,7 @@ describe("internals", () => {
       const safeFn = SafeFn.new().output(outputSchema);
       const res = await safeFn._parseOutput(123);
       expectTypeOf(res).toMatchTypeOf<
-        Result<any, z.ZodError<typeof outputSchema>>
+        Result<any, SafeFnOutputParseError<typeof outputSchema>>
       >();
     });
   });
