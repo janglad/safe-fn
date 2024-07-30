@@ -13,7 +13,10 @@ import type {
   SchemaOutputOrFallback,
 } from "./types";
 
+export type AnySafeFn = SafeFn<any, any, any, any, any, any>;
+
 export class SafeFn<
+  TParent extends AnySafeFn | undefined,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
@@ -21,23 +24,24 @@ export class SafeFn<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    TCtx
+    TParent
   >,
   TThrownHandler extends AnySafeFnThrownHandler,
-  TCtx,
-  TIsProcedure extends boolean,
 > {
+  readonly _parent: TParent;
   readonly _inputSchema: TInputSchema;
   readonly _outputSchema: TOutputSchema;
   readonly _actionFn: TActionFn;
   readonly _uncaughtErrorHandler: TThrownHandler;
 
   protected constructor(args: {
+    parent?: TParent;
     inputSchema: TInputSchema;
     outputSchema: TOutputSchema;
     actionFn: TActionFn;
     uncaughtErrorHandler: TThrownHandler;
   }) {
+    this._parent = args.parent as TParent;
     this._inputSchema = args.inputSchema;
     this._outputSchema = args.outputSchema;
     this._actionFn = args.actionFn;
@@ -51,16 +55,18 @@ export class SafeFn<
 ||                            ||
 ################################
 */
-  static new(): SafeFn<
+  static new<TNewParent extends AnySafeFn>(
+    parent?: TNewParent,
+  ): SafeFn<
+    TNewParent,
     undefined,
     undefined,
     unknown,
     SafeFnDefaultActionFn,
-    SafeFnDefaultThrowHandler,
-    Record<string, never>,
-    false
+    SafeFnDefaultThrowHandler
   > {
     return new SafeFn({
+      parent,
       inputSchema: undefined,
       outputSchema: undefined,
       actionFn: () =>
@@ -78,6 +84,7 @@ export class SafeFn<
   input<TNewInputSchema extends z.ZodTypeAny>(
     schema: TNewInputSchema,
   ): SafeFn<
+    TParent,
     TNewInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -85,11 +92,9 @@ export class SafeFn<
       TNewInputSchema,
       TOutputSchema,
       z.input<TNewInputSchema>,
-      TCtx
+      TParent
     >,
-    TThrownHandler,
-    TCtx,
-    TIsProcedure
+    TThrownHandler
   > {
     return new SafeFn({
       inputSchema: schema,
@@ -104,13 +109,12 @@ export class SafeFn<
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
   unparsedInput<TNewUnparsedInput>(): SafeFn<
+    TParent,
     TInputSchema,
     TOutputSchema,
     TNewUnparsedInput,
-    SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TCtx>,
-    TThrownHandler,
-    TCtx,
-    TIsProcedure
+    SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TParent>,
+    TThrownHandler
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -126,13 +130,12 @@ export class SafeFn<
   output<TNewOutputSchema extends z.ZodTypeAny>(
     schema: TNewOutputSchema,
   ): SafeFn<
+    TParent,
     TInputSchema,
     TNewOutputSchema,
     TUnparsedInput,
-    SafeFnActionFn<TInputSchema, TNewOutputSchema, TUnparsedInput, TCtx>,
-    TThrownHandler,
-    TCtx,
-    TIsProcedure
+    SafeFnActionFn<TInputSchema, TNewOutputSchema, TUnparsedInput, TParent>,
+    TThrownHandler
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -148,13 +151,12 @@ export class SafeFn<
   error<TNewThrownHandler extends AnySafeFnThrownHandler>(
     handler: TNewThrownHandler,
   ): SafeFn<
+    TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
     TActionFn,
-    TNewThrownHandler,
-    TCtx,
-    TIsProcedure
+    TNewThrownHandler
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -169,18 +171,17 @@ export class SafeFn<
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
-      TCtx
+      TParent
     >,
   >(
     actionFn: TNewActionFn,
   ): SafeFn<
+    TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
     TNewActionFn,
-    TThrownHandler,
-    TCtx,
-    TIsProcedure
+    TThrownHandler
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -217,7 +218,7 @@ export class SafeFn<
         parsedInput,
         unparsedInput: args,
         // TODO: pass context when functions are set up
-        ctx: {} as TCtx,
+        ctx: undefined as any,
       });
 
       if (!actionRes.success) {

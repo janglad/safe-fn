@@ -6,6 +6,7 @@ import type {
   InferOkData,
   Result,
 } from "./result";
+import type { AnySafeFn } from "./safe-fn";
 
 /*
 ################################
@@ -117,9 +118,15 @@ export type SafeFnActionFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
-  TCtx,
+  TParent extends AnySafeFn | undefined,
 > = (
-  args: SafeFnActionArgs<TInputSchema, TUnparsedInput, TCtx>,
+  args: SafeFnActionArgs<
+    TInputSchema,
+    TUnparsedInput,
+    TParent extends (...args: any) => any
+      ? Awaited<ReturnType<TParent>>
+      : undefined
+  >,
 ) => MaybePromise<SafeFnActionReturn<TOutputSchema>>;
 
 export type AnySafeFnActionFn = SafeFnActionFn<any, any, any, any>;
