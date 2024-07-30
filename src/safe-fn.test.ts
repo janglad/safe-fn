@@ -149,6 +149,8 @@ describe("run", () => {
       expect(res.data).toBeUndefined();
       expect(res.error).toBeDefined();
       assert(res.error !== undefined);
+      expect(res.error.code).toBe("INPUT_PARSING");
+      assert(res.error.code === "INPUT_PARSING");
       expect(res.error.cause).toBeInstanceOf(z.ZodError);
     });
   });
