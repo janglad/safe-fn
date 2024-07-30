@@ -20,16 +20,18 @@ export class SafeFn<
   readonly _inputSchema: TInputSchema;
   readonly _outputSchema: TOutputSchema;
   readonly _actionFn: TActionFn;
-  readonly _uncaughtErrorHandler = (error: unknown) => {};
+  readonly _uncaughtErrorHandler: AnySafeFnThrownHandler;
 
   private constructor(args: {
     inputSchema: TInputSchema;
     outputSchema: TOutputSchema;
     actionFn: TActionFn;
+    uncaughtErrorHandler: TThrownHandler;
   }) {
     this._inputSchema = args.inputSchema;
     this._outputSchema = args.outputSchema;
     this._actionFn = args.actionFn;
+    this._uncaughtErrorHandler = args.uncaughtErrorHandler;
   }
 
   // ******************************
@@ -46,6 +48,7 @@ export class SafeFn<
       inputSchema: undefined,
       outputSchema: undefined,
       actionFn: () => Err("No action provided" as const),
+      uncaughtErrorHandler: () => Err("Uncaught error" as const),
     });
   }
 
@@ -65,6 +68,7 @@ export class SafeFn<
       // TODO: This situation should be prevented by omit args on SafeFn class in the future.
       // @ts-expect-error
       actionFn: this._actionFn,
+      uncaughtErrorHandler: this._uncaughtErrorHandler,
     });
   }
 
@@ -83,6 +87,7 @@ export class SafeFn<
       // TODO: This situation should be prevented by omit args on SafeFn class in the future.
       // @ts-expect-error
       actionFn: this._actionFn,
+      uncaughtErrorHandler: this._uncaughtErrorHandler,
     });
   }
 
@@ -102,6 +107,24 @@ export class SafeFn<
       // TODO: This situation should be prevented by omit args on SafeFn class in the future.
       // @ts-expect-error
       actionFn: this._actionFn,
+      uncaughtErrorHandler: this._uncaughtErrorHandler,
+    });
+  }
+
+  error<TNewThrownHandler extends AnySafeFnThrownHandler>(
+    handler: TNewThrownHandler,
+  ): SafeFn<
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    TActionFn,
+    TNewThrownHandler
+  > {
+    return new SafeFn({
+      inputSchema: this._inputSchema,
+      outputSchema: this._outputSchema,
+      actionFn: this._actionFn,
+      uncaughtErrorHandler: handler,
     });
   }
 
@@ -124,6 +147,7 @@ export class SafeFn<
       inputSchema: this._inputSchema,
       outputSchema: this._outputSchema,
       actionFn,
+      uncaughtErrorHandler: this._uncaughtErrorHandler,
     });
   }
 
