@@ -3,7 +3,7 @@ import type { AnyErr, Result } from "./result";
 
 type TODO = any;
 
-type MaybePromise<T> = T | Promise<T>;
+export type MaybePromise<T> = T | Promise<T>;
 
 export type SafeFnInput = z.ZodTypeAny | undefined;
 export type SafeFnOutput = z.ZodTypeAny | undefined;

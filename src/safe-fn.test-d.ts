@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
-import { Ok, type Result } from "./result";
+import { Err, Ok, type Result } from "./result";
 import { SafeFn } from "./safe-fn";
 
 describe("input", () => {
@@ -414,5 +414,15 @@ describe("internals", () => {
         Result<any, z.ZodError<typeof outputSchema>>
       >();
     });
+  });
+});
+
+describe("error", () => {
+  test("should properly type the _uncaughtErrorHandler function", () => {
+    const safeFn = SafeFn.new().error((error) => Err("hello"));
+
+    expectTypeOf(safeFn._uncaughtErrorHandler).toEqualTypeOf<
+      (error: unknown) => Err<string>
+    >();
   });
 });

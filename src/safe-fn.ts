@@ -20,7 +20,7 @@ export class SafeFn<
   readonly _inputSchema: TInputSchema;
   readonly _outputSchema: TOutputSchema;
   readonly _actionFn: TActionFn;
-  readonly _uncaughtErrorHandler: AnySafeFnThrownHandler;
+  readonly _uncaughtErrorHandler: TThrownHandler;
 
   private constructor(args: {
     inputSchema: TInputSchema;
