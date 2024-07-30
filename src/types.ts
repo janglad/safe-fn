@@ -123,8 +123,9 @@ export type SafeFnActionFn<
   args: SafeFnActionArgs<
     TInputSchema,
     TUnparsedInput,
-    TParent extends (...args: any) => any
-      ? Awaited<ReturnType<TParent>>
+    TParent extends AnySafeFn
+      ? // TODO: clean this up
+        InferOkData<Awaited<ReturnType<TParent["run"]>>>
       : undefined
   >,
 ) => MaybePromise<SafeFnActionReturn<TOutputSchema>>;
