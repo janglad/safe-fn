@@ -17,7 +17,12 @@ export class SafeFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
-  TActionFn extends SafeFnActionFn<TInputSchema, TOutputSchema, TUnparsedInput>,
+  TActionFn extends SafeFnActionFn<
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    TCtx
+  >,
   TThrownHandler extends AnySafeFnThrownHandler,
   TCtx,
   TIsProcedure extends boolean,
@@ -76,7 +81,12 @@ export class SafeFn<
     TNewInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    SafeFnActionFn<TNewInputSchema, TOutputSchema, z.input<TNewInputSchema>>,
+    SafeFnActionFn<
+      TNewInputSchema,
+      TOutputSchema,
+      z.input<TNewInputSchema>,
+      TCtx
+    >,
     TThrownHandler,
     TCtx,
     TIsProcedure
@@ -97,7 +107,7 @@ export class SafeFn<
     TInputSchema,
     TOutputSchema,
     TNewUnparsedInput,
-    SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput>,
+    SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TCtx>,
     TThrownHandler,
     TCtx,
     TIsProcedure
@@ -119,7 +129,7 @@ export class SafeFn<
     TInputSchema,
     TNewOutputSchema,
     TUnparsedInput,
-    SafeFnActionFn<TInputSchema, TNewOutputSchema, TUnparsedInput>,
+    SafeFnActionFn<TInputSchema, TNewOutputSchema, TUnparsedInput, TCtx>,
     TThrownHandler,
     TCtx,
     TIsProcedure
@@ -158,7 +168,8 @@ export class SafeFn<
     TNewActionFn extends SafeFnActionFn<
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput
+      TUnparsedInput,
+      TCtx
     >,
   >(
     actionFn: TNewActionFn,
@@ -205,6 +216,8 @@ export class SafeFn<
       const actionRes = await this._actionFn({
         parsedInput,
         unparsedInput: args,
+        // TODO: pass context when functions are set up
+        ctx: {} as TCtx,
       });
 
       if (!actionRes.success) {

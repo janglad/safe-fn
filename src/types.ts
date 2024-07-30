@@ -87,9 +87,14 @@ export type SafeFnDefaultActionFn = () => Err<{
  * @param TInputSchema a Zod schema or undefined
  * @param TUnparsedInput the unparsed input type. This is inferred from TInputSchema. When none is provided, this is `never` by default or overridden by using `unparsedInput<>()`
  */
-type SafeFnActionArgs<TInputSchema extends SafeFnInput, TUnparsedInput> = {
+type SafeFnActionArgs<
+  TInputSchema extends SafeFnInput,
+  TUnparsedInput,
+  TCtx,
+> = {
   parsedInput: SchemaOutputOrFallback<TInputSchema, never>;
   unparsedInput: SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
+  ctx: TCtx;
 };
 
 /**
@@ -112,11 +117,12 @@ export type SafeFnActionFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
+  TCtx,
 > = (
-  args: SafeFnActionArgs<TInputSchema, TUnparsedInput>,
+  args: SafeFnActionArgs<TInputSchema, TUnparsedInput, TCtx>,
 ) => MaybePromise<SafeFnActionReturn<TOutputSchema>>;
 
-export type AnySafeFnActionFn = SafeFnActionFn<any, any, any>;
+export type AnySafeFnActionFn = SafeFnActionFn<any, any, any, any>;
 
 /* 
 ################################
