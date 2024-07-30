@@ -177,6 +177,42 @@ describe("run", () => {
       expect(res.error).toBeInstanceOf(z.ZodError);
     });
   });
+
+  describe("error", () => {
+    test("should not throw uncaught error without function provided", async () => {
+      const safeFn = SafeFn.new().action(() => {
+        throw new Error("error");
+      });
+
+      expect(() => safeFn.run({})).not.toThrow();
+    });
+
+    test("should not throw uncaught error with function provided", async () => {
+      const safeFn = SafeFn.new()
+        .action(() => {
+          throw new Error("error");
+        })
+        .error(() => Err("error"));
+
+      expect(() => safeFn.run({})).not.toThrow();
+    });
+
+    test("should pass uncaught error on to error handler", async () => {
+      const safeFn = SafeFn.new()
+        .action(() => {
+          throw new Error("a new error");
+        })
+        .error((error) => {
+          return Err(error);
+        });
+
+      const res = await safeFn.run({});
+
+      expect(res.success).toBe(false);
+      expect(res.error).toBeInstanceOf(Error);
+      expect(res.error.message).toBe("a new error");
+    });
+  });
 });
 
 describe("error", () => {
