@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
-import { Ok } from "./result";
+import { Err, Ok } from "./result";
 import { SafeFn } from "./safe-fn";
 
 describe("SafeFn", () => {
@@ -176,5 +176,13 @@ describe("run", () => {
       expect(res.error).toBeDefined();
       expect(res.error).toBeInstanceOf(z.ZodError);
     });
+  });
+});
+
+describe("error", () => {
+  test("should set the error handler", () => {
+    const errorHandler = () => Err("error");
+    const safeFn = SafeFn.new().error(errorHandler);
+    expect(safeFn._uncaughtErrorHandler).toEqual(errorHandler);
   });
 });
