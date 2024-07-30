@@ -19,13 +19,15 @@ export class SafeFn<
   TUnparsedInput,
   TActionFn extends SafeFnActionFn<TInputSchema, TOutputSchema, TUnparsedInput>,
   TThrownHandler extends AnySafeFnThrownHandler,
+  TCtx,
+  TIsProcedure extends boolean,
 > {
   readonly _inputSchema: TInputSchema;
   readonly _outputSchema: TOutputSchema;
   readonly _actionFn: TActionFn;
   readonly _uncaughtErrorHandler: TThrownHandler;
 
-  private constructor(args: {
+  protected constructor(args: {
     inputSchema: TInputSchema;
     outputSchema: TOutputSchema;
     actionFn: TActionFn;
@@ -49,7 +51,9 @@ export class SafeFn<
     undefined,
     unknown,
     SafeFnDefaultActionFn,
-    SafeFnDefaultThrowHandler
+    SafeFnDefaultThrowHandler,
+    Record<string, never>,
+    false
   > {
     return new SafeFn({
       inputSchema: undefined,
@@ -73,7 +77,9 @@ export class SafeFn<
     TOutputSchema,
     TUnparsedInput,
     SafeFnActionFn<TNewInputSchema, TOutputSchema, z.input<TNewInputSchema>>,
-    TThrownHandler
+    TThrownHandler,
+    TCtx,
+    TIsProcedure
   > {
     return new SafeFn({
       inputSchema: schema,
@@ -92,7 +98,9 @@ export class SafeFn<
     TOutputSchema,
     TNewUnparsedInput,
     SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput>,
-    TThrownHandler
+    TThrownHandler,
+    TCtx,
+    TIsProcedure
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -112,7 +120,9 @@ export class SafeFn<
     TNewOutputSchema,
     TUnparsedInput,
     SafeFnActionFn<TInputSchema, TNewOutputSchema, TUnparsedInput>,
-    TThrownHandler
+    TThrownHandler,
+    TCtx,
+    TIsProcedure
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -132,7 +142,9 @@ export class SafeFn<
     TOutputSchema,
     TUnparsedInput,
     TActionFn,
-    TNewThrownHandler
+    TNewThrownHandler,
+    TCtx,
+    TIsProcedure
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -155,7 +167,9 @@ export class SafeFn<
     TOutputSchema,
     TUnparsedInput,
     TNewActionFn,
-    TThrownHandler
+    TThrownHandler,
+    TCtx,
+    TIsProcedure
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
