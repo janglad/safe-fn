@@ -93,31 +93,8 @@ export type SafeFnDefaultActionFn = () => Err<{
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TUnparsedInput the unparsed input type. This is inferred from TInputSchema. When none is provided, this is `never` by default or overridden by using `unparsedInput<>()`
+ * @param TParent the parent safe function or undefined
  */
-// type SafeFnActionArgs<
-//   TInputSchema extends SafeFnInput,
-//   TUnparsedInput,
-//   TParent extends AnySafeFn | undefined,
-// > = {
-//   // TODO: clean this up.
-//   parsedInput: TParent extends AnySafeFn
-//     ? SchemaOutputOrFallback<
-//         TZodMerge<TInputSchema, InferInputSchema<TParent>>,
-//         undefined
-//       >
-//     : SchemaOutputOrFallback<TInputSchema, never>;
-//   unparsedInput: TParent extends AnySafeFn
-//     ? SchemaInputOrFallback<
-//         TZodMerge<TInputSchema, InferInputSchema<TParent>>,
-//         TUnparsedInput & InferUnparsedInput<TParent>
-//       >
-//     : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
-//   ctx: TParent extends AnySafeFn
-//     ? // TODO: clean this up
-//       InferOkData<Awaited<ReturnType<TParent["run"]>>>
-//     : undefined;
-// };
-
 type SafeFnActionArgs<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
