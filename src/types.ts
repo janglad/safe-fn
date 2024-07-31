@@ -1,4 +1,4 @@
-import type { AnyZodObject, ZodObject, ZodTypeAny, objectUtil, z } from "zod";
+import type { ZodTypeAny, z } from "zod";
 import type {
   AnyResult,
   Err,
@@ -24,22 +24,6 @@ export type InferOutputSchema<T> =
   T extends SafeFn<any, any, infer T, any, any, any> ? T : never;
 export type InferUnparsedInput<T> =
   T extends SafeFn<any, any, any, infer T, any, any> ? T : never;
-// Adopted from https://github.com/IdoPesok/zsa/blob/main/packages/zsa/src/types.ts
-// Does not work with transforms
-export type TZodMerge<
-  T1 extends z.ZodType | undefined,
-  T2 extends z.ZodType | undefined,
-> = T1 extends AnyZodObject
-  ? T2 extends AnyZodObject
-    ? ZodObject<
-        objectUtil.extendShape<T1["shape"], T2["shape"]>,
-        T2["_def"]["unknownKeys"],
-        T2["_def"]["catchall"]
-      >
-    : T2 extends undefined
-      ? T1 // only return T1 if T2 is undefined
-      : T2
-  : T2;
 
 /*
 ################################
