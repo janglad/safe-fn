@@ -75,13 +75,13 @@ describe("output", () => {
 
 describe("action", () => {
   describe("input", () => {
-    test("should type parsed input as never without input schema"),
+    test("should type parsed input as empty object without input schema"),
       () => {
         const safeFn = SafeFn.new();
         type ActionFn = Parameters<typeof safeFn.action>[0];
         type ActionFnArgs = Parameters<ActionFn>[0];
 
-        expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<never>();
+        expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<{}>();
       };
     test("should type parsed input as inputSchema for primitives ", () => {
       const inputSchema = z.string();

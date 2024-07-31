@@ -204,8 +204,7 @@ export class SafeFn<
     SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
   > {
     try {
-      let parsedInput: SchemaOutputOrFallback<TInputSchema, never> =
-        undefined as never;
+      let parsedInput: typeof args.parsedInput = undefined;
       if (this._inputSchema !== undefined) {
         const parseRes = await this._parseInput(args);
         if (!parseRes.success) {
@@ -219,7 +218,7 @@ export class SafeFn<
         unparsedInput: args,
         // TODO: pass context when functions are set up
         ctx: undefined as any,
-      });
+      } as any);
 
       if (!actionRes.success) {
         return actionRes;

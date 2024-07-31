@@ -110,28 +110,62 @@ export type SafeFnDefaultActionFn = () => Err<{
  * @param TInputSchema a Zod schema or undefined
  * @param TUnparsedInput the unparsed input type. This is inferred from TInputSchema. When none is provided, this is `never` by default or overridden by using `unparsedInput<>()`
  */
+// type SafeFnActionArgs<
+//   TInputSchema extends SafeFnInput,
+//   TUnparsedInput,
+//   TParent extends AnySafeFn | undefined,
+// > = {
+//   // TODO: clean this up.
+//   parsedInput: TParent extends AnySafeFn
+//     ? SchemaOutputOrFallback<
+//         TZodMerge<TInputSchema, InferInputSchema<TParent>>,
+//         undefined
+//       >
+//     : SchemaOutputOrFallback<TInputSchema, never>;
+//   unparsedInput: TParent extends AnySafeFn
+//     ? SchemaInputOrFallback<
+//         TZodMerge<TInputSchema, InferInputSchema<TParent>>,
+//         TUnparsedInput & InferUnparsedInput<TParent>
+//       >
+//     : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
+//   ctx: TParent extends AnySafeFn
+//     ? // TODO: clean this up
+//       InferOkData<Awaited<ReturnType<TParent["run"]>>>
+//     : undefined;
+// };
+
 type SafeFnActionArgs<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
   TParent extends AnySafeFn | undefined,
+> = TParent extends AnySafeFn
+  ? SafeFnActionArgsWParent<TInputSchema, TUnparsedInput, TParent>
+  : SafeFnaActionArgsNoParent<TInputSchema, TUnparsedInput>;
+
+type SafeFnActionArgsWParent<
+  TInputSchema extends SafeFnInput,
+  TUnparsedInput,
+  TParent extends AnySafeFn,
 > = {
-  // TODO: clean this up.
-  parsedInput: TParent extends AnySafeFn
-    ? SchemaOutputOrFallback<
-        TZodMerge<TInputSchema, InferInputSchema<TParent>>,
-        undefined
-      >
-    : SchemaOutputOrFallback<TInputSchema, never>;
-  unparsedInput: TParent extends AnySafeFn
-    ? SchemaInputOrFallback<
-        TZodMerge<TInputSchema, InferInputSchema<TParent>>,
-        TUnparsedInput & InferUnparsedInput<TParent>
-      >
-    : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
-  ctx: TParent extends AnySafeFn
-    ? // TODO: clean this up
-      InferOkData<Awaited<ReturnType<TParent["run"]>>>
-    : undefined;
+  // TODO: look at if empty object is good fit here
+  // Used to be never, chosen as to not collapse types that join
+  parsedInput: SchemaOutputOrFallback<TInputSchema, {}> &
+    SchemaOutputOrFallback<InferInputSchema<TParent>, {}>;
+  unparsedInput: SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
+    SchemaInputOrFallback<
+      InferInputSchema<TParent>,
+      InferUnparsedInput<TParent>
+    >;
+  ctx: InferOkData<Awaited<ReturnType<TParent["run"]>>>;
+};
+
+type SafeFnaActionArgsNoParent<
+  TInputSchema extends SafeFnInput,
+  TUnparsedInput,
+> = {
+  parsedInput: SchemaOutputOrFallback<TInputSchema, {}>;
+  unparsedInput: SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
+  ctx: undefined;
 };
 
 /**
@@ -230,7 +264,7 @@ export type SafeFnOutputParseError<TOutputSchema extends SafeFnOutput> =
  */
 export type SafeFnRunArgs<
   TInputSchema extends SafeFnInput,
-  TActionFn extends AnySafeFnActionFn,
+  TActionFn extends SafeFnActionFn<any, any, any, any>,
 > = SchemaInputOrFallback<
   TInputSchema,
   Parameters<TActionFn>[0]["unparsedInput"]
@@ -293,7 +327,7 @@ export type SafeFnRunArgs<
 export type SafeFnReturn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
-  TActionFn extends AnySafeFnActionFn,
+  TActionFn extends SafeFnActionFn<any, any, any, any>,
   TThrownHandler extends AnySafeFnThrownHandler,
 > = Result<
   SafeFnReturnData<TOutputSchema, TActionFn>,
