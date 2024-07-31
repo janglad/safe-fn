@@ -3,3 +3,5 @@ tsconfig.vitest-temp.json
 
 .DS_Store
 coverage
+# Random file I keep around for quickly trying stuff
+sandbox.ts
