@@ -60,9 +60,11 @@ export const createUser = SafeFn.new()
       });
     }
   });
+```
 
-//In Next  app/.../some-route/user.ts
-("use server");
+```ts
+//In Next.js  app/.../some-route/user.ts
+"use server";
 const createUserAction = createUser.onSuccess((data) => {
   revalidatePath(`/user/${data.id}`);
 }).run;
