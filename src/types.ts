@@ -142,6 +142,7 @@ type SafeFnActionReturn<TOutputSchema extends SafeFnOutput> = Result<
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
  * @param TUnparsedInput the unparsed input type. This is inferred from TInputSchema. When none is provided, this is `never` by default or overridden by using `unparsedInput<>()`
+ * @param TParent the parent safe function or undefined
  *
  * @returns the type of an action function for a safe function. See `SafeFnActionArgs` and `SafeFnActionReturn` for more information.
  */
