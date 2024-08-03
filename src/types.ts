@@ -230,11 +230,15 @@ export type SafeFnOutputParseError<TOutputSchema extends SafeFnOutput> =
  */
 export type SafeFnRunArgs<
   TInputSchema extends SafeFnInput,
-  TActionFn extends SafeFnActionFn<any, any, any, any>,
-> = SchemaInputOrFallback<
-  TInputSchema,
-  Parameters<TActionFn>[0]["unparsedInput"]
->;
+  TUnparsedInput,
+  TParent extends AnySafeFn | undefined,
+> = TParent extends AnySafeFn
+  ? SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
+      SchemaInputOrFallback<
+        InferInputSchema<TParent>,
+        InferUnparsedInput<TParent>
+      >
+  : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined

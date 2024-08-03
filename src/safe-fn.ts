@@ -204,7 +204,7 @@ export class SafeFn<
 ################################
   */
   async run(
-    args: SafeFnRunArgs<TInputSchema, TActionFn>,
+    args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
   ): Promise<
     SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
   > {
