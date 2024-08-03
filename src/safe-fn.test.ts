@@ -232,3 +232,20 @@ describe("error", () => {
     expect(safeFn._uncaughtErrorHandler).toEqual(errorHandler);
   });
 });
+
+describe("procedure", () => {
+  test("should set parent procedure", () => {
+    const safeFn1 = SafeFn.new();
+    const safeFn2 = SafeFn.new(safeFn1);
+    expect(safeFn2._parent).toEqual(safeFn1);
+  });
+
+  test("should return parent return value as ctx", () => {
+    const safeFn1 = SafeFn.new().action(() => Ok("hello"));
+    const safeFn2 = SafeFn.new(safeFn1).action((args) => {
+      return Ok(args.ctx);
+    });
+
+    expect(safeFn2.run({})).resolves.toEqual(Ok("hello"));
+  });
+});

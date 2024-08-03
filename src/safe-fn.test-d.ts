@@ -500,41 +500,90 @@ describe("parent", () => {
 
   describe("action", () => {
     describe("args", () => {
-      test("should merge parsedInput when parent and child have input schema", () => {
-        const input1 = z.object({ name: z.string() });
-        const input2 = z.object({ age: z.number() });
-        const safeFn1 = SafeFn.new().input(input1);
-        const safeFn2 = SafeFn.new(safeFn1).input(input2);
+      // TODO: test unparsed input
+      test.todo("should merge unparsedInput");
+      describe("parsedInput", () => {
+        test("should merge parsedInput when parent and child have input schema", () => {
+          const input1 = z.object({ name: z.string() });
+          const input2 = z.object({ age: z.number() });
+          const safeFn1 = SafeFn.new().input(input1);
+          const safeFn2 = SafeFn.new(safeFn1).input(input2);
 
-        type S2ParsedInput = Parameters<
-          Parameters<typeof safeFn2.action>[0]
-        >[0]["parsedInput"];
+          type S2ParsedInput = Parameters<
+            Parameters<typeof safeFn2.action>[0]
+          >[0]["parsedInput"];
 
-        expectTypeOf<S2ParsedInput>().toMatchTypeOf<
-          z.output<typeof input1> & z.output<typeof input2>
-        >();
+          expectTypeOf<S2ParsedInput>().toMatchTypeOf<
+            z.output<typeof input1> & z.output<typeof input2>
+          >();
+        });
+
+        test("should merge parsedInput when parent and child have input schema with transforms", () => {
+          const input1 = z
+            .object({ name: z.string() })
+            .transform(({ name }) => ({
+              name,
+              newProperty: "test",
+            }));
+          const input2 = z.object({ age: z.number() }).transform(({ age }) => ({
+            age,
+            newProperty2: "test",
+          }));
+
+          const safeFn1 = SafeFn.new().input(input1);
+          const safeFn2 = SafeFn.new(safeFn1).input(input2);
+
+          type S2ParsedInput = Parameters<
+            Parameters<typeof safeFn2.action>[0]
+          >[0]["parsedInput"];
+
+          expectTypeOf<S2ParsedInput>().toMatchTypeOf<
+            z.output<typeof input1> & z.output<typeof input2>
+          >();
+        });
+
+        test("should take parsedInput from child when parent has no input schema", () => {
+          const input = z.object({ name: z.string() });
+          const safeFn1 = SafeFn.new().action((args) => Ok(args.parsedInput));
+          const safeFn2 = SafeFn.new(safeFn1).input(input);
+
+          type S2ParsedInput = Parameters<
+            Parameters<typeof safeFn2.action>[0]
+          >[0]["parsedInput"];
+
+          expectTypeOf<S2ParsedInput>().toMatchTypeOf<z.output<typeof input>>();
+        });
+
+        test("should take parsedInput from parent when child has no input schema", () => {
+          const input = z.object({ name: z.string() });
+          const safeFn1 = SafeFn.new().input(input);
+          const safeFn2 = SafeFn.new(safeFn1).action((args) =>
+            Ok(args.parsedInput),
+          );
+
+          type S2ParsedInput = Parameters<
+            Parameters<typeof safeFn2.action>[0]
+          >[0]["parsedInput"];
+
+          expectTypeOf<S2ParsedInput>().toMatchTypeOf<z.output<typeof input>>();
+        });
       });
 
-      test("should merge parsedInput when parent and child have input schema with transforms", () => {
-        const input1 = z.object({ name: z.string() }).transform(({ name }) => ({
-          name,
-          newProperty: "test",
-        }));
-        const input2 = z.object({ age: z.number() }).transform(({ age }) => ({
-          age,
-          newProperty2: "test",
-        }));
+      describe("ctx", () => {});
+      test("should type ctx as unwrapped OK value from parent", () => {
+        const safeFn1 = SafeFn.new().action(() => Ok("ctx return" as const));
+        const safeFn2 = SafeFn.new(safeFn1).action((args) => Ok(args.ctx));
 
-        const safeFn1 = SafeFn.new().input(input1);
-        const safeFn2 = SafeFn.new(safeFn1).input(input2);
+        type S2Ctx = Parameters<Parameters<typeof safeFn2.action>[0]>[0]["ctx"];
+        expectTypeOf<S2Ctx>().toEqualTypeOf<"ctx return">();
+      });
 
-        type S2ParsedInput = Parameters<
-          Parameters<typeof safeFn2.action>[0]
-        >[0]["parsedInput"];
+      test("should type ctx as empty object if parent never returns", () => {
+        const safeFn1 = SafeFn.new().action(() => Err("ctx return" as const));
+        const safeFn2 = SafeFn.new(safeFn1).action((args) => Ok(args.ctx));
 
-        expectTypeOf<S2ParsedInput>().toMatchTypeOf<
-          z.output<typeof input1> & z.output<typeof input2>
-        >();
+        type S2Ctx = Parameters<Parameters<typeof safeFn2.action>[0]>[0]["ctx"];
+        expectTypeOf<S2Ctx>().toEqualTypeOf<{}>();
       });
     });
   });
