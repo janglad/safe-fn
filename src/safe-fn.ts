@@ -104,6 +104,7 @@ export class SafeFn<
       // @ts-expect-error
       actionFn: this._actionFn,
       uncaughtErrorHandler: this._uncaughtErrorHandler,
+      parent: this._parent,
     });
   }
 
@@ -124,6 +125,7 @@ export class SafeFn<
       // @ts-expect-error
       actionFn: this._actionFn,
       uncaughtErrorHandler: this._uncaughtErrorHandler,
+      parent: this._parent,
     });
   }
 
@@ -145,6 +147,7 @@ export class SafeFn<
       // @ts-expect-error
       actionFn: this._actionFn,
       uncaughtErrorHandler: this._uncaughtErrorHandler,
+      parent: this._parent,
     });
   }
 
@@ -163,6 +166,7 @@ export class SafeFn<
       outputSchema: this._outputSchema,
       actionFn: this._actionFn,
       uncaughtErrorHandler: handler,
+      parent: this._parent,
     });
   }
 
@@ -188,6 +192,7 @@ export class SafeFn<
       outputSchema: this._outputSchema,
       actionFn,
       uncaughtErrorHandler: this._uncaughtErrorHandler,
+      parent: this._parent,
     });
   }
 
@@ -204,6 +209,16 @@ export class SafeFn<
     SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
   > {
     try {
+      let ctx: any;
+
+      if (this._parent !== undefined) {
+        const parentRes = await this._parent.run(args);
+        if (!parentRes.success) {
+          return parentRes as any;
+        }
+        ctx = parentRes.data;
+      }
+
       let parsedInput: typeof args.parsedInput = undefined;
       if (this._inputSchema !== undefined) {
         const parseRes = await this._parseInput(args);
@@ -217,7 +232,7 @@ export class SafeFn<
         parsedInput,
         unparsedInput: args,
         // TODO: pass context when functions are set up
-        ctx: undefined as any,
+        ctx,
       } as any);
 
       if (!actionRes.success) {
