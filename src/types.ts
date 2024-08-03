@@ -17,6 +17,9 @@ import type { AnySafeFn, SafeFn } from "./safe-fn";
 */
 
 type TODO = any;
+type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
+  ? TFallback
+  : T;
 export type MaybePromise<T> = T | Promise<T>;
 export type InferInputSchema<T> =
   T extends SafeFn<any, infer T, any, any, any, any> ? T : never;
@@ -117,7 +120,8 @@ type SafeFnActionArgsWParent<
       InferInputSchema<TParent>,
       InferUnparsedInput<TParent>
     >;
-  ctx: InferOkData<Awaited<ReturnType<TParent["run"]>>>;
+  // TODO: look at if empty object is good fit here
+  ctx: TOrFallback<InferOkData<Awaited<ReturnType<TParent["run"]>>>, {}>;
 };
 
 type SafeFnaActionArgsNoParent<
