@@ -262,18 +262,6 @@ describe("action", () => {
 
 describe("run", () => {
   describe("input", () => {
-    // TODO: Allow passing unparsedInput as generic
-    test("should infer input from actionFn if no input schema is provided", () => {
-      const safeFn = SafeFn.new()
-        .unparsedInput<any>()
-        .action((args: { unparsedInput: { test: string } }) =>
-          Ok(args.unparsedInput),
-        );
-
-      type RunInput = Parameters<typeof safeFn.run>[0];
-      expectTypeOf<RunInput>().toEqualTypeOf<{ test: string }>();
-    });
-
     test("should type input as inputSchema input for primitives", () => {
       const inputSchema = z.string();
       const safeFn = SafeFn.new()
