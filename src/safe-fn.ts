@@ -76,7 +76,7 @@ export class SafeFn<
       uncaughtErrorHandler: (error: unknown) =>
         Err({
           code: "UNCAUGHT_ERROR",
-          error,
+          cause: error,
         } as const),
     });
   }

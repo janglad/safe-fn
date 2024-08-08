@@ -84,7 +84,7 @@ export type AnySafeFnThrownHandler = (
 
 export type SafeFnDefaultThrowHandler = (error: unknown) => Err<{
   code: "UNCAUGHT_ERROR";
-  error: unknown;
+  cause: unknown;
 }>;
 
 export type SafeFnDefaultActionFn = () => Err<{
