@@ -141,10 +141,6 @@ describe("run", () => {
         // @ts-expect-error
         .run(123);
 
-      if (!res.success) {
-        type test = typeof res.error;
-      }
-
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
       expect(res.error).toBeDefined();
