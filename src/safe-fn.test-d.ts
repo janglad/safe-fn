@@ -557,21 +557,26 @@ describe("parent", () => {
         });
       });
 
-      describe("ctx", () => {});
-      test("should type ctx as unwrapped OK value from parent", () => {
-        const safeFn1 = SafeFn.new().action(() => Ok("ctx return" as const));
-        const safeFn2 = SafeFn.new(safeFn1).action((args) => Ok(args.ctx));
+      describe("ctx", () => {
+        test("should type ctx as unwrapped OK value from parent", () => {
+          const safeFn1 = SafeFn.new().action(() => Ok("ctx return" as const));
+          const safeFn2 = SafeFn.new(safeFn1).action((args) => Ok(args.ctx));
 
-        type S2Ctx = Parameters<Parameters<typeof safeFn2.action>[0]>[0]["ctx"];
-        expectTypeOf<S2Ctx>().toEqualTypeOf<"ctx return">();
-      });
+          type S2Ctx = Parameters<
+            Parameters<typeof safeFn2.action>[0]
+          >[0]["ctx"];
+          expectTypeOf<S2Ctx>().toEqualTypeOf<"ctx return">();
+        });
 
-      test("should type ctx as empty object if parent never returns", () => {
-        const safeFn1 = SafeFn.new().action(() => Err("ctx return" as const));
-        const safeFn2 = SafeFn.new(safeFn1).action((args) => Ok(args.ctx));
+        test("should type ctx as empty object if parent never returns", () => {
+          const safeFn1 = SafeFn.new().action(() => Err("ctx return" as const));
+          const safeFn2 = SafeFn.new(safeFn1).action((args) => Ok(args.ctx));
 
-        type S2Ctx = Parameters<Parameters<typeof safeFn2.action>[0]>[0]["ctx"];
-        expectTypeOf<S2Ctx>().toEqualTypeOf<{}>();
+          type S2Ctx = Parameters<
+            Parameters<typeof safeFn2.action>[0]
+          >[0]["ctx"];
+          expectTypeOf<S2Ctx>().toEqualTypeOf<{}>();
+        });
       });
     });
   });
