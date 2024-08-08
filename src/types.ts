@@ -166,7 +166,7 @@ export type SafeFnActionFn<
   TUnparsedInput,
   TParent extends AnySafeFn | undefined,
 > = (
-  args: SafeFnActionArgs<TInputSchema, TUnparsedInput, TParent>,
+  args: Prettify<SafeFnActionArgs<TInputSchema, TUnparsedInput, TParent>>,
 ) => MaybePromise<SafeFnActionReturn<TOutputSchema>>;
 
 export type AnySafeFnActionFn = SafeFnActionFn<any, any, any, any>;
