@@ -213,7 +213,7 @@ export type SafeFnInputParseError<TInputSchema extends SafeFnInput> =
   TInputSchema extends z.ZodTypeAny
     ? {
         code: "INPUT_PARSING";
-        cause: z.ZodError<TInputSchema>;
+        cause: z.ZodError<z.input<TInputSchema>>;
       }
     : never;
 
@@ -221,7 +221,7 @@ export type SafeFnOutputParseError<TOutputSchema extends SafeFnOutput> =
   TOutputSchema extends z.ZodTypeAny
     ? {
         code: "OUTPUT_PARSING";
-        cause: z.ZodError<TOutputSchema>;
+        cause: z.ZodError<z.input<TOutputSchema>>;
       }
     : never;
 
