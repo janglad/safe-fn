@@ -15,6 +15,9 @@ import type { AnySafeFn, SafeFn } from "./safe-fn";
 ||                            ||
 ################################
 */
+type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {};
 
 type TODO = any;
 type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
@@ -116,13 +119,17 @@ type SafeFnActionArgsWParent<
 > = {
   // TODO: look at if empty object is good fit here
   // Used to be never, chosen as to not collapse types that join
-  parsedInput: SchemaOutputOrFallback<TInputSchema, {}> &
-    SchemaOutputOrFallback<InferInputSchema<TParent>, {}>;
-  unparsedInput: SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
-    SchemaInputOrFallback<
-      InferInputSchema<TParent>,
-      InferUnparsedInput<TParent>
-    >;
+  parsedInput: Prettify<
+    SchemaOutputOrFallback<TInputSchema, {}> &
+      SchemaOutputOrFallback<InferInputSchema<TParent>, {}>
+  >;
+  unparsedInput: Prettify<
+    SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
+      SchemaInputOrFallback<
+        InferInputSchema<TParent>,
+        InferUnparsedInput<TParent>
+      >
+  >;
   // TODO: look at if empty object is good fit here
   ctx: TOrFallback<InferOkData<Awaited<ReturnType<TParent["run"]>>>, {}>;
 };
@@ -236,7 +243,10 @@ export type SafeFnRunArgs<
   TUnparsedInput,
   TParent extends AnySafeFn | undefined,
 > = TParent extends AnySafeFn
-  ? SchemaInputOrFallback<TInputSchema, TUnparsedInput> & InferRunArgs<TParent>
+  ? Prettify<
+      SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
+        InferRunArgs<TParent>
+    >
   : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
 /**
  * @param TInputSchema a Zod schema or undefined
