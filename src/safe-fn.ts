@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { Err, Ok, type Result } from "./result";
 import type {
+  AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
+  BuilderSteps,
   SafeFnActionFn,
   SafeFnDefaultActionFn,
   SafeFnDefaultThrowHandler,
@@ -11,38 +13,11 @@ import type {
   SafeFnReturn,
   SafeFnRunArgs,
   SchemaOutputOrFallback,
+  TSafeFn,
 } from "./types";
 
-export type AnySafeFn = SafeFn<any, any, any, any, any, any, any>;
-
-export type TSafeFn<
-  TParent extends AnySafeFn | undefined,
-  TInputSchema extends SafeFnInput,
-  TOutputSchema extends SafeFnInput,
-  TUnparsedInput,
-  TActionFn extends SafeFnActionFn<
-    TInputSchema,
-    TOutputSchema,
-    TUnparsedInput,
-    TParent
-  >,
-  TThrownHandler extends AnySafeFnThrownHandler,
-  TOmit extends keyof AnySafeFn | "",
-> = Omit<
-  SafeFn<
-    TParent,
-    TInputSchema,
-    TOutputSchema,
-    TUnparsedInput,
-    TActionFn,
-    TThrownHandler,
-    TOmit
-  >,
-  TOmit
->;
-
 export class SafeFn<
-  TParent extends AnySafeFn | undefined,
+  TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
@@ -53,7 +28,7 @@ export class SafeFn<
     TParent
   >,
   TThrownHandler extends AnySafeFnThrownHandler,
-  TOmit extends keyof AnySafeFn | "",
+  TOmit extends BuilderSteps | "",
 > {
   readonly _parent: TParent;
   readonly _inputSchema: TInputSchema;
@@ -82,7 +57,7 @@ export class SafeFn<
 ||                            ||
 ################################
 */
-  static new<TNewParent extends AnySafeFn | undefined = undefined>(
+  static new<TNewParent extends AnyRunnableSafeFn | undefined = undefined>(
     parent?: TNewParent,
   ): TSafeFn<
     TNewParent,
@@ -196,7 +171,7 @@ export class SafeFn<
     return new SafeFn({
       inputSchema: this._inputSchema,
       outputSchema: this._outputSchema,
-      actionFn: this._actionFn,
+      actionFn: this._actionFn as any,
       uncaughtErrorHandler: handler,
       parent: this._parent,
     });
@@ -218,15 +193,15 @@ export class SafeFn<
     TUnparsedInput,
     TNewActionFn,
     TThrownHandler,
-    Exclude<TOmit, "run"> | "action"
+    Exclude<TOmit, "run"> | "input" | "output" | "unparsedInput" | "action"
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
       outputSchema: this._outputSchema,
-      actionFn,
+      actionFn: actionFn as any,
       uncaughtErrorHandler: this._uncaughtErrorHandler,
       parent: this._parent,
-    });
+    }) as any;
   }
 
   /*

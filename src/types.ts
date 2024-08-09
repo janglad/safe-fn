@@ -6,7 +6,52 @@ import type {
   InferOkData,
   Result,
 } from "./result";
-import type { AnySafeFn, SafeFn } from "./safe-fn";
+import type { SafeFn } from "./safe-fn";
+
+export type AnySafeFn = TSafeFn<any, any, any, any, any, any, BuilderSteps>;
+export type AnyRunnableSafeFn = AnySafeFn & {
+  run: (...args: any) => any;
+};
+
+/**
+ * The steps of the builder pattern for the safe function.
+ */
+export type BuilderSteps =
+  | "input"
+  | "unparsedInput"
+  | "output"
+  | "error"
+  | "action"
+  | "run";
+
+/**
+ * Utility function to omit steps for a "type level builder"
+ */
+export type TSafeFn<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnInput,
+  TUnparsedInput,
+  TActionFn extends SafeFnActionFn<
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    TParent
+  >,
+  TThrownHandler extends AnySafeFnThrownHandler,
+  TOmit extends BuilderSteps | "",
+> = Omit<
+  SafeFn<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    TActionFn,
+    TThrownHandler,
+    TOmit
+  >,
+  TOmit
+>;
 
 /*
 ################################
@@ -35,7 +80,9 @@ export type InferUnparsedInput<T> =
     ? TUnparsed
     : never;
 
-type InferRunArgs<T> = T extends AnySafeFn ? Parameters<T["run"]>[0] : never;
+type InferRunArgs<T> = T extends AnyRunnableSafeFn
+  ? Parameters<T["run"]>[0]
+  : never;
 
 /*
 ################################
@@ -110,15 +157,15 @@ export type SafeFnDefaultActionFn = () => Err<{
 type SafeFnActionArgs<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
-  TParent extends AnySafeFn | undefined,
-> = TParent extends AnySafeFn
+  TParent extends AnyRunnableSafeFn | undefined,
+> = TParent extends AnyRunnableSafeFn
   ? SafeFnActionArgsWParent<TInputSchema, TUnparsedInput, TParent>
   : SafeFnaActionArgsNoParent<TInputSchema, TUnparsedInput>;
 
 type SafeFnActionArgsWParent<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
-  TParent extends AnySafeFn,
+  TParent extends AnyRunnableSafeFn,
 > = {
   // TODO: look at if empty object is good fit here
   // Used to be never, chosen as to not collapse types that join
@@ -167,7 +214,7 @@ export type SafeFnActionFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
-  TParent extends AnySafeFn | undefined,
+  TParent extends AnyRunnableSafeFn | undefined,
 > = (
   args: Prettify<SafeFnActionArgs<TInputSchema, TUnparsedInput, TParent>>,
 ) => MaybePromise<SafeFnActionReturn<TOutputSchema>>;

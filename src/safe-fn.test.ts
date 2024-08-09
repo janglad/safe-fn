@@ -231,7 +231,7 @@ describe("error", () => {
 
 describe("procedure", () => {
   test("should set parent procedure", () => {
-    const safeFn1 = SafeFn.new();
+    const safeFn1 = SafeFn.new().action(() => Ok(""));
     const safeFn2 = SafeFn.new(safeFn1);
     expect(safeFn2._parent).toEqual(safeFn1);
   });
