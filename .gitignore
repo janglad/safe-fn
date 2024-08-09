@@ -5,3 +5,4 @@ tsconfig.vitest-temp.json
 coverage
 # Random file I keep around for quickly trying stuff
 sandbox.ts
+.turbo
