@@ -80,7 +80,7 @@ export type InferUnparsedInput<T> =
     ? TUnparsed
     : never;
 
-type InferRunArgs<T> = T extends AnyRunnableSafeFn
+export type InferRunArgs<T> = T extends AnyRunnableSafeFn
   ? Parameters<T["run"]>[0]
   : never;
 
