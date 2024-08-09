@@ -24,15 +24,18 @@ type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
   ? TFallback
   : T;
 export type MaybePromise<T> = T | Promise<T>;
-export type InferInputSchema<T> =
-  T extends SafeFn<any, infer T, any, any, any, any> ? T : never;
-export type InferOutputSchema<T> =
-  T extends SafeFn<any, any, infer T, any, any, any> ? T : never;
-export type InferUnparsedInput<T> =
-  T extends SafeFn<any, any, any, infer T, any, any> ? T : never;
-export type InferRunArgs<T> = T extends AnySafeFn
-  ? Parameters<T["run"]>[0]
+export type InferInputSchema<T> = T extends AnySafeFn
+  ? T["_inputSchema"]
   : never;
+export type InferOutputSchema<T> = T extends AnySafeFn
+  ? T["_outputSchema"]
+  : never;
+export type InferUnparsedInput<T> =
+  T extends SafeFn<any, any, any, infer TUnparsed, any, any>
+    ? TUnparsed
+    : never;
+
+type InferRunArgs<T> = T extends AnySafeFn ? Parameters<T["run"]>[0] : never;
 
 /*
 ################################
@@ -242,12 +245,21 @@ export type SafeFnRunArgs<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
   TParent extends AnySafeFn | undefined,
-> = TParent extends AnySafeFn
-  ? Prettify<
-      SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
-        InferRunArgs<TParent>
-    >
-  : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
+> =
+  TParent extends SafeFn<
+    any,
+    infer TParentInputSchema,
+    any,
+    infer TParentUnparsedInput,
+    any,
+    any
+  >
+    ? Prettify<
+        SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
+          InferRunArgs<TParent>
+        // SchemaInputOrFallback<TParentInputSchema, TParentUnparsedInput>
+      >
+    : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
