@@ -13,7 +13,33 @@ import type {
   SchemaOutputOrFallback,
 } from "./types";
 
-export type AnySafeFn = SafeFn<any, any, any, any, any, any>;
+export type AnySafeFn = SafeFn<any, any, any, any, any, any, any>;
+
+export type TSafeFn<
+  TParent extends AnySafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnInput,
+  TUnparsedInput,
+  TActionFn extends SafeFnActionFn<
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    TParent
+  >,
+  TThrownHandler extends AnySafeFnThrownHandler,
+  TOmit extends keyof AnySafeFn | "",
+> = Omit<
+  SafeFn<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    TActionFn,
+    TThrownHandler,
+    TOmit
+  >,
+  TOmit
+>;
 
 export class SafeFn<
   TParent extends AnySafeFn | undefined,
@@ -27,6 +53,7 @@ export class SafeFn<
     TParent
   >,
   TThrownHandler extends AnySafeFnThrownHandler,
+  TOmit extends keyof AnySafeFn | "",
 > {
   readonly _parent: TParent;
   readonly _inputSchema: TInputSchema;
@@ -57,13 +84,14 @@ export class SafeFn<
 */
   static new<TNewParent extends AnySafeFn | undefined = undefined>(
     parent?: TNewParent,
-  ): SafeFn<
+  ): TSafeFn<
     TNewParent,
     undefined,
     undefined,
     unknown,
     SafeFnDefaultActionFn,
-    SafeFnDefaultThrowHandler
+    SafeFnDefaultThrowHandler,
+    "run"
   > {
     return new SafeFn({
       parent,
@@ -83,7 +111,7 @@ export class SafeFn<
 
   input<TNewInputSchema extends z.ZodTypeAny>(
     schema: TNewInputSchema,
-  ): SafeFn<
+  ): TSafeFn<
     TParent,
     TNewInputSchema,
     TOutputSchema,
@@ -94,7 +122,8 @@ export class SafeFn<
       z.input<TNewInputSchema>,
       TParent
     >,
-    TThrownHandler
+    TThrownHandler,
+    TOmit | "input" | "unparsedInput"
   > {
     return new SafeFn({
       inputSchema: schema,
@@ -109,13 +138,14 @@ export class SafeFn<
   }
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
-  unparsedInput<TNewUnparsedInput>(): SafeFn<
+  unparsedInput<TNewUnparsedInput>(): TSafeFn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TNewUnparsedInput,
     SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TParent>,
-    TThrownHandler
+    TThrownHandler,
+    TOmit | "input" | "unparsedInput"
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -131,13 +161,14 @@ export class SafeFn<
 
   output<TNewOutputSchema extends z.ZodTypeAny>(
     schema: TNewOutputSchema,
-  ): SafeFn<
+  ): TSafeFn<
     TParent,
     TInputSchema,
     TNewOutputSchema,
     TUnparsedInput,
     SafeFnActionFn<TInputSchema, TNewOutputSchema, TUnparsedInput, TParent>,
-    TThrownHandler
+    TThrownHandler,
+    TOmit | "output"
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -153,13 +184,14 @@ export class SafeFn<
 
   error<TNewThrownHandler extends AnySafeFnThrownHandler>(
     handler: TNewThrownHandler,
-  ): SafeFn<
+  ): TSafeFn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
     TActionFn,
-    TNewThrownHandler
+    TNewThrownHandler,
+    TOmit | "error"
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,
@@ -179,13 +211,14 @@ export class SafeFn<
     >,
   >(
     actionFn: TNewActionFn,
-  ): SafeFn<
+  ): TSafeFn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
     TNewActionFn,
-    TThrownHandler
+    TThrownHandler,
+    Exclude<TOmit, "run"> | "action"
   > {
     return new SafeFn({
       inputSchema: this._inputSchema,

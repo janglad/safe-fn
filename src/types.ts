@@ -31,7 +31,7 @@ export type InferOutputSchema<T> = T extends AnySafeFn
   ? T["_outputSchema"]
   : never;
 export type InferUnparsedInput<T> =
-  T extends SafeFn<any, any, any, infer TUnparsed, any, any>
+  T extends SafeFn<any, any, any, infer TUnparsed, any, any, any>
     ? TUnparsed
     : never;
 
@@ -245,21 +245,13 @@ export type SafeFnRunArgs<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
   TParent extends AnySafeFn | undefined,
-> =
-  TParent extends SafeFn<
-    any,
-    infer TParentInputSchema,
-    any,
-    infer TParentUnparsedInput,
-    any,
-    any
-  >
-    ? Prettify<
-        SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
-          InferRunArgs<TParent>
-        // SchemaInputOrFallback<TParentInputSchema, TParentUnparsedInput>
-      >
-    : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
+> = TParent extends AnySafeFn
+  ? Prettify<
+      SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
+        InferRunArgs<TParent>
+      // SchemaInputOrFallback<TParentInputSchema, TParentUnparsedInput>
+    >
+  : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
