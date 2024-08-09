@@ -8,7 +8,10 @@
   "dependencies": {
     "zod": "^3.23.8"
   },
-  "exports": {
-    ".": "./dist/index.ts"
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts"
   }
 }
