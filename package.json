@@ -4,9 +4,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "vitest --coverage"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -16,8 +13,7 @@
     "prettier-plugin-organize-imports": "^4.0.0",
     "tsup": "^8.2.4",
     "turbo": "^2.0.12",
-    "typescript": "^5.5.4",
-    "vitest": "^2.0.4"
+    "typescript": "^5.5.4"
   },
   "packageManager": "pnpm@9.0.0"
 }
