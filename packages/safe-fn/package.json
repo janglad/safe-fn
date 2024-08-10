@@ -15,7 +15,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "test": "vitest --coverage",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "check-types": "tsc --noEmit"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^2.0.5",
