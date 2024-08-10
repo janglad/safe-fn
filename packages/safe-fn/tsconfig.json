@@ -1,0 +1,3 @@
+{
+    "extends" : "@safe-fn/typescript-config/base.jsonc",
+}

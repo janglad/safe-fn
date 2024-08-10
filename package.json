@@ -19,8 +19,5 @@
     "typescript": "^5.5.4",
     "vitest": "^2.0.4"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "packageManager": "pnpm@9.0.0"
 }

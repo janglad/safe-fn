@@ -32,9 +32,14 @@ importers:
 
   packages/safe-fn:
     dependencies:
+      '@safe-fn/typescript-config':
+        specifier: workspace:^
+        version: link:../typescript-config
       zod:
         specifier: ^3.23.8
         version: 3.23.8
+
+  packages/typescript-config: {}
 
 packages:
 
