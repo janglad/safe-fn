@@ -14,7 +14,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
-    "test": "vitest --coverage",
+    "test": "vitest --coverage --run",
     "test:watch": "vitest --watch",
     "check-types": "tsc --noEmit"
   },
