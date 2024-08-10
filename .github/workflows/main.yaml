@@ -23,8 +23,8 @@ jobs:
       - name: "Install dependencies"
         run: pnpm install --frozen-lockfile
       - name: "Run type-check"
-        run: turbo check-types
+        run: pnpm check-types
       - name: "Run tests"
-        run: turbo test
+        run: pnpm test
       - name: "Build"
-        run: turbo build
+        run: pnpm build
