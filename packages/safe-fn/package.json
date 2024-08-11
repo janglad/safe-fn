@@ -2,6 +2,9 @@
   "name": "safe-fn",
   "version": "0.0.1",
   "description": "",
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "safe-fn",
     "safe function",

@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "@repo/typescript-config",
   "devDependencies": {
     "typescript": "^5.5.4"
