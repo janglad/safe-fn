@@ -1,3 +1,4 @@
+import { type Err, type Ok, type Result, err, ok } from "./result";
 import { SafeFn } from "./safe-fn";
 
 import type {
@@ -23,14 +24,19 @@ export type {
   AnySafeFn,
   AnySafeFnThrownHandler,
   BuilderSteps,
+  Err,
   InferInputSchema,
   InferOutputSchema,
   InferRunArgs,
   InferUnparsedInput,
+  Ok,
+  Result,
   SafeFnActionFn,
   SafeFnReturn,
   SafeFnReturnData,
   SafeFnReturnError,
   SafeFnRunArgs,
   TSafeFn,
+  err,
+  ok,
 };
