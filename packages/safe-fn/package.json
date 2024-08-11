@@ -1,9 +1,15 @@
 {
-  "name": "@safe-fn/safe-fn",
-  "version": "0.1.0",
+  "name": "safe-fn",
+  "version": "0.0.1",
   "description": "",
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "safe-fn",
+    "safe function",
+    "validated function",
+    "zod",
+    "server-action"
+  ],
+  "author": "janglad",
   "license": "ISC",
   "dependencies": {
     "zod": "^3.23.8"
@@ -18,7 +24,7 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@safe-fn/typescript-config": "workspace:^",
+    "@repo/typescript-config": "workspace:^",
     "@vitest/coverage-v8": "^2.0.5",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"

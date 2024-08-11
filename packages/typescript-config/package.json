@@ -1,5 +1,5 @@
 {
-  "name": "@safe-fn/typescript-config",
+  "name": "@repo/typescript-config",
   "devDependencies": {
     "typescript": "^5.5.4"
   }
