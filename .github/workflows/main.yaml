@@ -1,9 +1,8 @@
 # Adopted from https://github.com/mattpocock/pkg-demo/blob/main/.github/workflows/main.yml
 name: CI
 on:
-  push:
-    branches:
-      - "**"
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   build:
