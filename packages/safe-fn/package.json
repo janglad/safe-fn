@@ -6,7 +6,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@safe-fn/typescript-config": "workspace:^",
     "zod": "^3.23.8"
   },
   "main": "./dist/index.js",
@@ -19,6 +18,7 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
+    "@safe-fn/typescript-config": "workspace:^",
     "@vitest/coverage-v8": "^2.0.5",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"
