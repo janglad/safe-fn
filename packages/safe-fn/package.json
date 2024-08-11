@@ -1,24 +1,36 @@
 {
-  "name": "@safe-fn/safe-fn",
+  "name": "safe-fn",
   "version": "0.0.1",
   "description": "",
-  "keywords": [],
-  "author": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "safe-fn",
+    "safe function",
+    "validated function",
+    "zod",
+    "server-action"
+  ],
+  "author": "janglad",
   "license": "ISC",
   "dependencies": {
-    "@safe-fn/typescript-config": "workspace:^",
     "zod": "^3.23.8"
   },
+  "files": [
+    "dist/**"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
-    "test": "vitest --coverage",
+    "test": "vitest --coverage --run",
     "test:watch": "vitest --watch",
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
+    "@repo/typescript-config": "workspace:^",
     "@vitest/coverage-v8": "^2.0.5",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"

@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "safe-fn",
+  "name": "safe-fn-root",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -16,5 +16,11 @@
   "packageManager": "pnpm@9.0.0",
   "dependencies": {
     "@changesets/cli": "^2.27.7"
+  },
+  "scripts": {
+    "check-types": "turbo check-types",
+    "test": "turbo test",
+    "build": "turbo build",
+    "release": "pnpm run build && changeset publish"
   }
 }

@@ -1,5 +1,7 @@
 {
-  "name": "@safe-fn/typescript-config",
+  "private": true,
+  "version": "0.0.0",
+  "name": "@repo/typescript-config",
   "devDependencies": {
     "typescript": "^5.5.4"
   }
