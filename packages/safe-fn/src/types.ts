@@ -83,7 +83,11 @@ export type InferUnparsedInput<T> =
 export type InferRunArgs<T> = T extends AnyRunnableSafeFn
   ? Parameters<T["run"]>[0]
   : never;
-
+export type InferReturn<T> = T extends AnyRunnableSafeFn
+  ? Awaited<ReturnType<T["run"]>>
+  : never;
+export type InferReturnData<T> = InferOkData<InferReturn<T>>;
+export type InferReturnError<T> = InferErrError<InferReturn<T>>;
 /*
 ################################
 ||                            ||
