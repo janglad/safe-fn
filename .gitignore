@@ -7,3 +7,4 @@ coverage
 sandbox.ts
 .turbo
 dist/
+.env
