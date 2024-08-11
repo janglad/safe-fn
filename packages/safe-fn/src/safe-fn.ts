@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Err, Ok, type Result } from "./result";
+import { err, ok, type Err, type Result } from "./result";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
@@ -73,11 +73,11 @@ export class SafeFn<
       inputSchema: undefined,
       outputSchema: undefined,
       actionFn: () =>
-        Err({
+        err({
           code: "NO_ACTION",
         } as const),
       uncaughtErrorHandler: (error: unknown) =>
-        Err({
+        err({
           code: "UNCAUGHT_ERROR",
           cause: error,
         } as const),
@@ -280,10 +280,10 @@ export class SafeFn<
     const res = await this._inputSchema.safeParseAsync(input);
 
     if (res.success) {
-      return Ok(res.data);
+      return ok(res.data);
     }
 
-    return Err({
+    return err({
       code: "INPUT_PARSING",
       cause: res.error,
     }) as Err<SafeFnInputParseError<TInputSchema>>;
@@ -304,10 +304,10 @@ export class SafeFn<
     const res = await this._outputSchema.safeParseAsync(output);
 
     if (res.success) {
-      return Ok(res.data);
+      return ok(res.data);
     }
 
-    return Err({
+    return err({
       code: "OUTPUT_PARSING",
       cause: res.error,
     }) as Err<SafeFnOutputParseError<TOutputSchema>>;

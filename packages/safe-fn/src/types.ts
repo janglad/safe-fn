@@ -1,4 +1,4 @@
-import type { ZodTypeAny, z } from "zod";
+import type { z, ZodTypeAny } from "zod";
 import type {
   AnyResult,
   Err,
