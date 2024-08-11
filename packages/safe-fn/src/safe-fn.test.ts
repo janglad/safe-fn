@@ -1,6 +1,6 @@
 import { assert, describe, expect, test } from "vitest";
 import { z } from "zod";
-import { Err, Ok } from "./result";
+import { err, ok } from "./result";
 import { SafeFn } from "./safe-fn";
 
 describe("SafeFn", () => {
@@ -28,7 +28,7 @@ describe("output", () => {
 
 describe("action", () => {
   test("should set the action function", () => {
-    const actionFn = () => Ok("data");
+    const actionFn = () => ok("data");
     const safeFn = SafeFn.new().action(actionFn);
     expect(safeFn._actionFn).toEqual(actionFn);
   });
@@ -45,7 +45,7 @@ describe("internals", () => {
       const inputSchema = z.string();
       const safeFn = SafeFn.new().input(inputSchema);
       const res = await safeFn._parseInput("data");
-      expect(res).toEqual(Ok("data"));
+      expect(res).toEqual(ok("data"));
     });
 
     // TODO: mabe write this better
@@ -63,7 +63,7 @@ describe("internals", () => {
       const inputSchema = z.string().transform((data) => data + "!");
       const safeFn = SafeFn.new().input(inputSchema);
       const res = await safeFn._parseInput("data");
-      expect(res).toEqual(Ok("data!"));
+      expect(res).toEqual(ok("data!"));
     });
   });
 
@@ -77,7 +77,7 @@ describe("internals", () => {
       const outputSchema = z.string();
       const safeFn = SafeFn.new().output(outputSchema);
       const res = await safeFn._parseOutput("data");
-      expect(res).toEqual(Ok("data"));
+      expect(res).toEqual(ok("data"));
     });
 
     test("should return Err when output is invalid", async () => {
@@ -94,7 +94,7 @@ describe("internals", () => {
       const outputSchema = z.string().transform((data) => data + "!");
       const safeFn = SafeFn.new().output(outputSchema);
       const res = await safeFn._parseOutput("data");
-      expect(res).toEqual(Ok("data!"));
+      expect(res).toEqual(ok("data!"));
     });
   });
 });
@@ -103,41 +103,41 @@ describe("run", () => {
   describe("input", () => {
     test("should set parsedInput to undefined when no input schema is defined", async () => {
       const res = await SafeFn.new()
-        .action((args) => Ok(args.parsedInput))
+        .action((args) => ok(args.parsedInput))
         .run({});
-      expect(res).toEqual(Ok(undefined));
+      expect(res).toEqual(ok(undefined));
     });
 
     test("should pass unparsedInput when no input schema is defined", async () => {
       const res = await SafeFn.new()
-        .action((args) => Ok(args.unparsedInput))
+        .action((args) => ok(args.unparsedInput))
         .run("data");
-      expect(res).toEqual(Ok("data"));
+      expect(res).toEqual(ok("data"));
     });
 
     test("should pass unparsedInput when input schema is defined", async () => {
       const inputSchema = z.any().transform((_) => undefined);
       const res = await SafeFn.new()
         .input(inputSchema)
-        .action((args) => Ok(args.unparsedInput))
+        .action((args) => ok(args.unparsedInput))
         .run("data");
-      expect(res).toEqual(Ok("data"));
+      expect(res).toEqual(ok("data"));
     });
 
     test("should pass parsedInput when input schema is defined", async () => {
       const inputSchema = z.any().transform((_) => "parsed");
       const res = await SafeFn.new()
         .input(inputSchema)
-        .action((args) => Ok(args.parsedInput))
+        .action((args) => ok(args.parsedInput))
         .run("data");
-      expect(res).toEqual(Ok("parsed"));
+      expect(res).toEqual(ok("parsed"));
     });
 
     test("should return Err when input is invalid", async () => {
       const inputSchema = z.string();
       const res = await SafeFn.new()
         .input(inputSchema)
-        .action((args) => Ok(args.parsedInput))
+        .action((args) => ok(args.parsedInput))
         // @ts-expect-error
         .run(123);
 
@@ -154,18 +154,18 @@ describe("run", () => {
   describe("output", () => {
     test("should return action result when no output schema is defined", async () => {
       const res = await SafeFn.new()
-        .action((args) => Ok("data"))
+        .action((args) => ok("data"))
         .run({});
-      expect(res).toEqual(Ok("data"));
+      expect(res).toEqual(ok("data"));
     });
 
     test("should return parsed output when output schema is defined", async () => {
       const outputSchema = z.any().transform((_) => "parsed");
       const res = await SafeFn.new()
         .output(outputSchema)
-        .action((args) => Ok("Any string"))
+        .action((args) => ok("Any string"))
         .run({});
-      expect(res).toEqual(Ok("parsed"));
+      expect(res).toEqual(ok("parsed"));
     });
 
     test("should return Err when output is invalid", async () => {
@@ -173,7 +173,7 @@ describe("run", () => {
       const res = await SafeFn.new()
         .output(outputSchema)
         // @ts-expect-error
-        .action((args) => Ok(123))
+        .action((args) => ok(123))
         .run({});
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
@@ -196,7 +196,7 @@ describe("run", () => {
         .action(() => {
           throw new Error("error");
         })
-        .error(() => Err("error"));
+        .error(() => err("error"));
 
       expect(() => safeFn.run({})).not.toThrow();
     });
@@ -207,7 +207,7 @@ describe("run", () => {
           throw new Error("a new error");
         })
         .error((error) => {
-          return Err(error);
+          return err(error);
         });
 
       const res = await safeFn.run({});
@@ -223,7 +223,7 @@ describe("run", () => {
 
 describe("error", () => {
   test("should set the error handler", () => {
-    const errorHandler = () => Err("error");
+    const errorHandler = () => err("error");
     const safeFn = SafeFn.new().error(errorHandler);
     expect(safeFn._uncaughtErrorHandler).toEqual(errorHandler);
   });
@@ -231,17 +231,17 @@ describe("error", () => {
 
 describe("procedure", () => {
   test("should set parent procedure", () => {
-    const safeFn1 = SafeFn.new().action(() => Ok(""));
+    const safeFn1 = SafeFn.new().action(() => ok(""));
     const safeFn2 = SafeFn.new(safeFn1);
     expect(safeFn2._parent).toEqual(safeFn1);
   });
 
   test("should return parent return value as ctx", () => {
-    const safeFn1 = SafeFn.new().action(() => Ok("hello"));
+    const safeFn1 = SafeFn.new().action(() => ok("hello"));
     const safeFn2 = SafeFn.new(safeFn1).action((args) => {
-      return Ok(args.ctx);
+      return ok(args.ctx);
     });
 
-    expect(safeFn2.run({})).resolves.toEqual(Ok("hello"));
+    expect(safeFn2.run({})).resolves.toEqual(ok("hello"));
   });
 });

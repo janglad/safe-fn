@@ -8,7 +8,7 @@ export type Ok<TData> = {
 };
 export type InferOkData<T> = T extends Ok<infer TData> ? TData : never;
 
-export const Ok = <const TData>(data: TData): Ok<TData> => ({
+export const ok = <const TData>(data: TData): Ok<TData> => ({
   success: true,
   data,
   error: undefined as never,
@@ -22,7 +22,7 @@ export type Err<TError> = {
 export type InferErrError<T> = T extends Err<infer TError> ? TError : never;
 
 export type AnyErr = Err<any>;
-export const Err = <const TError>(error: TError): Err<TError> => ({
+export const err = <const TError>(error: TError): Err<TError> => ({
   success: false,
   error,
   data: undefined as never,

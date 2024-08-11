@@ -43,18 +43,18 @@ export const createUser = SafeFn.new()
   .action(async (input) => {
     try {
       const user = await db.user.insert(input.parsedInput);
-      return Ok(user);
+      return ok(user);
     } catch (error) {
       if (error instanceof DbError) {
         if (error.code === "UNIQUE_CONSTRAINT") {
-          return Err({
+          return err({
             code: "DUPLICATE_USER",
             message: "User already exists",
           });
         }
       }
 
-      return Err({
+      return err({
         code: "INTERNAL_ERROR",
         message: "Something went wrong",
       });
@@ -86,7 +86,7 @@ const safeFn = SafeFn.new()
     }),
   )
   .error((error) => {
-    return Err({
+    return err({
       code: "CAUGHT_ERROR",
       cause,
     });
@@ -94,14 +94,14 @@ const safeFn = SafeFn.new()
   .action(async ({ parsedInput }) => {
     const isProfane = await isProfaneName(parsedInput.firstName);
     if (isProfane) {
-      return Err({
+      return err({
         code: "PROFANE_NAME",
         message: "Name is profane",
       });
     }
 
     const fullName = `${parsedInput.firstName} ${parsedInput.lastName}`;
-    return Ok({ fullName });
+    return ok({ fullName });
   });
 ```
 

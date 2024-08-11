@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
-import { Err, Ok, type InferErrError, type Result } from "./result";
+import { err, ok, type Err, type InferErrError, type Result } from "./result";
 import { SafeFn } from "./safe-fn";
 import type {
   SafeFnDefaultThrowHandler,
@@ -265,7 +265,7 @@ describe("run", () => {
       const inputSchema = z.string();
       const safeFn = SafeFn.new()
         .input(inputSchema)
-        .action((args) => Ok(args.parsedInput));
+        .action((args) => ok(args.parsedInput));
 
       type RunInput = Parameters<typeof safeFn.run>[0];
 
@@ -281,7 +281,7 @@ describe("run", () => {
       });
       const safeFn = SafeFn.new()
         .input(inputSchema)
-        .action((args) => Ok(args.parsedInput));
+        .action((args) => ok(args.parsedInput));
 
       type RunInput = Parameters<typeof safeFn.run>[0];
 
@@ -299,7 +299,7 @@ describe("run", () => {
         .transform(({ test }) => ({ test, newProperty: "test" }));
       const safeFn = SafeFn.new()
         .input(inputSchema)
-        .action((args) => Ok(args.parsedInput));
+        .action((args) => ok(args.parsedInput));
 
       type RunInput = Parameters<typeof safeFn.run>[0];
 
@@ -320,7 +320,7 @@ describe("run", () => {
     //   >();
     // });
     test("should infer success return type from action when no output schema is provided", async () => {
-      const safeFn = SafeFn.new().action(() => Ok("data" as const));
+      const safeFn = SafeFn.new().action(() => ok("data" as const));
 
       expectTypeOf(safeFn.run({})).resolves.toMatchTypeOf<
         Result<"data", any>
@@ -331,7 +331,7 @@ describe("run", () => {
       const outputSchema = z.string().transform((data) => data + "!");
       const safeFn = SafeFn.new()
         .output(outputSchema)
-        .action(() => Ok(""));
+        .action(() => ok(""));
 
       const res = await safeFn.run({});
       expectTypeOf(res).toMatchTypeOf<
@@ -342,7 +342,7 @@ describe("run", () => {
 
   describe("error", () => {
     test("should infer Err return as default when no error function is set", async () => {
-      const safeFn = SafeFn.new().action(() => Ok("data" as const));
+      const safeFn = SafeFn.new().action(() => ok("data" as const));
 
       type Res = Awaited<ReturnType<typeof safeFn.run>>;
       type InferredErrError = InferErrError<Res>;
@@ -352,7 +352,7 @@ describe("run", () => {
     });
 
     test("should infer Err return type from action when no error function is set", async () => {
-      const safeFn = SafeFn.new().action(() => Err("my error" as const));
+      const safeFn = SafeFn.new().action(() => err("my error" as const));
       type Res = Awaited<ReturnType<typeof safeFn.run>>;
       type InferredErrError = InferErrError<Res>;
       expectTypeOf<InferredErrError>().toEqualTypeOf<
@@ -363,9 +363,9 @@ describe("run", () => {
     test("should infer Err return type from action when error function is set", async () => {
       const safeFn = SafeFn.new()
         .action(() => {
-          return Err("error" as const);
+          return err("error" as const);
         })
-        .error(() => Err("thrown" as const));
+        .error(() => err("thrown" as const));
 
       type Res = Awaited<ReturnType<typeof safeFn.run>>;
       type InferredErrError = InferErrError<Res>;
@@ -471,7 +471,7 @@ describe("internals", () => {
 
 describe("error", () => {
   test("should properly type the _uncaughtErrorHandler function", () => {
-    const safeFn = SafeFn.new().error((error) => Err("hello" as const));
+    const safeFn = SafeFn.new().error((error) => err("hello" as const));
 
     type res = ReturnType<typeof safeFn._uncaughtErrorHandler>;
     expectTypeOf(safeFn._uncaughtErrorHandler).toEqualTypeOf<
@@ -484,7 +484,7 @@ describe("parent", () => {
   test("should properly type the _parent function", () => {
     const safeFn1 = SafeFn.new()
       .input(z.object({ name: z.string() }))
-      .action(() => Ok(""));
+      .action(() => ok(""));
     const safeFn2 = SafeFn.new(safeFn1).input(z.object({ age: z.number() }));
     expectTypeOf(safeFn2._parent).toEqualTypeOf(safeFn1);
   });
@@ -499,7 +499,7 @@ describe("parent", () => {
           const input2 = z.object({ age: z.number() });
           const safeFn1 = SafeFn.new()
             .input(input1)
-            .action(() => Ok(""));
+            .action(() => ok(""));
           const safeFn2 = SafeFn.new(safeFn1).input(input2);
 
           type S2ParsedInput = Parameters<
@@ -525,7 +525,7 @@ describe("parent", () => {
 
           const safeFn1 = SafeFn.new()
             .input(input1)
-            .action(() => Ok(""));
+            .action(() => ok(""));
           const safeFn2 = SafeFn.new(safeFn1).input(input2);
 
           type S2ParsedInput = Parameters<
@@ -539,7 +539,7 @@ describe("parent", () => {
 
         test("should take parsedInput from child when parent has no input schema", () => {
           const input = z.object({ name: z.string() });
-          const safeFn1 = SafeFn.new().action((args) => Ok(args.parsedInput));
+          const safeFn1 = SafeFn.new().action((args) => ok(args.parsedInput));
           const safeFn2 = SafeFn.new(safeFn1).input(input);
 
           type S2ParsedInput = Parameters<
@@ -553,7 +553,7 @@ describe("parent", () => {
           const input = z.object({ name: z.string() });
           const safeFn1 = SafeFn.new()
             .input(input)
-            .action(() => Ok(""));
+            .action(() => ok(""));
           const safeFn2 = SafeFn.new(safeFn1);
 
           type S2ParsedInput = Parameters<
@@ -566,7 +566,7 @@ describe("parent", () => {
 
       describe("ctx", () => {
         test("should type ctx as unwrapped OK value from parent", () => {
-          const safeFn1 = SafeFn.new().action(() => Ok("ctx return" as const));
+          const safeFn1 = SafeFn.new().action(() => ok("ctx return" as const));
           const safeFn2 = SafeFn.new(safeFn1);
 
           type S2Ctx = Parameters<
@@ -576,7 +576,7 @@ describe("parent", () => {
         });
 
         test("should type ctx as empty object if parent never returns", () => {
-          const safeFn1 = SafeFn.new().action(() => Err("ctx return" as const));
+          const safeFn1 = SafeFn.new().action(() => err("ctx return" as const));
           const safeFn2 = SafeFn.new(safeFn1);
 
           type S2Ctx = Parameters<

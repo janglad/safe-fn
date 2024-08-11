@@ -1,4 +1,4 @@
-import type { ZodTypeAny, z } from "zod";
+import type { z, ZodTypeAny } from "zod";
 import type {
   AnyResult,
   Err,
@@ -248,8 +248,8 @@ export type SafeFnReturnData<
  * @param TActionFn the action function of the safe function
  * @param TThrownHandler the thrown handler of the safe function
  * @returns the error type of the return value of the safe function after unsuccessful execution. This is a union of all possible error types that can be thrown by the safe function consisting off:
- * - A union of all `Err()` returns of the action function
- * - A union of all `Err()` returns of the uncaught error handler
+ * - A union of all `Err` returns of the action function
+ * - A union of all `Err` returns of the uncaught error handler
  * - A `SafeFnInputParseError` if the input schema is defined and the input could not be parsed
  * - A `SafeFnOutputParseError` if the output schema is defined and the output could not be parsed
  * Note that this is wrapped in a `Result` type.
@@ -304,7 +304,7 @@ export type SafeFnRunArgs<
  * @param TOutputSchema a Zod schema or undefined
  * @param TActionFn the action function of the safe function
  * @param TThrownHandler the thrown handler of the safe function
- * @returns the return value of the safe function after execution. This is a `Result` type that can either be an `Ok()` or an `Err()`.
+ * @returns the return value of the safe function after execution. This is a `Result` type that can either be an `Ok` or an `Err`.
  * 
  * @example
  * ```ts
@@ -321,7 +321,7 @@ export type SafeFnRunArgs<
     }),
   )
   .error((error) => {
-    return Err({
+    return err({
       code: "CAUGHT_ERROR",
       error,
     });
@@ -329,14 +329,14 @@ export type SafeFnRunArgs<
   .action(async ({ parsedInput }) => {
     const isProfane = await isProfaneName(parsedInput.firstName);
     if (isProfane) {
-      return Err({
+      return err({
         code: "PROFANE_NAME",
         message: "Name is profane",
       });
     }
 
     const fullName = `${parsedInput.firstName} ${parsedInput.lastName}`;
-    return Ok({ fullName });
+    return ok({ fullName });
   });
  * ```
 
