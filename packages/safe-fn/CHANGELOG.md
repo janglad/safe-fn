@@ -1,5 +1,11 @@
 # @safe-fn/safe-fn
 
+## 0.1.1
+
+### Patch Changes
+
+- 2b72e15: Renames `Ok()` and `Err()` to `ok()` and `err()` to avoid overlap with types. Exports `ok()`, `err()`, `Ok`, `Err`, `Result` to be available to users.
+
 ## 0.1.0
 
 ### Minor Changes
