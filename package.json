@@ -20,6 +20,7 @@
   "scripts": {
     "check-types": "turbo check-types",
     "test": "turbo test",
-    "build": "turbo build"
+    "build": "turbo build",
+    "release": "pnpm run build && changeset publish"
   }
 }

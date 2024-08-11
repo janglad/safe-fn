@@ -27,13 +27,13 @@ importers:
 
   packages/safe-fn:
     dependencies:
-      '@safe-fn/typescript-config':
-        specifier: workspace:^
-        version: link:../typescript-config
       zod:
         specifier: ^3.23.8
         version: 3.23.8
     devDependencies:
+      '@safe-fn/typescript-config':
+        specifier: workspace:^
+        version: link:../typescript-config
       '@vitest/coverage-v8':
         specifier: ^2.0.5
         version: 2.0.5(vitest@2.0.5)
