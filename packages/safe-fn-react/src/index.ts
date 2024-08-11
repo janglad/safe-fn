@@ -1,2 +1,2 @@
-export type Hello = "Hello, world!";
-export const hello: Hello = "Hello, world!";
+import { useServerAction } from "./useServerAction";
+export { useServerAction };
