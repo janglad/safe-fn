@@ -15,6 +15,7 @@ import type {
   SchemaOutputOrFallback,
   TSafeFn,
 } from "./types";
+import { isFrameworkError } from "./util";
 
 export class SafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -262,6 +263,9 @@ export class SafeFn<
 
       return actionRes;
     } catch (error) {
+      if (isFrameworkError(error)) {
+        throw error;
+      }
       return await this._uncaughtErrorHandler(error);
     }
   }
