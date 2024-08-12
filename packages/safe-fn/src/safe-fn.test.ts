@@ -56,6 +56,7 @@ describe("internals", () => {
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
       expect(res.error).toBeDefined();
+      assert(res.error !== undefined);
       expect(res.error.cause).toBeInstanceOf(z.ZodError);
     });
 
@@ -87,6 +88,7 @@ describe("internals", () => {
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
       expect(res.error).toBeDefined();
+      assert(res.error !== undefined);
       expect(res.error.cause).toBeInstanceOf(z.ZodError);
     });
 

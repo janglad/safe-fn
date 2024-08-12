@@ -4,20 +4,20 @@ export type AnyResult = Result<any, any>;
 export type Ok<TData> = {
   success: true;
   data: TData;
-  error: never;
+  error: undefined;
 };
 export type InferOkData<T> = T extends Ok<infer TData> ? TData : never;
 
 export const ok = <const TData>(data: TData): Ok<TData> => ({
   success: true,
   data,
-  error: undefined as never,
+  error: undefined,
 });
 
 export type Err<TError> = {
   success: false;
   error: TError;
-  data: never;
+  data: undefined;
 };
 export type InferErrError<T> = T extends Err<infer TError> ? TError : never;
 
