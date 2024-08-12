@@ -204,6 +204,15 @@ export class SafeFn<
     }) as any;
   }
 
+  createAction(): (
+    args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
+  ) => Promise<
+    SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
+  > {
+    // TODO: strip stack traces etc here
+    return this.run.bind(this);
+  }
+
   /*
 ################################
 ||                            ||

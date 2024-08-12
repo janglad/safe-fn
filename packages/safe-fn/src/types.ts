@@ -12,6 +12,7 @@ export type AnySafeFn = TSafeFn<any, any, any, any, any, any, BuilderSteps>;
 export type AnyRunnableSafeFn = AnySafeFn & {
   run: (...args: any) => any;
 };
+export type AnyCompleteSafeFn = AnyRunnableSafeFn["run"];
 
 /**
  * The steps of the builder pattern for the safe function.
