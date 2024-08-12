@@ -21,7 +21,7 @@ import type {
   TSafeFn,
 } from "./types";
 
-export { SafeFn };
+export { SafeFn, err, ok };
 export type {
   AnyRunnableSafeFn,
   AnySafeFn,
@@ -43,6 +43,4 @@ export type {
   SafeFnReturnError,
   SafeFnRunArgs,
   TSafeFn,
-  err,
-  ok,
 };
