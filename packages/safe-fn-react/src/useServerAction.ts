@@ -1,46 +1,40 @@
-import { startTransition, useRef, useState } from "react";
-import {
-  type AnyRunnableSafeFn,
-  type InferReturn,
-  type InferRunArgs,
-} from "safe-fn";
+import { useRef, useState, useTransition } from "react";
+import { type AnyCompleteSafeFn } from "safe-fn";
 
-export const useServerAction = <TAction extends AnyRunnableSafeFn>(
+export const useServerAction = <TAction extends AnyCompleteSafeFn>(
   action: TAction,
 ) => {
-  type ActionReturn = InferReturn<TAction>;
+  type ActionReturn = Awaited<ReturnType<TAction>>;
+  type ActionArgs = Parameters<TAction>[0];
 
-  const [result, setResult] = useState<InferReturn<TAction> | undefined>(
-    undefined,
-  );
-  const [isPending, setIsPending] = useState(false);
+  const [result, setResult] = useState<ActionReturn | undefined>(undefined);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [isTransitioning, startTransition] = useTransition();
 
   const resolveRef = useRef<undefined | ((args: ActionReturn) => void)>(
     undefined,
   );
 
-  const _execute = async (args: InferRunArgs<TAction>) => {
-    setIsPending(true);
-    const res = await action.run(args);
+  const _execute = async (args: ActionArgs) => {
+    const res = await action(args);
     setResult(res);
     resolveRef.current?.(res);
-    setIsPending(false);
+    setIsExecuting(false);
   };
 
-  const execute = async (
-    args: InferRunArgs<TAction>,
-  ): Promise<ActionReturn> => {
+  const execute = async (args: ActionArgs): Promise<ActionReturn> => {
     return new Promise((resolve) => {
+      setIsExecuting(true);
       startTransition(() => {
         resolveRef.current = resolve;
         _execute(args);
       });
-    });
+    }) as Promise<ActionReturn>;
   };
 
   return {
     result,
-    isPending,
+    isPending: isExecuting || isTransitioning,
     execute,
   };
 };
