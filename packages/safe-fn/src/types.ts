@@ -13,6 +13,17 @@ export type AnyRunnableSafeFn = AnySafeFn & {
   run: (...args: any) => any;
 };
 
+// TODO: organize and naming
+export type AnyCompleteSafeFn = AnyRunnableSafeFn["run"];
+export type InferCompleteFnRunArgs<T extends AnyCompleteSafeFn> =
+  Parameters<T>[0];
+export type InferCompleteFnReturn<T extends AnyCompleteSafeFn> = Awaited<
+  ReturnType<T>
+>;
+export type InferCompleteFnReturnData<T extends AnyCompleteSafeFn> =
+  InferOkData<Awaited<ReturnType<T>>>;
+export type InferCompleteFnReturnError<T extends AnyCompleteSafeFn> =
+  InferErrError<Awaited<ReturnType<T>>>;
 /**
  * The steps of the builder pattern for the safe function.
  */
@@ -83,7 +94,11 @@ export type InferUnparsedInput<T> =
 export type InferRunArgs<T> = T extends AnyRunnableSafeFn
   ? Parameters<T["run"]>[0]
   : never;
-
+export type InferReturn<T> = T extends AnyRunnableSafeFn
+  ? Prettify<Awaited<ReturnType<T["run"]>>>
+  : never;
+export type InferReturnData<T> = InferOkData<InferReturn<T>>;
+export type InferReturnError<T> = InferErrError<InferReturn<T>>;
 /*
 ################################
 ||                            ||

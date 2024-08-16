@@ -19,6 +19,7 @@
   },
   "scripts": {
     "check-types": "turbo check-types",
+    "lint": "turbo lint",
     "test": "turbo test",
     "build": "turbo build",
     "release": "pnpm run build && changeset publish"

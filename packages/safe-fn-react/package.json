@@ -1,0 +1,33 @@
+{
+  "name": "safe-fn-react",
+  "version": "0.0.1",
+  "author": "janglad",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist/**"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:^",
+    "@repo/typescript-config": "workspace:^",
+    "@types/react": "^18.3.3",
+    "eslint": "^8.57.0",
+    "react": "^18.3.1",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "safe-fn": "workspace:^"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  }
+}
