@@ -1,5 +1,8 @@
 {
   "private": true,
   "version": "0.0.0",
-  "name": "@repo/eslint-config"
+  "name": "@repo/eslint-config",
+  "devDependencies": {
+    "@vercel/style-guide": "^6.0.0"
+  }
 }
