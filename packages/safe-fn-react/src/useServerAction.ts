@@ -1,22 +1,32 @@
 import { useRef, useState, useTransition } from "react";
-import { type AnyCompleteSafeFn } from "safe-fn";
+import {
+  type AnyCompleteSafeFn,
+  type InferCompleteFnReturn,
+  type InferCompleteFnRunArgs,
+} from "safe-fn";
+
+interface UseServerActionReturn<TAction extends AnyCompleteSafeFn> {
+  isPending: boolean;
+  isSuccess: boolean;
+  result: InferCompleteFnReturn<TAction> | undefined;
+  execute: TAction;
+}
 
 export const useServerAction = <TAction extends AnyCompleteSafeFn>(
   action: TAction,
-) => {
-  type ActionReturn = Awaited<ReturnType<TAction>>;
-  type ActionArgs = Parameters<TAction>[0];
+): UseServerActionReturn<TAction> => {
+  type ActionReturn = InferCompleteFnReturn<TAction>;
+  type ActionArgs = InferCompleteFnRunArgs<TAction>;
 
   const [result, setResult] = useState<ActionReturn | undefined>(undefined);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isTransitioning, startTransition] = useTransition();
 
-  const resolveRef = useRef<undefined | ((args: ActionReturn) => void)>(
+  const resolveRef = useRef<((args: ActionReturn) => void) | undefined>(
     undefined,
   );
-
-  const _execute = async (args: ActionArgs) => {
-    const res = await action(args);
+  const _execute = async (args: ActionArgs): Promise<void> => {
+    const res = (await action(args)) as ActionReturn;
     setResult(res);
     resolveRef.current?.(res);
     setIsExecuting(false);
@@ -27,7 +37,10 @@ export const useServerAction = <TAction extends AnyCompleteSafeFn>(
       setIsExecuting(true);
       startTransition(() => {
         resolveRef.current = resolve;
-        _execute(args);
+        _execute(args).catch((e: unknown) => {
+          // TODO: handle error
+          throw e;
+        });
       });
     }) as Promise<ActionReturn>;
   };
@@ -35,6 +48,7 @@ export const useServerAction = <TAction extends AnyCompleteSafeFn>(
   return {
     result,
     isPending: isExecuting || isTransitioning,
+    isSuccess: !!result?.data,
     execute,
-  };
+  } as UseServerActionReturn<TAction>;
 };
