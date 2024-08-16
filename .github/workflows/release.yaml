@@ -30,7 +30,8 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
-
+      - name: "build"
+        run: pnpm build
       - name: "Run type-check"
         run: pnpm check-types
       - name: "Run tests"
