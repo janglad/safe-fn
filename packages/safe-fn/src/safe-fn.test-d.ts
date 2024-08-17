@@ -493,6 +493,106 @@ describe("parent", () => {
     describe("args", () => {
       // TODO: test unparsed input
       test.todo("should merge unparsedInput");
+
+      describe("unparsedInput", () => {
+        test("should merge inferred unparsedInput when parent and child have input schema with transforms", () => {
+          const input1 = z
+            .object({ firstName: z.string(), lastName: z.string() })
+            .transform(({ firstName, lastName }) => `${firstName} ${lastName}`);
+          const input2 = z
+            .object({ birthDay: z.number() })
+            .transform(() => ({ age: 1 }));
+          const safeFn1 = SafeFn.new()
+            .input(input1)
+            .action(() => ok(""));
+          const safeFn2 = SafeFn.new(safeFn1).input(input2);
+
+          type S2UnparsedInput = Parameters<
+            Parameters<typeof safeFn2.action>[0]
+          >[0]["unparsedInput"];
+
+          expectTypeOf<S2UnparsedInput>().toMatchTypeOf<
+            z.input<typeof input1> & z.input<typeof input2>
+          >();
+        });
+      });
+
+      test("should merge unparsedInput when parent and child manually define it", () => {
+        const safeFn1 = SafeFn.new()
+          .unparsedInput<{ name: string }>()
+          .action(() => ok(""));
+        const safeFn2 = SafeFn.new(safeFn1).unparsedInput<{ age: number }>();
+
+        type S2UnparsedInput = Parameters<
+          Parameters<typeof safeFn2.action>[0]
+        >[0]["unparsedInput"];
+
+        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<{
+          name: string;
+          age: number;
+        }>();
+      });
+
+      test("should merge unparsedInput when child has input schema and parent manually defines it", () => {
+        const input = z.object({ name: z.string() });
+        const safeFn1 = SafeFn.new()
+          .unparsedInput<{ age: number }>()
+          .action(() => ok(""));
+        const safeFn2 = SafeFn.new(safeFn1).input(input);
+
+        type S2UnparsedInput = Parameters<
+          Parameters<typeof safeFn2.action>[0]
+        >[0]["unparsedInput"];
+
+        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<{
+          name: string;
+          age: number;
+        }>();
+      });
+
+      test("should merge unparsedInput when parent has input schema and child manually defines it", () => {
+        const input = z.object({ name: z.string() });
+        const safeFn1 = SafeFn.new()
+          .input(input)
+          .action(() => ok(""));
+        const safeFn2 = SafeFn.new(safeFn1).unparsedInput<{ age: number }>();
+
+        type S2UnparsedInput = Parameters<
+          Parameters<typeof safeFn2.action>[0]
+        >[0]["unparsedInput"];
+
+        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<{
+          name: string;
+          age: number;
+        }>();
+      });
+
+      test("should type unparsedInput as child when parent has none", () => {
+        const input = z.object({ name: z.string() });
+        const safeFn1 = SafeFn.new().action(() => ok(""));
+        const safeFn2 = SafeFn.new(safeFn1).input(input);
+
+        type S2UnparsedInput = Parameters<
+          Parameters<typeof safeFn2.action>[0]
+        >[0]["unparsedInput"];
+
+        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<z.input<typeof input>>();
+      });
+
+      test("should type unparsedInput as parent when child has none", () => {
+        const input = z.object({ name: z.string() });
+        const safeFn1 = SafeFn.new()
+          .input(input)
+          .action(() => ok(""));
+        const safeFn2 = SafeFn.new(safeFn1);
+
+        type S2UnparsedInput = Parameters<
+          Parameters<typeof safeFn2.action>[0]
+        >[0]["unparsedInput"];
+
+        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<z.input<typeof input>>();
+      });
+
       describe("parsedInput", () => {
         test("should merge parsedInput when parent and child have input schema", () => {
           const input1 = z.object({ name: z.string() });

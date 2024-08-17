@@ -87,7 +87,7 @@ export type InferOutputSchema<T> = T extends AnySafeFn
   ? T["_outputSchema"]
   : never;
 export type InferUnparsedInput<T> =
-  T extends SafeFn<any, any, any, infer TUnparsed, any, any, any>
+  T extends TSafeFn<any, any, any, infer TUnparsed, any, any, any>
     ? TUnparsed
     : never;
 
