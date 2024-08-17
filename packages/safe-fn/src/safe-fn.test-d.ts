@@ -567,6 +567,32 @@ describe("parent", () => {
         }>();
       });
 
+      test("should type unparsedInput as child when parent has none", () => {
+        const input = z.object({ name: z.string() });
+        const safeFn1 = SafeFn.new().action(() => ok(""));
+        const safeFn2 = SafeFn.new(safeFn1).input(input);
+
+        type S2UnparsedInput = Parameters<
+          Parameters<typeof safeFn2.action>[0]
+        >[0]["unparsedInput"];
+
+        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<z.input<typeof input>>();
+      });
+
+      test("should type unparsedInput as parent when child has none", () => {
+        const input = z.object({ name: z.string() });
+        const safeFn1 = SafeFn.new()
+          .input(input)
+          .action(() => ok(""));
+        const safeFn2 = SafeFn.new(safeFn1);
+
+        type S2UnparsedInput = Parameters<
+          Parameters<typeof safeFn2.action>[0]
+        >[0]["unparsedInput"];
+
+        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<z.input<typeof input>>();
+      });
+
       describe("parsedInput", () => {
         test("should merge parsedInput when parent and child have input schema", () => {
           const input1 = z.object({ name: z.string() });
