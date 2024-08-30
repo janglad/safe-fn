@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { err, ok, type Err, type Result } from "./result";
+import { err } from "./result";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
@@ -7,13 +7,7 @@ import type {
   SafeFnDefaultActionFn,
   SafeFnDefaultThrowHandler,
   SafeFnInput,
-  SafeFnInputParseError,
-  SafeFnOutputParseError,
-  SafeFnReturn,
-  SafeFnRunArgs,
-  SchemaOutputOrFallback,
 } from "./types";
-import { isFrameworkError } from "./util";
 
 export class SafeFnInternals<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -194,126 +188,5 @@ export class SafeFnInternals<
       uncaughtErrorHandler: this._uncaughtErrorHandler,
       parent: this._parent,
     }) as any;
-  }
-
-  createAction(): (
-    args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
-  ) => Promise<
-    SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
-  > {
-    // TODO: strip stack traces etc here
-    return this.run.bind(this);
-  }
-
-  /*
-################################
-||                            ||
-||            Run             ||
-||                            ||
-################################
-  */
-  async run(
-    args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
-  ): Promise<
-    SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
-  > {
-    try {
-      let ctx: any;
-
-      if (this._parent !== undefined) {
-        const parentRes = await this._parent.run(args);
-        if (!parentRes.success) {
-          return parentRes as any;
-        }
-        ctx = parentRes.data;
-      }
-
-      let parsedInput: typeof args.parsedInput = undefined;
-      if (this._inputSchema !== undefined) {
-        const parseRes = await this._parseInput(args);
-        if (!parseRes.success) {
-          return parseRes;
-        } else {
-          parsedInput = parseRes.data;
-        }
-      }
-      const actionRes = await this._actionFn({
-        parsedInput,
-        unparsedInput: args,
-        // TODO: pass context when functions are set up
-        ctx,
-      } as any);
-
-      if (!actionRes.success) {
-        return actionRes;
-      }
-
-      if (this._outputSchema !== undefined) {
-        return await this._parseOutput(actionRes.data);
-      }
-
-      return actionRes;
-    } catch (error) {
-      if (isFrameworkError(error)) {
-        throw error;
-      }
-      return await this._uncaughtErrorHandler(error);
-    }
-  }
-
-  /*
-################################
-||                            ||
-||          Internal          ||
-||                            ||
-################################
-*/
-
-  async _parseInput(
-    input: unknown,
-  ): Promise<
-    Result<
-      SchemaOutputOrFallback<TInputSchema, never>,
-      SafeFnInputParseError<TInputSchema>
-    >
-  > {
-    if (this._inputSchema === undefined) {
-      throw new Error("No input schema defined");
-    }
-
-    const res = await this._inputSchema.safeParseAsync(input);
-
-    if (res.success) {
-      return ok(res.data);
-    }
-
-    return err({
-      code: "INPUT_PARSING",
-      cause: res.error,
-    }) as Err<SafeFnInputParseError<TInputSchema>>;
-  }
-
-  async _parseOutput(
-    output: unknown,
-  ): Promise<
-    Result<
-      SchemaOutputOrFallback<TOutputSchema, never>,
-      SafeFnOutputParseError<TOutputSchema>
-    >
-  > {
-    if (this._outputSchema === undefined) {
-      throw new Error("No output schema defined");
-    }
-
-    const res = await this._outputSchema.safeParseAsync(output);
-
-    if (res.success) {
-      return ok(res.data);
-    }
-
-    return err({
-      code: "OUTPUT_PARSING",
-      cause: res.error,
-    }) as Err<SafeFnOutputParseError<TOutputSchema>>;
   }
 }

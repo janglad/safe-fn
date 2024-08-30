@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { SafeFnInternals } from "./internals";
-import { type Result } from "./result";
+import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
@@ -9,11 +9,6 @@ import type {
   SafeFnDefaultActionFn,
   SafeFnDefaultThrowHandler,
   SafeFnInput,
-  SafeFnInputParseError,
-  SafeFnOutputParseError,
-  SafeFnReturn,
-  SafeFnRunArgs,
-  SchemaOutputOrFallback,
   TSafeFn,
 } from "./types";
 
@@ -144,69 +139,14 @@ export class SafeFnBuilder<
     >,
   >(
     actionFn: TNewActionFn,
-  ): TSafeFn<
+  ): RunnableSafeFn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
     TNewActionFn,
-    TThrownHandler,
-    Exclude<TOmit, "run"> | "input" | "output" | "unparsedInput" | "action"
+    TThrownHandler
   > {
-    return new SafeFnBuilder(this._internals.action(actionFn)) as any;
-  }
-
-  createAction(): (
-    args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
-  ) => Promise<
-    SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
-  > {
-    // TODO: strip stack traces etc here
-    return this.run.bind(this);
-  }
-
-  /*
-################################
-||                            ||
-||            Run             ||
-||                            ||
-################################
-  */
-  async run(
-    args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
-  ): Promise<
-    SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
-  > {
-    return this._internals.run(args);
-  }
-
-  /*
-################################
-||                            ||
-||          Internal          ||
-||                            ||
-################################
-*/
-
-  async _parseInput(
-    input: unknown,
-  ): Promise<
-    Result<
-      SchemaOutputOrFallback<TInputSchema, never>,
-      SafeFnInputParseError<TInputSchema>
-    >
-  > {
-    return this._internals._parseInput(input);
-  }
-
-  async _parseOutput(
-    output: unknown,
-  ): Promise<
-    Result<
-      SchemaOutputOrFallback<TOutputSchema, never>,
-      SafeFnOutputParseError<TOutputSchema>
-    >
-  > {
-    return this._internals._parseOutput(output);
+    return new RunnableSafeFn(this._internals.action(actionFn)) as any;
   }
 }

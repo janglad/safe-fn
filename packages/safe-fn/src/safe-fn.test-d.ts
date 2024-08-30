@@ -390,7 +390,7 @@ describe("run", () => {
 describe("internals", () => {
   describe("_parseInput", () => {
     test("should return Result Ok as never when no input schema is defined", async () => {
-      const safeFn = SafeFnBuilder.new();
+      const safeFn = SafeFnBuilder.new().action(() => ok("data" as const));
       const res = await safeFn._parseInput("data");
       expectTypeOf(res).toMatchTypeOf<Result<never, any>>();
     });
@@ -404,7 +404,9 @@ describe("internals", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new().input(inputSchema);
+      const safeFn = SafeFnBuilder.new()
+        .input(inputSchema)
+        .action(() => ok(""));
       const res = await safeFn._parseInput("data");
       expectTypeOf(res).toMatchTypeOf<
         Result<z.output<typeof inputSchema>, any>
@@ -412,7 +414,7 @@ describe("internals", () => {
     });
 
     test("should type Result Err as never without input schema", async () => {
-      const safeFn = SafeFnBuilder.new();
+      const safeFn = SafeFnBuilder.new().action(() => ok(""));
       const res = await safeFn._parseInput(123);
       expectTypeOf(res).toEqualTypeOf<Result<never, never>>();
     });
@@ -426,7 +428,9 @@ describe("internals", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new().input(inputSchema);
+      const safeFn = SafeFnBuilder.new()
+        .input(inputSchema)
+        .action(() => ok(""));
       const res = await safeFn._parseInput(123);
       expectTypeOf(res).toMatchTypeOf<
         Result<any, SafeFnInputParseError<typeof inputSchema>>
@@ -436,7 +440,7 @@ describe("internals", () => {
 
   describe("_parseOutput", () => {
     test("should return Result Ok as never when no output schema is defined", async () => {
-      const safeFn = SafeFnBuilder.new();
+      const safeFn = SafeFnBuilder.new().action(() => ok("data" as const));
       const res = await safeFn._parseOutput("data");
       expectTypeOf(res).toMatchTypeOf<Result<never, any>>();
     });
@@ -450,7 +454,9 @@ describe("internals", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new().output(outputSchema);
+      const safeFn = SafeFnBuilder.new()
+        .output(outputSchema)
+        .action(() => ok("" as any));
       const res = await safeFn._parseOutput("data");
       expectTypeOf(res).toMatchTypeOf<
         Result<z.output<typeof outputSchema>, any>
@@ -458,7 +464,7 @@ describe("internals", () => {
     });
 
     test("should type Result Err as never without output schema", async () => {
-      const safeFn = SafeFnBuilder.new();
+      const safeFn = SafeFnBuilder.new().action(() => ok("" as any));
       const res = await safeFn._parseOutput(123);
       expectTypeOf(res).toEqualTypeOf<Result<never, never>>();
     });
@@ -472,7 +478,9 @@ describe("internals", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new().output(outputSchema);
+      const safeFn = SafeFnBuilder.new()
+        .output(outputSchema)
+        .action(() => ok("" as any));
       const res = await safeFn._parseOutput(123);
       expectTypeOf(res).toMatchTypeOf<
         Result<any, SafeFnOutputParseError<typeof outputSchema>>
