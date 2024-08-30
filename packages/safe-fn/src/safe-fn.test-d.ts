@@ -492,7 +492,9 @@ describe("internals", () => {
 
 describe("error", () => {
   test("should properly type the _uncaughtErrorHandler function", () => {
-    const safeFn = SafeFnBuilder.new().error((error) => err("hello" as const));
+    const safeFn = SafeFnBuilder.new()
+      .action(() => ok(""))
+      .error((error) => err("hello" as const));
 
     type res = ReturnType<typeof safeFn._internals._uncaughtErrorHandler>;
     expectTypeOf(safeFn._internals._uncaughtErrorHandler).toEqualTypeOf<

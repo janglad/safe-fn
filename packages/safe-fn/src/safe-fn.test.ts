@@ -238,7 +238,9 @@ describe("run", () => {
 describe("error", () => {
   test("should set the error handler", () => {
     const errorHandler = () => err("error");
-    const safeFn = SafeFnBuilder.new().error(errorHandler);
+    const safeFn = SafeFnBuilder.new()
+      .action(() => ok(""))
+      .error(errorHandler);
     expect(safeFn._internals._uncaughtErrorHandler).toEqual(errorHandler);
   });
 });
