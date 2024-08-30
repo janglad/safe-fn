@@ -6,12 +6,11 @@ import type {
   InferOkData,
   Result,
 } from "./result";
-import type { SafeFnBuilder } from "./safe-fn";
+import type { RunnableSafeFn } from "./runnable-safe-fn";
+import type { SafeFnBuilder } from "./safe-fn-builder";
 
-export type AnySafeFn = TSafeFn<any, any, any, any, any, any, BuilderSteps>;
-export type AnyRunnableSafeFn = AnySafeFn & {
-  run: (...args: any) => any;
-};
+export type AnySafeFnBuilder = SafeFnBuilder<any, any, any, any, any, any>;
+export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
 
 // TODO: organize and naming
 export type AnyCompleteSafeFn = AnyRunnableSafeFn["run"];
@@ -24,45 +23,6 @@ export type InferCompleteFnReturnData<T extends AnyCompleteSafeFn> =
   InferOkData<Awaited<ReturnType<T>>>;
 export type InferCompleteFnReturnError<T extends AnyCompleteSafeFn> =
   InferErrError<Awaited<ReturnType<T>>>;
-/**
- * The steps of the builder pattern for the safe function.
- */
-export type BuilderSteps =
-  | "input"
-  | "unparsedInput"
-  | "output"
-  | "error"
-  | "action"
-  | "run";
-
-/**
- * Utility function to omit steps for a "type level builder"
- */
-export type TSafeFn<
-  TParent extends AnyRunnableSafeFn | undefined,
-  TInputSchema extends SafeFnInput,
-  TOutputSchema extends SafeFnInput,
-  TUnparsedInput,
-  TActionFn extends SafeFnActionFn<
-    TInputSchema,
-    TOutputSchema,
-    TUnparsedInput,
-    TParent
-  >,
-  TThrownHandler extends AnySafeFnThrownHandler,
-  TOmit extends BuilderSteps | "",
-> = Omit<
-  SafeFnBuilder<
-    TParent,
-    TInputSchema,
-    TOutputSchema,
-    TUnparsedInput,
-    TActionFn,
-    TThrownHandler,
-    TOmit
-  >,
-  TOmit
->;
 
 /*
 ################################
@@ -80,14 +40,14 @@ type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
   ? TFallback
   : T;
 export type MaybePromise<T> = T | Promise<T>;
-export type InferInputSchema<T> = T extends AnySafeFn
+export type InferInputSchema<T> = T extends AnyRunnableSafeFn
   ? T["_internals"]["_inputSchema"]
   : never;
-export type InferOutputSchema<T> = T extends AnySafeFn
+export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
   ? T["_internals"]["_outputSchema"]
   : never;
 export type InferUnparsedInput<T> =
-  T extends SafeFnBuilder<any, any, any, infer TUnparsed, any, any, any>
+  T extends RunnableSafeFn<any, any, any, infer TUnparsed, any, any>
     ? TUnparsed
     : never;
 
@@ -306,8 +266,8 @@ export type SafeFnOutputParseError<TOutputSchema extends SafeFnOutput> =
 export type SafeFnRunArgs<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
-  TParent extends AnySafeFn | undefined,
-> = TParent extends AnySafeFn
+  TParent extends AnyRunnableSafeFn | undefined,
+> = TParent extends AnyRunnableSafeFn
   ? Prettify<
       SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
         InferRunArgs<TParent>

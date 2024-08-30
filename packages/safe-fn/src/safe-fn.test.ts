@@ -1,7 +1,7 @@
 import { assert, describe, expect, test } from "vitest";
 import { z } from "zod";
 import { err, ok } from "./result";
-import { SafeFnBuilder } from "./safe-fn";
+import { SafeFnBuilder } from "./safe-fn-builder";
 
 describe("SafeFn", () => {
   test("should create a new instance", () => {

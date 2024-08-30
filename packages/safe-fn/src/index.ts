@@ -1,13 +1,12 @@
 import type { Err, Ok, Result } from "./result";
 import { err, ok } from "./result";
-import { SafeFnBuilder } from "./safe-fn";
+import { SafeFnBuilder } from "./safe-fn-builder";
 
 import type {
   AnyCompleteSafeFn,
   AnyRunnableSafeFn,
-  AnySafeFn,
+  AnySafeFnBuilder,
   AnySafeFnThrownHandler,
-  BuilderSteps,
   InferCompleteFnReturn,
   InferCompleteFnReturnData,
   InferCompleteFnReturnError,
@@ -24,16 +23,14 @@ import type {
   SafeFnReturnData,
   SafeFnReturnError,
   SafeFnRunArgs,
-  TSafeFn,
 } from "./types";
 
 export { err, ok, SafeFnBuilder as SafeFn };
 export type {
   AnyCompleteSafeFn,
   AnyRunnableSafeFn,
-  AnySafeFn,
+  AnySafeFnBuilder as AnySafeFn,
   AnySafeFnThrownHandler,
-  BuilderSteps,
   Err,
   InferCompleteFnReturn,
   InferCompleteFnReturnData,
@@ -53,5 +50,4 @@ export type {
   SafeFnReturnData,
   SafeFnReturnError,
   SafeFnRunArgs,
-  TSafeFn,
 };

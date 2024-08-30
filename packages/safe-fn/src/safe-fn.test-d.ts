@@ -1,7 +1,8 @@
 import { describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
+import type { InferInputSchema } from "../dist";
 import { err, ok, type Err, type InferErrError, type Result } from "./result";
-import { SafeFnBuilder } from "./safe-fn";
+import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   SafeFnDefaultThrowHandler,
   SafeFnInputParseError,
@@ -527,6 +528,8 @@ describe("parent", () => {
           type S2ParsedInput = Parameters<
             Parameters<typeof safeFn2.action>[0]
           >[0]["parsedInput"];
+
+          type test = InferInputSchema<typeof safeFn1>;
 
           expectTypeOf<S2ParsedInput>().toMatchTypeOf<
             z.output<typeof input1> & z.output<typeof input2>
