@@ -81,10 +81,10 @@ type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
   : T;
 export type MaybePromise<T> = T | Promise<T>;
 export type InferInputSchema<T> = T extends AnySafeFn
-  ? T["_inputSchema"]
+  ? T["_internals"]["_inputSchema"]
   : never;
 export type InferOutputSchema<T> = T extends AnySafeFn
-  ? T["_outputSchema"]
+  ? T["_internals"]["_outputSchema"]
   : never;
 export type InferUnparsedInput<T> =
   T extends SafeFn<any, any, any, infer TUnparsed, any, any, any>

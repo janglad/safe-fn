@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { err, ok, type Err, type Result } from "./result";
+import { SafeFnInternals } from "./internals";
+import { type Result } from "./result";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
@@ -15,7 +16,6 @@ import type {
   SchemaOutputOrFallback,
   TSafeFn,
 } from "./types";
-import { isFrameworkError } from "./util";
 
 export class SafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -31,24 +31,26 @@ export class SafeFn<
   TThrownHandler extends AnySafeFnThrownHandler,
   TOmit extends BuilderSteps | "",
 > {
-  readonly _parent: TParent;
-  readonly _inputSchema: TInputSchema;
-  readonly _outputSchema: TOutputSchema;
-  readonly _actionFn: TActionFn;
-  readonly _uncaughtErrorHandler: TThrownHandler;
+  readonly _internals: SafeFnInternals<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    TActionFn,
+    TThrownHandler
+  >;
 
-  protected constructor(args: {
-    parent?: TParent;
-    inputSchema: TInputSchema;
-    outputSchema: TOutputSchema;
-    actionFn: TActionFn;
-    uncaughtErrorHandler: TThrownHandler;
-  }) {
-    this._parent = args.parent as TParent;
-    this._inputSchema = args.inputSchema;
-    this._outputSchema = args.outputSchema;
-    this._actionFn = args.actionFn;
-    this._uncaughtErrorHandler = args.uncaughtErrorHandler;
+  protected constructor(
+    internals: SafeFnInternals<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      TActionFn,
+      TThrownHandler
+    >,
+  ) {
+    this._internals = internals;
   }
 
   /*
@@ -69,20 +71,8 @@ export class SafeFn<
     SafeFnDefaultThrowHandler,
     "run"
   > {
-    return new SafeFn({
-      parent,
-      inputSchema: undefined,
-      outputSchema: undefined,
-      actionFn: () =>
-        err({
-          code: "NO_ACTION",
-        } as const),
-      uncaughtErrorHandler: (error: unknown) =>
-        err({
-          code: "UNCAUGHT_ERROR",
-          cause: error,
-        } as const),
-    });
+    const internals = SafeFnInternals.new(parent);
+    return new SafeFn(internals);
   }
 
   input<TNewInputSchema extends z.ZodTypeAny>(
@@ -101,16 +91,7 @@ export class SafeFn<
     TThrownHandler,
     TOmit | "input" | "unparsedInput"
   > {
-    return new SafeFn({
-      inputSchema: schema,
-      outputSchema: this._outputSchema,
-      // Input redefined so action args no longer match.
-      // TODO: This situation should be prevented by omit args on SafeFn class in the future.
-      // @ts-expect-error
-      actionFn: this._actionFn,
-      uncaughtErrorHandler: this._uncaughtErrorHandler,
-      parent: this._parent,
-    });
+    return new SafeFn(this._internals.input(schema)) as any;
   }
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
@@ -123,16 +104,7 @@ export class SafeFn<
     TThrownHandler,
     TOmit | "input" | "unparsedInput"
   > {
-    return new SafeFn({
-      inputSchema: this._inputSchema,
-      outputSchema: this._outputSchema,
-      // Input redefined so action args no longer match.
-      // TODO: This situation should be prevented by omit args on SafeFn class in the future.
-      // @ts-expect-error
-      actionFn: this._actionFn,
-      uncaughtErrorHandler: this._uncaughtErrorHandler,
-      parent: this._parent,
-    });
+    return new SafeFn(this._internals.unparsedInput()) as any;
   }
 
   output<TNewOutputSchema extends z.ZodTypeAny>(
@@ -146,16 +118,7 @@ export class SafeFn<
     TThrownHandler,
     TOmit | "output"
   > {
-    return new SafeFn({
-      inputSchema: this._inputSchema,
-      outputSchema: schema,
-      // Output redefined so action args no longer match.
-      // TODO: This situation should be prevented by omit args on SafeFn class in the future.
-      // @ts-expect-error
-      actionFn: this._actionFn,
-      uncaughtErrorHandler: this._uncaughtErrorHandler,
-      parent: this._parent,
-    });
+    return new SafeFn(this._internals.output(schema)) as any;
   }
 
   error<TNewThrownHandler extends AnySafeFnThrownHandler>(
@@ -169,13 +132,7 @@ export class SafeFn<
     TNewThrownHandler,
     TOmit | "error"
   > {
-    return new SafeFn({
-      inputSchema: this._inputSchema,
-      outputSchema: this._outputSchema,
-      actionFn: this._actionFn as any,
-      uncaughtErrorHandler: handler,
-      parent: this._parent,
-    });
+    return new SafeFn(this._internals.error(handler)) as any;
   }
 
   action<
@@ -196,13 +153,7 @@ export class SafeFn<
     TThrownHandler,
     Exclude<TOmit, "run"> | "input" | "output" | "unparsedInput" | "action"
   > {
-    return new SafeFn({
-      inputSchema: this._inputSchema,
-      outputSchema: this._outputSchema,
-      actionFn: actionFn as any,
-      uncaughtErrorHandler: this._uncaughtErrorHandler,
-      parent: this._parent,
-    }) as any;
+    return new SafeFn(this._internals.action(actionFn)) as any;
   }
 
   createAction(): (
@@ -226,48 +177,7 @@ export class SafeFn<
   ): Promise<
     SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
   > {
-    try {
-      let ctx: any;
-
-      if (this._parent !== undefined) {
-        const parentRes = await this._parent.run(args);
-        if (!parentRes.success) {
-          return parentRes as any;
-        }
-        ctx = parentRes.data;
-      }
-
-      let parsedInput: typeof args.parsedInput = undefined;
-      if (this._inputSchema !== undefined) {
-        const parseRes = await this._parseInput(args);
-        if (!parseRes.success) {
-          return parseRes;
-        } else {
-          parsedInput = parseRes.data;
-        }
-      }
-      const actionRes = await this._actionFn({
-        parsedInput,
-        unparsedInput: args,
-        // TODO: pass context when functions are set up
-        ctx,
-      } as any);
-
-      if (!actionRes.success) {
-        return actionRes;
-      }
-
-      if (this._outputSchema !== undefined) {
-        return await this._parseOutput(actionRes.data);
-      }
-
-      return actionRes;
-    } catch (error) {
-      if (isFrameworkError(error)) {
-        throw error;
-      }
-      return await this._uncaughtErrorHandler(error);
-    }
+    return this._internals.run(args);
   }
 
   /*
@@ -286,20 +196,7 @@ export class SafeFn<
       SafeFnInputParseError<TInputSchema>
     >
   > {
-    if (this._inputSchema === undefined) {
-      throw new Error("No input schema defined");
-    }
-
-    const res = await this._inputSchema.safeParseAsync(input);
-
-    if (res.success) {
-      return ok(res.data);
-    }
-
-    return err({
-      code: "INPUT_PARSING",
-      cause: res.error,
-    }) as Err<SafeFnInputParseError<TInputSchema>>;
+    return this._internals._parseInput(input);
   }
 
   async _parseOutput(
@@ -310,19 +207,6 @@ export class SafeFn<
       SafeFnOutputParseError<TOutputSchema>
     >
   > {
-    if (this._outputSchema === undefined) {
-      throw new Error("No output schema defined");
-    }
-
-    const res = await this._outputSchema.safeParseAsync(output);
-
-    if (res.success) {
-      return ok(res.data);
-    }
-
-    return err({
-      code: "OUTPUT_PARSING",
-      cause: res.error,
-    }) as Err<SafeFnOutputParseError<TOutputSchema>>;
+    return this._internals._parseOutput(output);
   }
 }
