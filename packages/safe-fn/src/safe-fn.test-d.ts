@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 import { err, ok, type Err, type InferErrError, type Result } from "./result";
-import { SafeFn } from "./safe-fn";
+import { SafeFnBuilder } from "./safe-fn";
 import type {
   SafeFnDefaultThrowHandler,
   SafeFnInputParseError,
@@ -11,7 +11,7 @@ import type {
 describe("input", () => {
   test("should properly type the input schema for primitives", () => {
     const inputSchema = z.string();
-    const safeFn = SafeFn.new().input(inputSchema);
+    const safeFn = SafeFnBuilder.new().input(inputSchema);
     expectTypeOf(safeFn._internals._inputSchema).toEqualTypeOf<
       typeof inputSchema
     >();
@@ -24,7 +24,7 @@ describe("input", () => {
         value: z.number(),
       }),
     });
-    const safeFn = SafeFn.new().input(inputSchema);
+    const safeFn = SafeFnBuilder.new().input(inputSchema);
     expectTypeOf(safeFn._internals._inputSchema).toEqualTypeOf<
       typeof inputSchema
     >();
@@ -39,7 +39,7 @@ describe("input", () => {
         }),
       })
       .transform(({ test }) => ({ test, newProperty: "test" }));
-    const safeFn = SafeFn.new().input(inputSchema);
+    const safeFn = SafeFnBuilder.new().input(inputSchema);
     expectTypeOf(safeFn._internals._inputSchema).toEqualTypeOf<
       typeof inputSchema
     >();
@@ -49,7 +49,7 @@ describe("input", () => {
 describe("output", () => {
   test("should properly type the output schema for primitives", () => {
     const outputSchema = z.string();
-    const safeFn = SafeFn.new().output(outputSchema);
+    const safeFn = SafeFnBuilder.new().output(outputSchema);
     expectTypeOf(safeFn._internals._outputSchema).toEqualTypeOf<
       typeof outputSchema
     >();
@@ -62,7 +62,7 @@ describe("output", () => {
         value: z.number(),
       }),
     });
-    const safeFn = SafeFn.new().output(outputSchema);
+    const safeFn = SafeFnBuilder.new().output(outputSchema);
     expectTypeOf(safeFn._internals._outputSchema).toEqualTypeOf<
       typeof outputSchema
     >();
@@ -77,7 +77,7 @@ describe("output", () => {
         }),
       })
       .transform(({ test }) => ({ test, newProperty: "test" }));
-    const safeFn = SafeFn.new().output(outputSchema);
+    const safeFn = SafeFnBuilder.new().output(outputSchema);
     expectTypeOf(safeFn._internals._outputSchema).toEqualTypeOf<
       typeof outputSchema
     >();
@@ -88,7 +88,7 @@ describe("action", () => {
   describe("input", () => {
     test("should type parsed input as empty object without input schema"),
       () => {
-        const safeFn = SafeFn.new();
+        const safeFn = SafeFnBuilder.new();
         type ActionFn = Parameters<typeof safeFn.action>[0];
         type ActionFnArgs = Parameters<ActionFn>[0];
 
@@ -96,7 +96,7 @@ describe("action", () => {
       };
     test("should type parsed input as inputSchema for primitives ", () => {
       const inputSchema = z.string();
-      const safeFn = SafeFn.new().input(inputSchema);
+      const safeFn = SafeFnBuilder.new().input(inputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
@@ -113,7 +113,7 @@ describe("action", () => {
           value: z.number(),
         }),
       });
-      const safeFn = SafeFn.new().input(inputSchema);
+      const safeFn = SafeFnBuilder.new().input(inputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
@@ -132,7 +132,7 @@ describe("action", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFn.new().input(inputSchema);
+      const safeFn = SafeFnBuilder.new().input(inputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
@@ -143,7 +143,7 @@ describe("action", () => {
     });
 
     test("should type unparsed input as unknown without input schema", () => {
-      const safeFn = SafeFn.new();
+      const safeFn = SafeFnBuilder.new();
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
 
@@ -152,7 +152,7 @@ describe("action", () => {
 
     test("should type unparsed input as inputSchema for primitives", () => {
       const inputSchema = z.string();
-      const safeFn = SafeFn.new().input(inputSchema);
+      const safeFn = SafeFnBuilder.new().input(inputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
@@ -169,7 +169,7 @@ describe("action", () => {
           value: z.number(),
         }),
       });
-      const safeFn = SafeFn.new().input(inputSchema);
+      const safeFn = SafeFnBuilder.new().input(inputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
@@ -188,7 +188,7 @@ describe("action", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFn.new().input(inputSchema);
+      const safeFn = SafeFnBuilder.new().input(inputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
@@ -201,7 +201,7 @@ describe("action", () => {
 
   describe("unparsedInput", () => {
     test("Should allow manually setting unparsedInput type", () => {
-      const safeFn = SafeFn.new().unparsedInput<{ test: string }>();
+      const safeFn = SafeFnBuilder.new().unparsedInput<{ test: string }>();
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnArgs = Parameters<ActionFn>[0];
@@ -214,7 +214,7 @@ describe("action", () => {
 
   describe("output", () => {
     test("should type output as any without output schema", () => {
-      const safeFn = SafeFn.new();
+      const safeFn = SafeFnBuilder.new();
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
 
@@ -223,7 +223,7 @@ describe("action", () => {
 
     test("should type output as outputSchema for primitives", () => {
       const outputSchema = z.string();
-      const safeFn = SafeFn.new().output(outputSchema);
+      const safeFn = SafeFnBuilder.new().output(outputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
@@ -240,7 +240,7 @@ describe("action", () => {
           value: z.number(),
         }),
       });
-      const safeFn = SafeFn.new().output(outputSchema);
+      const safeFn = SafeFnBuilder.new().output(outputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
@@ -259,7 +259,7 @@ describe("action", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFn.new().output(outputSchema);
+      const safeFn = SafeFnBuilder.new().output(outputSchema);
 
       type ActionFn = Parameters<typeof safeFn.action>[0];
       type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
@@ -275,7 +275,7 @@ describe("run", () => {
   describe("input", () => {
     test("should type input as inputSchema input for primitives", () => {
       const inputSchema = z.string();
-      const safeFn = SafeFn.new()
+      const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .action((args) => ok(args.parsedInput));
 
@@ -291,7 +291,7 @@ describe("run", () => {
           value: z.number(),
         }),
       });
-      const safeFn = SafeFn.new()
+      const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .action((args) => ok(args.parsedInput));
 
@@ -309,7 +309,7 @@ describe("run", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFn.new()
+      const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .action((args) => ok(args.parsedInput));
 
@@ -332,7 +332,7 @@ describe("run", () => {
     //   >();
     // });
     test("should infer success return type from action when no output schema is provided", async () => {
-      const safeFn = SafeFn.new().action(() => ok("data" as const));
+      const safeFn = SafeFnBuilder.new().action(() => ok("data" as const));
 
       expectTypeOf(safeFn.run({})).resolves.toMatchTypeOf<
         Result<"data", any>
@@ -341,7 +341,7 @@ describe("run", () => {
 
     test("should type output as Ok<outputSchema> for transformed values", async () => {
       const outputSchema = z.string().transform((data) => data + "!");
-      const safeFn = SafeFn.new()
+      const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
         .action(() => ok(""));
 
@@ -354,7 +354,7 @@ describe("run", () => {
 
   describe("error", () => {
     test("should infer Err return as default when no error function is set", async () => {
-      const safeFn = SafeFn.new().action(() => ok("data" as const));
+      const safeFn = SafeFnBuilder.new().action(() => ok("data" as const));
 
       type Res = Awaited<ReturnType<typeof safeFn.run>>;
       type InferredErrError = InferErrError<Res>;
@@ -364,7 +364,7 @@ describe("run", () => {
     });
 
     test("should infer Err return type from action when no error function is set", async () => {
-      const safeFn = SafeFn.new().action(() => err("my error" as const));
+      const safeFn = SafeFnBuilder.new().action(() => err("my error" as const));
       type Res = Awaited<ReturnType<typeof safeFn.run>>;
       type InferredErrError = InferErrError<Res>;
       expectTypeOf<InferredErrError>().toEqualTypeOf<
@@ -373,7 +373,7 @@ describe("run", () => {
     });
 
     test("should infer Err return type from action when error function is set", async () => {
-      const safeFn = SafeFn.new()
+      const safeFn = SafeFnBuilder.new()
         .action(() => {
           return err("error" as const);
         })
@@ -390,7 +390,7 @@ describe("run", () => {
 describe("internals", () => {
   describe("_parseInput", () => {
     test("should return Result Ok as never when no input schema is defined", async () => {
-      const safeFn = SafeFn.new();
+      const safeFn = SafeFnBuilder.new();
       const res = await safeFn._parseInput("data");
       expectTypeOf(res).toMatchTypeOf<Result<never, any>>();
     });
@@ -404,7 +404,7 @@ describe("internals", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFn.new().input(inputSchema);
+      const safeFn = SafeFnBuilder.new().input(inputSchema);
       const res = await safeFn._parseInput("data");
       expectTypeOf(res).toMatchTypeOf<
         Result<z.output<typeof inputSchema>, any>
@@ -412,7 +412,7 @@ describe("internals", () => {
     });
 
     test("should type Result Err as never without input schema", async () => {
-      const safeFn = SafeFn.new();
+      const safeFn = SafeFnBuilder.new();
       const res = await safeFn._parseInput(123);
       expectTypeOf(res).toEqualTypeOf<Result<never, never>>();
     });
@@ -426,7 +426,7 @@ describe("internals", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFn.new().input(inputSchema);
+      const safeFn = SafeFnBuilder.new().input(inputSchema);
       const res = await safeFn._parseInput(123);
       expectTypeOf(res).toMatchTypeOf<
         Result<any, SafeFnInputParseError<typeof inputSchema>>
@@ -436,7 +436,7 @@ describe("internals", () => {
 
   describe("_parseOutput", () => {
     test("should return Result Ok as never when no output schema is defined", async () => {
-      const safeFn = SafeFn.new();
+      const safeFn = SafeFnBuilder.new();
       const res = await safeFn._parseOutput("data");
       expectTypeOf(res).toMatchTypeOf<Result<never, any>>();
     });
@@ -450,7 +450,7 @@ describe("internals", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFn.new().output(outputSchema);
+      const safeFn = SafeFnBuilder.new().output(outputSchema);
       const res = await safeFn._parseOutput("data");
       expectTypeOf(res).toMatchTypeOf<
         Result<z.output<typeof outputSchema>, any>
@@ -458,7 +458,7 @@ describe("internals", () => {
     });
 
     test("should type Result Err as never without output schema", async () => {
-      const safeFn = SafeFn.new();
+      const safeFn = SafeFnBuilder.new();
       const res = await safeFn._parseOutput(123);
       expectTypeOf(res).toEqualTypeOf<Result<never, never>>();
     });
@@ -472,7 +472,7 @@ describe("internals", () => {
           }),
         })
         .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFn.new().output(outputSchema);
+      const safeFn = SafeFnBuilder.new().output(outputSchema);
       const res = await safeFn._parseOutput(123);
       expectTypeOf(res).toMatchTypeOf<
         Result<any, SafeFnOutputParseError<typeof outputSchema>>
@@ -483,7 +483,7 @@ describe("internals", () => {
 
 describe("error", () => {
   test("should properly type the _uncaughtErrorHandler function", () => {
-    const safeFn = SafeFn.new().error((error) => err("hello" as const));
+    const safeFn = SafeFnBuilder.new().error((error) => err("hello" as const));
 
     type res = ReturnType<typeof safeFn._internals._uncaughtErrorHandler>;
     expectTypeOf(safeFn._internals._uncaughtErrorHandler).toEqualTypeOf<
@@ -494,10 +494,12 @@ describe("error", () => {
 
 describe("parent", () => {
   test("should properly type the _parent function", () => {
-    const safeFn1 = SafeFn.new()
+    const safeFn1 = SafeFnBuilder.new()
       .input(z.object({ name: z.string() }))
       .action(() => ok(""));
-    const safeFn2 = SafeFn.new(safeFn1).input(z.object({ age: z.number() }));
+    const safeFn2 = SafeFnBuilder.new(safeFn1).input(
+      z.object({ age: z.number() }),
+    );
     expectTypeOf(safeFn2._internals._parent).toEqualTypeOf(safeFn1);
   });
 
@@ -509,10 +511,10 @@ describe("parent", () => {
         test("should merge parsedInput when parent and child have input schema", () => {
           const input1 = z.object({ name: z.string() });
           const input2 = z.object({ age: z.number() });
-          const safeFn1 = SafeFn.new()
+          const safeFn1 = SafeFnBuilder.new()
             .input(input1)
             .action(() => ok(""));
-          const safeFn2 = SafeFn.new(safeFn1).input(input2);
+          const safeFn2 = SafeFnBuilder.new(safeFn1).input(input2);
 
           type S2ParsedInput = Parameters<
             Parameters<typeof safeFn2.action>[0]
@@ -535,10 +537,10 @@ describe("parent", () => {
             newProperty2: "test",
           }));
 
-          const safeFn1 = SafeFn.new()
+          const safeFn1 = SafeFnBuilder.new()
             .input(input1)
             .action(() => ok(""));
-          const safeFn2 = SafeFn.new(safeFn1).input(input2);
+          const safeFn2 = SafeFnBuilder.new(safeFn1).input(input2);
 
           type S2ParsedInput = Parameters<
             Parameters<typeof safeFn2.action>[0]
@@ -551,8 +553,10 @@ describe("parent", () => {
 
         test("should take parsedInput from child when parent has no input schema", () => {
           const input = z.object({ name: z.string() });
-          const safeFn1 = SafeFn.new().action((args) => ok(args.parsedInput));
-          const safeFn2 = SafeFn.new(safeFn1).input(input);
+          const safeFn1 = SafeFnBuilder.new().action((args) =>
+            ok(args.parsedInput),
+          );
+          const safeFn2 = SafeFnBuilder.new(safeFn1).input(input);
 
           type S2ParsedInput = Parameters<
             Parameters<typeof safeFn2.action>[0]
@@ -563,10 +567,10 @@ describe("parent", () => {
 
         test("should take parsedInput from parent when child has no input schema", () => {
           const input = z.object({ name: z.string() });
-          const safeFn1 = SafeFn.new()
+          const safeFn1 = SafeFnBuilder.new()
             .input(input)
             .action(() => ok(""));
-          const safeFn2 = SafeFn.new(safeFn1);
+          const safeFn2 = SafeFnBuilder.new(safeFn1);
 
           type S2ParsedInput = Parameters<
             Parameters<typeof safeFn2.action>[0]
@@ -578,8 +582,10 @@ describe("parent", () => {
 
       describe("ctx", () => {
         test("should type ctx as unwrapped OK value from parent", () => {
-          const safeFn1 = SafeFn.new().action(() => ok("ctx return" as const));
-          const safeFn2 = SafeFn.new(safeFn1);
+          const safeFn1 = SafeFnBuilder.new().action(() =>
+            ok("ctx return" as const),
+          );
+          const safeFn2 = SafeFnBuilder.new(safeFn1);
 
           type S2Ctx = Parameters<
             Parameters<typeof safeFn2.action>[0]
@@ -588,8 +594,10 @@ describe("parent", () => {
         });
 
         test("should type ctx as empty object if parent never returns", () => {
-          const safeFn1 = SafeFn.new().action(() => err("ctx return" as const));
-          const safeFn2 = SafeFn.new(safeFn1);
+          const safeFn1 = SafeFnBuilder.new().action(() =>
+            err("ctx return" as const),
+          );
+          const safeFn2 = SafeFnBuilder.new(safeFn1);
 
           type S2Ctx = Parameters<
             Parameters<typeof safeFn2.action>[0]

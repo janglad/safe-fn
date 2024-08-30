@@ -6,7 +6,7 @@ import type {
   InferOkData,
   Result,
 } from "./result";
-import type { SafeFn } from "./safe-fn";
+import type { SafeFnBuilder } from "./safe-fn";
 
 export type AnySafeFn = TSafeFn<any, any, any, any, any, any, BuilderSteps>;
 export type AnyRunnableSafeFn = AnySafeFn & {
@@ -52,7 +52,7 @@ export type TSafeFn<
   TThrownHandler extends AnySafeFnThrownHandler,
   TOmit extends BuilderSteps | "",
 > = Omit<
-  SafeFn<
+  SafeFnBuilder<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -87,7 +87,7 @@ export type InferOutputSchema<T> = T extends AnySafeFn
   ? T["_internals"]["_outputSchema"]
   : never;
 export type InferUnparsedInput<T> =
-  T extends SafeFn<any, any, any, infer TUnparsed, any, any, any>
+  T extends SafeFnBuilder<any, any, any, infer TUnparsed, any, any, any>
     ? TUnparsed
     : never;
 

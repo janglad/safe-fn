@@ -1,6 +1,6 @@
 import type { Err, Ok, Result } from "./result";
 import { err, ok } from "./result";
-import { SafeFn } from "./safe-fn";
+import { SafeFnBuilder } from "./safe-fn";
 
 import type {
   AnyCompleteSafeFn,
@@ -27,7 +27,7 @@ import type {
   TSafeFn,
 } from "./types";
 
-export { err, ok, SafeFn };
+export { err, ok, SafeFnBuilder as SafeFn };
 export type {
   AnyCompleteSafeFn,
   AnyRunnableSafeFn,

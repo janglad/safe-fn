@@ -17,7 +17,7 @@ import type {
   TSafeFn,
 } from "./types";
 
-export class SafeFn<
+export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
@@ -72,7 +72,7 @@ export class SafeFn<
     "run"
   > {
     const internals = SafeFnInternals.new(parent);
-    return new SafeFn(internals);
+    return new SafeFnBuilder(internals);
   }
 
   input<TNewInputSchema extends z.ZodTypeAny>(
@@ -91,7 +91,7 @@ export class SafeFn<
     TThrownHandler,
     TOmit | "input" | "unparsedInput"
   > {
-    return new SafeFn(this._internals.input(schema)) as any;
+    return new SafeFnBuilder(this._internals.input(schema)) as any;
   }
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
@@ -104,7 +104,7 @@ export class SafeFn<
     TThrownHandler,
     TOmit | "input" | "unparsedInput"
   > {
-    return new SafeFn(this._internals.unparsedInput()) as any;
+    return new SafeFnBuilder(this._internals.unparsedInput()) as any;
   }
 
   output<TNewOutputSchema extends z.ZodTypeAny>(
@@ -118,7 +118,7 @@ export class SafeFn<
     TThrownHandler,
     TOmit | "output"
   > {
-    return new SafeFn(this._internals.output(schema)) as any;
+    return new SafeFnBuilder(this._internals.output(schema)) as any;
   }
 
   error<TNewThrownHandler extends AnySafeFnThrownHandler>(
@@ -132,7 +132,7 @@ export class SafeFn<
     TNewThrownHandler,
     TOmit | "error"
   > {
-    return new SafeFn(this._internals.error(handler)) as any;
+    return new SafeFnBuilder(this._internals.error(handler)) as any;
   }
 
   action<
@@ -153,7 +153,7 @@ export class SafeFn<
     TThrownHandler,
     Exclude<TOmit, "run"> | "input" | "output" | "unparsedInput" | "action"
   > {
-    return new SafeFn(this._internals.action(actionFn)) as any;
+    return new SafeFnBuilder(this._internals.action(actionFn)) as any;
   }
 
   createAction(): (
