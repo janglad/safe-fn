@@ -30,18 +30,6 @@ export type SafeFnInternals<
 
 export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
 
-// TODO: organize and naming
-export type InferCompleteFnRunArgs<T extends AnyRunnableSafeFn> = Parameters<
-  T["run"]
->[0];
-export type InferCompleteFnReturn<T extends AnyRunnableSafeFn> = Awaited<
-  ReturnType<T["run"]>
->;
-export type InferCompleteFnReturnData<T extends AnyRunnableSafeFn> =
-  InferOkData<Awaited<ReturnType<T["run"]>>>;
-export type InferCompleteFnReturnError<T extends AnyRunnableSafeFn> =
-  InferErrError<Awaited<ReturnType<T["run"]>>>;
-
 /*
 ################################
 ||                            ||
@@ -69,14 +57,16 @@ export type InferUnparsedInput<T> =
     ? TUnparsed
     : never;
 
-export type InferRunArgs<T> = T extends AnyRunnableSafeFn
-  ? Parameters<T["run"]>[0]
-  : never;
-export type InferReturn<T> = T extends AnyRunnableSafeFn
-  ? Prettify<Awaited<ReturnType<T["run"]>>>
-  : never;
-export type InferReturnData<T> = InferOkData<InferReturn<T>>;
-export type InferReturnError<T> = InferErrError<InferReturn<T>>;
+export type InferRunArgs<T extends AnyRunnableSafeFn> = Parameters<T["run"]>[0];
+export type InferReturn<T extends AnyRunnableSafeFn> = Prettify<
+  Awaited<ReturnType<T["run"]>>
+>;
+export type InferReturnData<T extends AnyRunnableSafeFn> = InferOkData<
+  InferReturn<T>
+>;
+export type InferReturnError<T extends AnyRunnableSafeFn> = InferErrError<
+  InferReturn<T>
+>;
 /*
 ################################
 ||                            ||
