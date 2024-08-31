@@ -8,6 +8,26 @@ import type {
 } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
 
+export type SafeFnInternals<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnInput,
+  TUnparsedInput,
+  TActionFn extends SafeFnActionFn<
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    TParent
+  >,
+  TThrownHandler extends AnySafeFnThrownHandler,
+> = {
+  parent: TParent;
+  inputSchema: TInputSchema;
+  outputSchema: TOutputSchema;
+  actionFn: TActionFn;
+  uncaughtErrorHandler: TThrownHandler;
+};
+
 export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
 
 // TODO: organize and naming

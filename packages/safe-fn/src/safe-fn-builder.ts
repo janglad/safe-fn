@@ -9,27 +9,8 @@ import type {
   SafeFnDefaultActionFn,
   SafeFnDefaultThrowHandler,
   SafeFnInput,
+  SafeFnInternals,
 } from "./types";
-
-export type TInternals<
-  TParent extends AnyRunnableSafeFn | undefined,
-  TInputSchema extends SafeFnInput,
-  TOutputSchema extends SafeFnInput,
-  TUnparsedInput,
-  TActionFn extends SafeFnActionFn<
-    TInputSchema,
-    TOutputSchema,
-    TUnparsedInput,
-    TParent
-  >,
-  TThrownHandler extends AnySafeFnThrownHandler,
-> = {
-  parent: TParent;
-  inputSchema: TInputSchema;
-  outputSchema: TOutputSchema;
-  actionFn: TActionFn;
-  uncaughtErrorHandler: TThrownHandler;
-};
 
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -44,7 +25,7 @@ export class SafeFnBuilder<
   >,
   TThrownHandler extends AnySafeFnThrownHandler,
 > {
-  readonly _internals: TInternals<
+  readonly _internals: SafeFnInternals<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -54,7 +35,7 @@ export class SafeFnBuilder<
   >;
 
   protected constructor(
-    internals: TInternals<
+    internals: SafeFnInternals<
       TParent,
       TInputSchema,
       TOutputSchema,

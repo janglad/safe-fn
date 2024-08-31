@@ -1,11 +1,11 @@
 import { err, ok, type Err, type Result } from "./result";
-import type { TInternals } from "./safe-fn-builder";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
   SafeFnActionFn,
   SafeFnInput,
   SafeFnInputParseError,
+  SafeFnInternals,
   SafeFnOutputParseError,
   SafeFnReturn,
   SafeFnRunArgs,
@@ -26,7 +26,7 @@ export class RunnableSafeFn<
   >,
   TThrownHandler extends AnySafeFnThrownHandler,
 > {
-  readonly _internals: TInternals<
+  readonly _internals: SafeFnInternals<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -36,7 +36,7 @@ export class RunnableSafeFn<
   >;
 
   constructor(
-    internals: TInternals<
+    internals: SafeFnInternals<
       TParent,
       TInputSchema,
       TOutputSchema,
