@@ -7,22 +7,20 @@ import type {
   Result,
 } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
-import type { SafeFnBuilder } from "./safe-fn-builder";
 
-export type AnySafeFnBuilder = SafeFnBuilder<any, any, any, any, any, any>;
 export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
 
 // TODO: organize and naming
-export type AnyCompleteSafeFn = AnyRunnableSafeFn["run"];
-export type InferCompleteFnRunArgs<T extends AnyCompleteSafeFn> =
-  Parameters<T>[0];
-export type InferCompleteFnReturn<T extends AnyCompleteSafeFn> = Awaited<
-  ReturnType<T>
+export type InferCompleteFnRunArgs<T extends AnyRunnableSafeFn> = Parameters<
+  T["run"]
+>[0];
+export type InferCompleteFnReturn<T extends AnyRunnableSafeFn> = Awaited<
+  ReturnType<T["run"]>
 >;
-export type InferCompleteFnReturnData<T extends AnyCompleteSafeFn> =
-  InferOkData<Awaited<ReturnType<T>>>;
-export type InferCompleteFnReturnError<T extends AnyCompleteSafeFn> =
-  InferErrError<Awaited<ReturnType<T>>>;
+export type InferCompleteFnReturnData<T extends AnyRunnableSafeFn> =
+  InferOkData<Awaited<ReturnType<T["run"]>>>;
+export type InferCompleteFnReturnError<T extends AnyRunnableSafeFn> =
+  InferErrError<Awaited<ReturnType<T["run"]>>>;
 
 /*
 ################################
