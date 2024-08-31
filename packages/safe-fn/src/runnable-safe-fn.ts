@@ -1,5 +1,5 @@
-import type { SafeFnInternals } from "./internals";
 import { err, ok, type Err, type Result } from "./result";
+import type { TInternals } from "./safe-fn-builder";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
@@ -26,7 +26,7 @@ export class RunnableSafeFn<
   >,
   TThrownHandler extends AnySafeFnThrownHandler,
 > {
-  readonly _internals: SafeFnInternals<
+  readonly _internals: TInternals<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -36,7 +36,7 @@ export class RunnableSafeFn<
   >;
 
   constructor(
-    internals: SafeFnInternals<
+    internals: TInternals<
       TParent,
       TInputSchema,
       TOutputSchema,
@@ -75,7 +75,10 @@ export class RunnableSafeFn<
     TActionFn,
     TNewThrownHandler
   > {
-    return new RunnableSafeFn(this._internals.error(handler));
+    return new RunnableSafeFn({
+      ...this._internals,
+      uncaughtErrorHandler: handler,
+    });
   }
 
   /*
@@ -93,8 +96,8 @@ export class RunnableSafeFn<
     try {
       let ctx: any;
 
-      if (this._internals._parent !== undefined) {
-        const parentRes = await this._internals._parent.run(args);
+      if (this._internals.parent !== undefined) {
+        const parentRes = await this._internals.parent.run(args);
         if (!parentRes.success) {
           return parentRes as any;
         }
@@ -102,7 +105,7 @@ export class RunnableSafeFn<
       }
 
       let parsedInput: typeof args.parsedInput = undefined;
-      if (this._internals._inputSchema !== undefined) {
+      if (this._internals.inputSchema !== undefined) {
         const parseRes = await this._parseInput(args);
         if (!parseRes.success) {
           return parseRes;
@@ -110,7 +113,7 @@ export class RunnableSafeFn<
           parsedInput = parseRes.data;
         }
       }
-      const actionRes = await this._internals._actionFn({
+      const actionRes = await this._internals.actionFn({
         parsedInput,
         unparsedInput: args,
         // TODO: pass context when functions are set up
@@ -121,7 +124,7 @@ export class RunnableSafeFn<
         return actionRes;
       }
 
-      if (this._internals._outputSchema !== undefined) {
+      if (this._internals.outputSchema !== undefined) {
         return await this._parseOutput(actionRes.data);
       }
 
@@ -130,7 +133,7 @@ export class RunnableSafeFn<
       if (isFrameworkError(error)) {
         throw error;
       }
-      return await this._internals._uncaughtErrorHandler(error);
+      return await this._internals.uncaughtErrorHandler(error);
     }
   }
 
@@ -150,11 +153,11 @@ export class RunnableSafeFn<
       SafeFnInputParseError<TInputSchema>
     >
   > {
-    if (this._internals._inputSchema === undefined) {
+    if (this._internals.inputSchema === undefined) {
       throw new Error("No input schema defined");
     }
 
-    const res = await this._internals._inputSchema.safeParseAsync(input);
+    const res = await this._internals.inputSchema.safeParseAsync(input);
 
     if (res.success) {
       return ok(res.data);
@@ -174,11 +177,11 @@ export class RunnableSafeFn<
       SafeFnOutputParseError<TOutputSchema>
     >
   > {
-    if (this._internals._outputSchema === undefined) {
+    if (this._internals.outputSchema === undefined) {
       throw new Error("No output schema defined");
     }
 
-    const res = await this._internals._outputSchema.safeParseAsync(output);
+    const res = await this._internals.outputSchema.safeParseAsync(output);
 
     if (res.success) {
       return ok(res.data);

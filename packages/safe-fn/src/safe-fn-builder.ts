@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { SafeFnInternals } from "./internals";
+
+import { err } from "./result";
 import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
@@ -9,6 +10,26 @@ import type {
   SafeFnDefaultThrowHandler,
   SafeFnInput,
 } from "./types";
+
+export type TInternals<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnInput,
+  TUnparsedInput,
+  TActionFn extends SafeFnActionFn<
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    TParent
+  >,
+  TThrownHandler extends AnySafeFnThrownHandler,
+> = {
+  parent: TParent;
+  inputSchema: TInputSchema;
+  outputSchema: TOutputSchema;
+  actionFn: TActionFn;
+  uncaughtErrorHandler: TThrownHandler;
+};
 
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -23,7 +44,7 @@ export class SafeFnBuilder<
   >,
   TThrownHandler extends AnySafeFnThrownHandler,
 > {
-  readonly _internals: SafeFnInternals<
+  readonly _internals: TInternals<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -33,7 +54,7 @@ export class SafeFnBuilder<
   >;
 
   protected constructor(
-    internals: SafeFnInternals<
+    internals: TInternals<
       TParent,
       TInputSchema,
       TOutputSchema,
@@ -62,8 +83,20 @@ export class SafeFnBuilder<
     SafeFnDefaultActionFn,
     SafeFnDefaultThrowHandler
   > {
-    const internals = SafeFnInternals.new(parent);
-    return new SafeFnBuilder(internals);
+    return new SafeFnBuilder({
+      parent,
+      inputSchema: undefined,
+      outputSchema: undefined,
+      actionFn: () =>
+        err({
+          code: "NO_ACTION",
+        } as const),
+      uncaughtErrorHandler: (error: unknown) =>
+        err({
+          code: "UNCAUGHT_ERROR",
+          cause: error,
+        } as const),
+    }) as any;
   }
 
   input<TNewInputSchema extends z.ZodTypeAny>(
@@ -84,7 +117,10 @@ export class SafeFnBuilder<
     >,
     "input" | "unparsedInput"
   > {
-    return new SafeFnBuilder(this._internals.input(schema));
+    return new SafeFnBuilder({
+      ...this._internals,
+      inputSchema: schema,
+    } as any);
   }
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
@@ -99,7 +135,14 @@ export class SafeFnBuilder<
     >,
     "input" | "unparsedInput"
   > {
-    return new SafeFnBuilder(this._internals.unparsedInput());
+    return this as unknown as SafeFnBuilder<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TNewUnparsedInput,
+      SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TParent>,
+      TThrownHandler
+    >;
   }
 
   output<TNewOutputSchema extends z.ZodTypeAny>(
@@ -115,23 +158,10 @@ export class SafeFnBuilder<
     >,
     "output"
   > {
-    return new SafeFnBuilder(this._internals.output(schema));
-  }
-
-  error<TNewThrownHandler extends AnySafeFnThrownHandler>(
-    handler: TNewThrownHandler,
-  ): Omit<
-    SafeFnBuilder<
-      TParent,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput,
-      TActionFn,
-      TNewThrownHandler
-    >,
-    "error"
-  > {
-    return new SafeFnBuilder(this._internals.error(handler));
+    return new SafeFnBuilder({
+      ...this._internals,
+      outputSchema: schema,
+    } as any);
   }
 
   action<
@@ -151,6 +181,9 @@ export class SafeFnBuilder<
     TNewActionFn,
     TThrownHandler
   > {
-    return new RunnableSafeFn(this._internals.action(actionFn));
+    return new RunnableSafeFn({
+      ...this._internals,
+      actionFn,
+    } as any) as any;
   }
 }

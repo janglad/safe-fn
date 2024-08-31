@@ -13,7 +13,7 @@ describe("input", () => {
   test("should properly type the input schema for primitives", () => {
     const inputSchema = z.string();
     const safeFn = SafeFnBuilder.new().input(inputSchema);
-    expectTypeOf(safeFn._internals._inputSchema).toEqualTypeOf<
+    expectTypeOf(safeFn._internals.inputSchema).toEqualTypeOf<
       typeof inputSchema
     >();
   });
@@ -26,7 +26,7 @@ describe("input", () => {
       }),
     });
     const safeFn = SafeFnBuilder.new().input(inputSchema);
-    expectTypeOf(safeFn._internals._inputSchema).toEqualTypeOf<
+    expectTypeOf(safeFn._internals.inputSchema).toEqualTypeOf<
       typeof inputSchema
     >();
   });
@@ -41,7 +41,7 @@ describe("input", () => {
       })
       .transform(({ test }) => ({ test, newProperty: "test" }));
     const safeFn = SafeFnBuilder.new().input(inputSchema);
-    expectTypeOf(safeFn._internals._inputSchema).toEqualTypeOf<
+    expectTypeOf(safeFn._internals.inputSchema).toEqualTypeOf<
       typeof inputSchema
     >();
   });
@@ -51,7 +51,7 @@ describe("output", () => {
   test("should properly type the output schema for primitives", () => {
     const outputSchema = z.string();
     const safeFn = SafeFnBuilder.new().output(outputSchema);
-    expectTypeOf(safeFn._internals._outputSchema).toEqualTypeOf<
+    expectTypeOf(safeFn._internals.outputSchema).toEqualTypeOf<
       typeof outputSchema
     >();
   });
@@ -64,7 +64,7 @@ describe("output", () => {
       }),
     });
     const safeFn = SafeFnBuilder.new().output(outputSchema);
-    expectTypeOf(safeFn._internals._outputSchema).toEqualTypeOf<
+    expectTypeOf(safeFn._internals.outputSchema).toEqualTypeOf<
       typeof outputSchema
     >();
   });
@@ -79,7 +79,7 @@ describe("output", () => {
       })
       .transform(({ test }) => ({ test, newProperty: "test" }));
     const safeFn = SafeFnBuilder.new().output(outputSchema);
-    expectTypeOf(safeFn._internals._outputSchema).toEqualTypeOf<
+    expectTypeOf(safeFn._internals.outputSchema).toEqualTypeOf<
       typeof outputSchema
     >();
   });
@@ -496,8 +496,8 @@ describe("error", () => {
       .action(() => ok(""))
       .error((error) => err("hello" as const));
 
-    type res = ReturnType<typeof safeFn._internals._uncaughtErrorHandler>;
-    expectTypeOf(safeFn._internals._uncaughtErrorHandler).toEqualTypeOf<
+    type res = ReturnType<typeof safeFn._internals.uncaughtErrorHandler>;
+    expectTypeOf(safeFn._internals.uncaughtErrorHandler).toEqualTypeOf<
       (error: unknown) => Err<"hello">
     >();
   });
@@ -511,7 +511,7 @@ describe("parent", () => {
     const safeFn2 = SafeFnBuilder.new(safeFn1).input(
       z.object({ age: z.number() }),
     );
-    expectTypeOf(safeFn2._internals._parent).toEqualTypeOf(safeFn1);
+    expectTypeOf(safeFn2._internals.parent).toEqualTypeOf(safeFn1);
   });
 
   describe("action", () => {

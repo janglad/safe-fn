@@ -14,7 +14,7 @@ describe("input", () => {
   test("should set the input schema", () => {
     const inputSchema = z.string();
     const safeFn = SafeFnBuilder.new().input(inputSchema);
-    expect(safeFn._internals._inputSchema).toEqual(inputSchema);
+    expect(safeFn._internals.inputSchema).toEqual(inputSchema);
   });
 });
 
@@ -22,7 +22,7 @@ describe("output", () => {
   test("should set the output schema", () => {
     const outputSchema = z.string();
     const safeFn = SafeFnBuilder.new().output(outputSchema);
-    expect(safeFn._internals._outputSchema).toEqual(outputSchema);
+    expect(safeFn._internals.outputSchema).toEqual(outputSchema);
   });
 });
 
@@ -30,7 +30,7 @@ describe("action", () => {
   test("should set the action function", () => {
     const actionFn = () => ok("data");
     const safeFn = SafeFnBuilder.new().action(actionFn);
-    expect(safeFn._internals._actionFn).toEqual(actionFn);
+    expect(safeFn._internals.actionFn).toEqual(actionFn);
   });
 });
 
@@ -241,7 +241,7 @@ describe("error", () => {
     const safeFn = SafeFnBuilder.new()
       .action(() => ok(""))
       .error(errorHandler);
-    expect(safeFn._internals._uncaughtErrorHandler).toEqual(errorHandler);
+    expect(safeFn._internals.uncaughtErrorHandler).toEqual(errorHandler);
   });
 });
 
@@ -249,7 +249,7 @@ describe("procedure", () => {
   test("should set parent procedure", () => {
     const safeFn1 = SafeFnBuilder.new().action(() => ok(""));
     const safeFn2 = SafeFnBuilder.new(safeFn1);
-    expect(safeFn2._internals._parent).toEqual(safeFn1);
+    expect(safeFn2._internals.parent).toEqual(safeFn1);
   });
 
   test("should return parent return value as ctx", () => {
