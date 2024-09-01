@@ -2,7 +2,7 @@ import { err, ok, type Err, type Result } from "./result";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
-  SafeFnActionFn,
+  SafeFnHandlerFn,
   SafeFnInput,
   SafeFnInputParseError,
   SafeFnInternals,
@@ -18,7 +18,7 @@ export class RunnableSafeFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
-  TActionFn extends SafeFnActionFn<
+  THandlerFn extends SafeFnHandlerFn<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -31,7 +31,7 @@ export class RunnableSafeFn<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    TActionFn,
+    THandlerFn,
     TThrownHandler
   >;
 
@@ -41,7 +41,7 @@ export class RunnableSafeFn<
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
-      TActionFn,
+      THandlerFn,
       TThrownHandler
     >,
   ) {
@@ -51,7 +51,7 @@ export class RunnableSafeFn<
   createAction(): (
     args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
   ) => Promise<
-    SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
+    SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler>
   > {
     // TODO: strip stack traces etc here
     return this.run.bind(this);
@@ -72,7 +72,7 @@ export class RunnableSafeFn<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    TActionFn,
+    THandlerFn,
     TNewThrownHandler
   > {
     return new RunnableSafeFn({
@@ -91,7 +91,7 @@ export class RunnableSafeFn<
   async run(
     args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
   ): Promise<
-    SafeFnReturn<TInputSchema, TOutputSchema, TActionFn, TThrownHandler>
+    SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler>
   > {
     try {
       let ctx: any;
@@ -113,22 +113,22 @@ export class RunnableSafeFn<
           parsedInput = parseRes.data;
         }
       }
-      const actionRes = await this._internals.actionFn({
+      const handlerRes = await this._internals.handler({
         parsedInput,
         unparsedInput: args,
         // TODO: pass context when functions are set up
         ctx,
       } as any);
 
-      if (!actionRes.success) {
-        return actionRes;
+      if (!handlerRes.success) {
+        return handlerRes;
       }
 
       if (this._internals.outputSchema !== undefined) {
-        return await this._parseOutput(actionRes.data);
+        return await this._parseOutput(handlerRes.data);
       }
 
-      return actionRes;
+      return handlerRes;
     } catch (error) {
       if (isFrameworkError(error)) {
         throw error;

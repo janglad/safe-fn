@@ -29,15 +29,15 @@ describe("output", () => {
 describe("action", () => {
   test("should set the action function", () => {
     const actionFn = () => ok("data");
-    const safeFn = SafeFnBuilder.new().action(actionFn);
-    expect(safeFn._internals.actionFn).toEqual(actionFn);
+    const safeFn = SafeFnBuilder.new().handler(actionFn);
+    expect(safeFn._internals.handler).toEqual(actionFn);
   });
 });
 
 describe("internals", () => {
   describe("_parseInput", () => {
     test("should throw when no input schema is defined", async () => {
-      const safeFn = SafeFnBuilder.new().action(() => ok("data" as any));
+      const safeFn = SafeFnBuilder.new().handler(() => ok("data" as any));
       expect(() => safeFn._parseInput("data")).rejects.toThrow();
     });
 
@@ -45,7 +45,7 @@ describe("internals", () => {
       const inputSchema = z.string();
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
-        .action(() => ok(""));
+        .handler(() => ok(""));
       const res = await safeFn._parseInput("data");
       expect(res).toEqual(ok("data"));
     });
@@ -55,7 +55,7 @@ describe("internals", () => {
       const inputSchema = z.string();
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
-        .action(() => ok(""));
+        .handler(() => ok(""));
       const res = await safeFn._parseInput(123);
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
@@ -68,7 +68,7 @@ describe("internals", () => {
       const inputSchema = z.string().transform((data) => data + "!");
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
-        .action(() => ok(""));
+        .handler(() => ok(""));
       const res = await safeFn._parseInput("data");
       expect(res).toEqual(ok("data!"));
     });
@@ -76,7 +76,7 @@ describe("internals", () => {
 
   describe("_parseOutput", () => {
     test("should throw when no output schema is defined", async () => {
-      const safeFn = SafeFnBuilder.new().action(() => ok("data" as any));
+      const safeFn = SafeFnBuilder.new().handler(() => ok("data" as any));
       expect(() => safeFn._parseOutput("data")).rejects.toThrow();
     });
 
@@ -84,7 +84,7 @@ describe("internals", () => {
       const outputSchema = z.string();
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
-        .action(() => ok(""));
+        .handler(() => ok(""));
       const res = await safeFn._parseOutput("data");
       expect(res).toEqual(ok("data"));
     });
@@ -93,7 +93,7 @@ describe("internals", () => {
       const outputSchema = z.string();
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
-        .action(() => ok(""));
+        .handler(() => ok(""));
       const res = await safeFn._parseOutput(123);
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
@@ -106,7 +106,7 @@ describe("internals", () => {
       const outputSchema = z.string().transform((data) => data + "!");
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
-        .action(() => ok(""));
+        .handler(() => ok(""));
       const res = await safeFn._parseOutput("data");
       expect(res).toEqual(ok("data!"));
     });
@@ -117,14 +117,14 @@ describe("run", () => {
   describe("input", () => {
     test("should set parsedInput to undefined when no input schema is defined", async () => {
       const res = await SafeFnBuilder.new()
-        .action((args) => ok(args.parsedInput))
+        .handler((args) => ok(args.parsedInput))
         .run({});
       expect(res).toEqual(ok(undefined));
     });
 
     test("should pass unparsedInput when no input schema is defined", async () => {
       const res = await SafeFnBuilder.new()
-        .action((args) => ok(args.unparsedInput))
+        .handler((args) => ok(args.unparsedInput))
         .run("data");
       expect(res).toEqual(ok("data"));
     });
@@ -133,7 +133,7 @@ describe("run", () => {
       const inputSchema = z.any().transform((_) => undefined);
       const res = await SafeFnBuilder.new()
         .input(inputSchema)
-        .action((args) => ok(args.unparsedInput))
+        .handler((args) => ok(args.unparsedInput))
         .run("data");
       expect(res).toEqual(ok("data"));
     });
@@ -142,7 +142,7 @@ describe("run", () => {
       const inputSchema = z.any().transform((_) => "parsed");
       const res = await SafeFnBuilder.new()
         .input(inputSchema)
-        .action((args) => ok(args.parsedInput))
+        .handler((args) => ok(args.parsedInput))
         .run("data");
       expect(res).toEqual(ok("parsed"));
     });
@@ -151,7 +151,7 @@ describe("run", () => {
       const inputSchema = z.string();
       const res = await SafeFnBuilder.new()
         .input(inputSchema)
-        .action((args) => ok(args.parsedInput))
+        .handler((args) => ok(args.parsedInput))
         // @ts-expect-error
         .run(123);
 
@@ -168,7 +168,7 @@ describe("run", () => {
   describe("output", () => {
     test("should return action result when no output schema is defined", async () => {
       const res = await SafeFnBuilder.new()
-        .action((args) => ok("data"))
+        .handler((args) => ok("data"))
         .run({});
       expect(res).toEqual(ok("data"));
     });
@@ -177,7 +177,7 @@ describe("run", () => {
       const outputSchema = z.any().transform((_) => "parsed");
       const res = await SafeFnBuilder.new()
         .output(outputSchema)
-        .action((args) => ok("Any string"))
+        .handler((args) => ok("Any string"))
         .run({});
       expect(res).toEqual(ok("parsed"));
     });
@@ -187,7 +187,7 @@ describe("run", () => {
       const res = await SafeFnBuilder.new()
         .output(outputSchema)
         // @ts-expect-error
-        .action((args) => ok(123))
+        .handler((args) => ok(123))
         .run({});
       expect(res.success).toBe(false);
       expect(res.data).toBeUndefined();
@@ -198,7 +198,7 @@ describe("run", () => {
 
   describe("error", () => {
     test("should not throw uncaught error without function provided", async () => {
-      const safeFn = SafeFnBuilder.new().action(() => {
+      const safeFn = SafeFnBuilder.new().handler(() => {
         throw new Error("error");
       });
 
@@ -207,7 +207,7 @@ describe("run", () => {
 
     test("should not throw uncaught error with function provided", async () => {
       const safeFn = SafeFnBuilder.new()
-        .action(() => {
+        .handler(() => {
           throw new Error("error");
         })
         .error(() => err("error"));
@@ -217,7 +217,7 @@ describe("run", () => {
 
     test("should pass uncaught error on to error handler", async () => {
       const safeFn = SafeFnBuilder.new()
-        .action(() => {
+        .handler(() => {
           throw new Error("a new error");
         })
         .error((error) => {
@@ -239,7 +239,7 @@ describe("error", () => {
   test("should set the error handler", () => {
     const errorHandler = () => err("error");
     const safeFn = SafeFnBuilder.new()
-      .action(() => ok(""))
+      .handler(() => ok(""))
       .error(errorHandler);
     expect(safeFn._internals.uncaughtErrorHandler).toEqual(errorHandler);
   });
@@ -247,14 +247,14 @@ describe("error", () => {
 
 describe("procedure", () => {
   test("should set parent procedure", () => {
-    const safeFn1 = SafeFnBuilder.new().action(() => ok(""));
+    const safeFn1 = SafeFnBuilder.new().handler(() => ok(""));
     const safeFn2 = SafeFnBuilder.new(safeFn1);
     expect(safeFn2._internals.parent).toEqual(safeFn1);
   });
 
   test("should return parent return value as ctx", () => {
-    const safeFn1 = SafeFnBuilder.new().action(() => ok("hello"));
-    const safeFn2 = SafeFnBuilder.new(safeFn1).action((args) => {
+    const safeFn1 = SafeFnBuilder.new().handler(() => ok("hello"));
+    const safeFn2 = SafeFnBuilder.new(safeFn1).handler((args) => {
       return ok(args.ctx);
     });
 

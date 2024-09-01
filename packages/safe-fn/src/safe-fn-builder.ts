@@ -5,9 +5,9 @@ import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
-  SafeFnActionFn,
-  SafeFnDefaultActionFn,
+  SafeFnDefaultHandlerFn,
   SafeFnDefaultThrowHandler,
+  SafeFnHandlerFn,
   SafeFnInput,
   SafeFnInternals,
 } from "./types";
@@ -17,7 +17,7 @@ export class SafeFnBuilder<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
-  TActionFn extends SafeFnActionFn<
+  THandlerFn extends SafeFnHandlerFn<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -30,7 +30,7 @@ export class SafeFnBuilder<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    TActionFn,
+    THandlerFn,
     TThrownHandler
   >;
 
@@ -40,7 +40,7 @@ export class SafeFnBuilder<
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
-      TActionFn,
+      THandlerFn,
       TThrownHandler
     >,
   ) {
@@ -61,16 +61,16 @@ export class SafeFnBuilder<
     undefined,
     undefined,
     unknown,
-    SafeFnDefaultActionFn,
+    SafeFnDefaultHandlerFn,
     SafeFnDefaultThrowHandler
   > {
     return new SafeFnBuilder({
       parent,
       inputSchema: undefined,
       outputSchema: undefined,
-      actionFn: () =>
+      handler: () =>
         err({
-          code: "NO_ACTION",
+          code: "NO_HANDLER",
         } as const),
       uncaughtErrorHandler: (error: unknown) =>
         err({
@@ -88,7 +88,7 @@ export class SafeFnBuilder<
       TNewInputSchema,
       TOutputSchema,
       TUnparsedInput,
-      SafeFnActionFn<
+      SafeFnHandlerFn<
         TNewInputSchema,
         TOutputSchema,
         z.input<TNewInputSchema>,
@@ -111,7 +111,7 @@ export class SafeFnBuilder<
       TInputSchema,
       TOutputSchema,
       TNewUnparsedInput,
-      SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TParent>,
+      SafeFnHandlerFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TParent>,
       TThrownHandler
     >,
     "input" | "unparsedInput"
@@ -121,7 +121,7 @@ export class SafeFnBuilder<
       TInputSchema,
       TOutputSchema,
       TNewUnparsedInput,
-      SafeFnActionFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TParent>,
+      SafeFnHandlerFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TParent>,
       TThrownHandler
     >;
   }
@@ -134,7 +134,7 @@ export class SafeFnBuilder<
       TInputSchema,
       TNewOutputSchema,
       TUnparsedInput,
-      SafeFnActionFn<TInputSchema, TNewOutputSchema, TUnparsedInput, TParent>,
+      SafeFnHandlerFn<TInputSchema, TNewOutputSchema, TUnparsedInput, TParent>,
       TThrownHandler
     >,
     "output"
@@ -145,26 +145,26 @@ export class SafeFnBuilder<
     } as any);
   }
 
-  action<
-    TNewActionFn extends SafeFnActionFn<
+  handler<
+    TNewHandlerFn extends SafeFnHandlerFn<
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
       TParent
     >,
   >(
-    actionFn: TNewActionFn,
+    handlerFn: TNewHandlerFn,
   ): RunnableSafeFn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    TNewActionFn,
+    TNewHandlerFn,
     TThrownHandler
   > {
     return new RunnableSafeFn({
       ...this._internals,
-      actionFn,
+      handler: handlerFn,
     } as any) as any;
   }
 }
