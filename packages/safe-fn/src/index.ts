@@ -32,7 +32,7 @@ export type {
   AnyRunnableSafeFn,
   AnySafeFnAction,
   AnySafeFnThrownHandler,
-  Err,
+  Err as Err,
   InferInputSchema,
   InferOutputSchema,
   InferReturn,

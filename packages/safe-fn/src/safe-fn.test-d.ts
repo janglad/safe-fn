@@ -500,7 +500,7 @@ describe("error", () => {
 
     type res = ReturnType<typeof safeFn._internals.uncaughtErrorHandler>;
     expectTypeOf(safeFn._internals.uncaughtErrorHandler).toEqualTypeOf<
-      (error: unknown) => Err<"hello">
+      (error: unknown) => Err<never, "hello">
     >();
   });
 });

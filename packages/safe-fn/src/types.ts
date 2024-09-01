@@ -117,14 +117,20 @@ export type AnySafeFnThrownHandler = (
   error: unknown,
 ) => MaybePromise<AnyResult>;
 
-export type SafeFnDefaultThrowHandler = (error: unknown) => Err<{
-  code: "UNCAUGHT_ERROR";
-  cause: unknown;
-}>;
+export type SafeFnDefaultThrowHandler = (error: unknown) => Err<
+  never,
+  {
+    code: "UNCAUGHT_ERROR";
+    cause: unknown;
+  }
+>;
 
-export type SafeFnDefaultHandlerFn = () => Err<{
-  code: "NO_HANDLER";
-}>;
+export type SafeFnDefaultHandlerFn = () => Err<
+  never,
+  {
+    code: "NO_HANDLER";
+  }
+>;
 
 /*
 ################################
