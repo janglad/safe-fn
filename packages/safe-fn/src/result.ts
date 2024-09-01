@@ -1,6 +1,7 @@
 import * as NT from "neverthrow";
 
 export type Result<TData, TError> = NT.Result<TData, TError>;
+export type ResultAsync<TData, TError> = NT.ResultAsync<TData, TError>;
 export type AnyResult = Result<any, any>;
 
 export type Ok<TData, TError = never> = NT.Ok<TData, TError>;

@@ -1,4 +1,4 @@
-import { err, ok, type Err, type Result } from "./result";
+import { ResultAsync } from "neverthrow";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
@@ -11,7 +11,7 @@ import type {
   SafeFnRunArgs,
   SchemaOutputOrFallback,
 } from "./types";
-import { isFrameworkError } from "./util";
+import { isFrameworkError, safeZodAsyncParse } from "./util";
 
 export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -145,51 +145,49 @@ export class RunnableSafeFn<
 ################################
 */
 
-  async _parseInput(
+  _parseInput(
     input: unknown,
-  ): Promise<
-    Result<
-      SchemaOutputOrFallback<TInputSchema, never>,
-      SafeFnInputParseError<TInputSchema>
-    >
+  ): ResultAsync<
+    SchemaOutputOrFallback<TInputSchema, never>,
+    SafeFnInputParseError<TInputSchema>
   > {
     if (this._internals.inputSchema === undefined) {
       throw new Error("No input schema defined");
     }
 
-    const res = await this._internals.inputSchema.safeParseAsync(input);
-
-    if (res.success) {
-      return ok(res.data);
-    }
-
-    return err({
-      code: "INPUT_PARSING",
-      cause: res.error,
-    }) as Err<never, SafeFnInputParseError<TInputSchema>>;
+    return safeZodAsyncParse(this._internals.inputSchema, input).mapErr(
+      (error) => {
+        if (error.code === "PARSING_UNHANDLED") {
+          throw error.cause;
+        }
+        return {
+          code: "INPUT_PARSING",
+          cause: error.cause,
+        } as SafeFnInputParseError<TInputSchema>;
+      },
+    );
   }
 
-  async _parseOutput(
+  _parseOutput(
     output: unknown,
-  ): Promise<
-    Result<
-      SchemaOutputOrFallback<TOutputSchema, never>,
-      SafeFnOutputParseError<TOutputSchema>
-    >
+  ): ResultAsync<
+    SchemaOutputOrFallback<TOutputSchema, never>,
+    SafeFnOutputParseError<TOutputSchema>
   > {
     if (this._internals.outputSchema === undefined) {
       throw new Error("No output schema defined");
     }
 
-    const res = await this._internals.outputSchema.safeParseAsync(output);
-
-    if (res.success) {
-      return ok(res.data);
-    }
-
-    return err({
-      code: "OUTPUT_PARSING",
-      cause: res.error,
-    }) as Err<never, SafeFnOutputParseError<TOutputSchema>>;
+    return safeZodAsyncParse(this._internals.outputSchema, output).mapErr(
+      (error) => {
+        if (error.code === "PARSING_UNHANDLED") {
+          throw error.cause;
+        }
+        return {
+          code: "OUTPUT_PARSING",
+          cause: error.cause,
+        } as SafeFnOutputParseError<TOutputSchema>;
+      },
+    );
   }
 }

@@ -38,7 +38,7 @@ describe("internals", () => {
   describe("_parseInput", () => {
     test("should throw when no input schema is defined", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as any));
-      expect(() => safeFn._parseInput("data")).rejects.toThrow();
+      expect(() => safeFn._parseInput("data")).toThrow();
     });
 
     test("should return Ok when input is valid", async () => {
