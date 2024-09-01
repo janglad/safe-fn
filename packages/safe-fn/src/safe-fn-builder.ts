@@ -17,12 +17,6 @@ export class SafeFnBuilder<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
-  THandlerFn extends SafeFnHandlerFn<
-    TInputSchema,
-    TOutputSchema,
-    TUnparsedInput,
-    TParent
-  >,
   TThrownHandler extends AnySafeFnThrownHandler,
 > {
   readonly _internals: SafeFnInternals<
@@ -30,7 +24,7 @@ export class SafeFnBuilder<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    THandlerFn,
+    SafeFnDefaultHandlerFn,
     TThrownHandler
   >;
 
@@ -40,7 +34,7 @@ export class SafeFnBuilder<
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
-      THandlerFn,
+      SafeFnDefaultHandlerFn,
       TThrownHandler
     >,
   ) {
@@ -61,7 +55,6 @@ export class SafeFnBuilder<
     undefined,
     undefined,
     unknown,
-    SafeFnDefaultHandlerFn,
     SafeFnDefaultThrowHandler
   > {
     return new SafeFnBuilder({
@@ -88,12 +81,6 @@ export class SafeFnBuilder<
       TNewInputSchema,
       TOutputSchema,
       z.input<TNewInputSchema>,
-      SafeFnHandlerFn<
-        TNewInputSchema,
-        TOutputSchema,
-        z.input<TNewInputSchema>,
-        TParent
-      >,
       TThrownHandler
     >,
     "input" | "unparsedInput"
@@ -111,7 +98,6 @@ export class SafeFnBuilder<
       TInputSchema,
       TOutputSchema,
       TNewUnparsedInput,
-      SafeFnHandlerFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TParent>,
       TThrownHandler
     >,
     "input" | "unparsedInput"
@@ -121,7 +107,6 @@ export class SafeFnBuilder<
       TInputSchema,
       TOutputSchema,
       TNewUnparsedInput,
-      SafeFnHandlerFn<TInputSchema, TOutputSchema, TNewUnparsedInput, TParent>,
       TThrownHandler
     >;
   }
@@ -134,7 +119,6 @@ export class SafeFnBuilder<
       TInputSchema,
       TNewOutputSchema,
       TUnparsedInput,
-      SafeFnHandlerFn<TInputSchema, TNewOutputSchema, TUnparsedInput, TParent>,
       TThrownHandler
     >,
     "output"
