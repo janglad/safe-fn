@@ -8,6 +8,8 @@ import type {
 } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
 
+// TODO: organize/optimize types
+
 export type SafeFnInternals<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
@@ -345,4 +347,54 @@ export type SafeFnReturn<
 > = Result<
   SafeFnReturnData<TOutputSchema, THandlerFn>,
   SafeFnReturnError<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler>
+>;
+
+/* 
+################################
+||                            ||
+||           Action           ||
+||                            ||
+################################
+*/
+
+// Note: these are identical to run right now but will change in the future
+export type SafeFnActionArgs<
+  TInputSchema extends SafeFnInput,
+  TUnparsedInput,
+  TParent extends AnyRunnableSafeFn | undefined,
+> = SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>;
+
+export type SafeFnActionReturn<
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  THandlerFn extends AnySafeFnHandlerFn,
+  TThrownHandler extends AnySafeFnThrownHandler,
+> = Promise<
+  SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler>
+>;
+export type SafeFnAction<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  THandlerFn extends AnySafeFnHandlerFn,
+  TThrownHandler extends AnySafeFnThrownHandler,
+> = (
+  args: SafeFnActionArgs<TInputSchema, TUnparsedInput, TParent>,
+) => SafeFnActionReturn<
+  TInputSchema,
+  TOutputSchema,
+  THandlerFn,
+  TThrownHandler
+>;
+export type AnySafeFnAction = SafeFnAction<any, any, any, any, any, any>;
+export type InferSafeFnActionReturn<T extends AnySafeFnAction> = Awaited<
+  ReturnType<T>
+>;
+export type InferSafeFnActionArgs<T extends AnySafeFnAction> = Parameters<T>[0];
+export type InferSafeFnActionOkData<T extends AnySafeFnAction> = InferOkData<
+  InferSafeFnActionReturn<T>
+>;
+export type InferSafeFnActionError<T extends AnySafeFnAction> = InferErrError<
+  InferSafeFnActionReturn<T>
 >;

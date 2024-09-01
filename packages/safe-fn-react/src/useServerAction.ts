@@ -1,22 +1,22 @@
 import { useRef, useState, useTransition } from "react";
 import {
-  type AnyCompleteSafeFn,
-  type InferCompleteFnReturn,
-  type InferCompleteFnRunArgs,
+  type AnySafeFnAction,
+  type InferSafeFnActionArgs,
+  type InferSafeFnActionReturn,
 } from "safe-fn";
 
-interface UseServerActionReturn<TAction extends AnyCompleteSafeFn> {
+interface UseServerActionReturn<TAction extends AnySafeFnAction> {
   isPending: boolean;
   isSuccess: boolean;
-  result: InferCompleteFnReturn<TAction> | undefined;
+  result: InferSafeFnActionReturn<TAction> | undefined;
   execute: TAction;
 }
 
-export const useServerAction = <TAction extends AnyCompleteSafeFn>(
+export const useServerAction = <TAction extends AnySafeFnAction>(
   action: TAction,
 ): UseServerActionReturn<TAction> => {
-  type ActionReturn = InferCompleteFnReturn<TAction>;
-  type ActionArgs = InferCompleteFnRunArgs<TAction>;
+  type ActionReturn = InferSafeFnActionReturn<TAction>;
+  type ActionArgs = InferSafeFnActionArgs<TAction>;
 
   const [result, setResult] = useState<ActionReturn | undefined>(undefined);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -50,5 +50,5 @@ export const useServerAction = <TAction extends AnyCompleteSafeFn>(
     isPending: isExecuting || isTransitioning,
     isSuccess: !!result?.data,
     execute,
-  } as UseServerActionReturn<TAction>;
+  } as unknown as UseServerActionReturn<TAction>;
 };
