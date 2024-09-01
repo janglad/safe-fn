@@ -1,4 +1,5 @@
-import { ResultAsync } from "neverthrow";
+import { ResultAsync, safeTry } from "neverthrow";
+import { ok } from "./result";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnThrownHandler,
@@ -50,9 +51,7 @@ export class RunnableSafeFn<
 
   createAction(): (
     args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
-  ) => Promise<
-    SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler>
-  > {
+  ) => SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler> {
     // TODO: strip stack traces etc here
     return this.run.bind(this);
   }
@@ -88,53 +87,55 @@ export class RunnableSafeFn<
 ||                            ||
 ################################
   */
-  async run(
+  run(
     args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
-  ): Promise<
-    SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler>
-  > {
-    try {
-      let ctx: any;
+  ): SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler> {
+    const inputSchema = this._internals.inputSchema;
+    const outputSchema = this._internals.outputSchema;
+    const handler = this._internals.handler;
+    const parent = this._internals.parent;
+    const uncaughtErrorHandler = this._internals.uncaughtErrorHandler;
+    const _parseOutput = this._parseOutput.bind(this);
+    const _parseInput = this._parseInput.bind(this);
 
-      if (this._internals.parent !== undefined) {
-        const parentRes = await this._internals.parent.run(args);
-        if (!parentRes.isOk()) {
-          return parentRes as any;
-        }
-        ctx = parentRes.value;
-      }
+    const res = safeTry(async function* () {
+      const ctx =
+        parent === undefined ? undefined : yield* parent.run(args).safeUnwrap();
 
-      let parsedInput: typeof args.parsedInput = undefined;
-      if (this._internals.inputSchema !== undefined) {
-        const parseRes = await this._parseInput(args);
-        if (!parseRes.isOk()) {
-          return parseRes as any;
-        } else {
-          parsedInput = parseRes.value;
-        }
-      }
-      const handlerRes = await this._internals.handler({
-        parsedInput,
-        unparsedInput: args,
-        // TODO: pass context when functions are set up
-        ctx,
-      } as any);
+      const parsedInput =
+        inputSchema === undefined
+          ? undefined
+          : yield* _parseInput(args).safeUnwrap();
 
-      if (!handlerRes.isOk()) {
-        return handlerRes;
-      }
+      const handlerRes = yield* ResultAsync.fromSafePromise(
+        (async () => {
+          return await handler({
+            parsedInput,
+            unparsedInput: args,
+            ctx,
+          } as any);
+        })(),
+      ).safeUnwrap();
 
-      if (this._internals.outputSchema !== undefined) {
-        return await this._parseOutput(handlerRes.value);
-      }
+      const parsedOutput =
+        outputSchema === undefined
+          ? undefined
+          : yield* _parseOutput(handlerRes).safeUnwrap();
 
-      return handlerRes;
-    } catch (error) {
+      return parsedOutput === undefined ? handlerRes : ok(parsedOutput);
+    });
+
+    return ResultAsync.fromPromise(res, (error) => {
       if (isFrameworkError(error)) {
         throw error;
       }
-      return await this._internals.uncaughtErrorHandler(error);
-    }
+      return ResultAsync.fromSafePromise(
+        (async () => {
+          const res = await uncaughtErrorHandler(error);
+          return res;
+        })(),
+      ).andThen((res) => res);
+    }).andThen((res) => res);
   }
 
   /*

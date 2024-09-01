@@ -335,6 +335,8 @@ describe("run", () => {
     test("should infer success return type from handler when no output schema is provided", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
 
+      const test = await safeFn.run({});
+
       expectTypeOf(safeFn.run({})).resolves.toMatchTypeOf<
         Result<"data", any>
       >();

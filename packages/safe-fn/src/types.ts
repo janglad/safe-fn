@@ -5,6 +5,7 @@ import type {
   InferErrError,
   InferOkData,
   Result,
+  ResultAsync,
 } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
 
@@ -350,7 +351,7 @@ export type SafeFnReturn<
   TOutputSchema extends SafeFnOutput,
   THandlerFn extends SafeFnHandlerFn<any, any, any, any>,
   TThrownHandler extends AnySafeFnThrownHandler,
-> = Result<
+> = ResultAsync<
   SafeFnReturnData<TOutputSchema, THandlerFn>,
   SafeFnReturnError<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler>
 >;
