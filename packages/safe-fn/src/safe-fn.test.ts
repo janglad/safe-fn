@@ -77,7 +77,7 @@ describe("internals", () => {
   describe("_parseOutput", () => {
     test("should throw when no output schema is defined", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as any));
-      expect(() => safeFn._parseOutput("data")).rejects.toThrow();
+      expect(() => safeFn._parseOutput("data")).toThrow();
     });
 
     test("should return Ok when output is valid", async () => {
