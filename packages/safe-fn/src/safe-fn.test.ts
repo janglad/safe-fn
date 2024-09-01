@@ -26,11 +26,11 @@ describe("output", () => {
   });
 });
 
-describe("action", () => {
-  test("should set the action function", () => {
-    const actionFn = () => ok("data");
-    const safeFn = SafeFnBuilder.new().handler(actionFn);
-    expect(safeFn._internals.handler).toEqual(actionFn);
+describe("handler", () => {
+  test("should set the handler function", () => {
+    const handlerFn = () => ok("data");
+    const safeFn = SafeFnBuilder.new().handler(handlerFn);
+    expect(safeFn._internals.handler).toEqual(handlerFn);
   });
 });
 
@@ -166,7 +166,7 @@ describe("run", () => {
   });
 
   describe("output", () => {
-    test("should return action result when no output schema is defined", async () => {
+    test("should return handler result when no output schema is defined", async () => {
       const res = await SafeFnBuilder.new()
         .handler((args) => ok("data"))
         .run({});

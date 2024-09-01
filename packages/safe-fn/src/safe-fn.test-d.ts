@@ -85,24 +85,24 @@ describe("output", () => {
   });
 });
 
-describe("action", () => {
+describe("handler", () => {
   describe("input", () => {
     test("should type parsed input as empty object without input schema"),
       () => {
         const safeFn = SafeFnBuilder.new();
-        type ActionFn = Parameters<typeof safeFn.handler>[0];
-        type ActionFnArgs = Parameters<ActionFn>[0];
+        type HandlerFn = Parameters<typeof safeFn.handler>[0];
+        type HandlerFnArgs = Parameters<HandlerFn>[0];
 
-        expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<{}>();
+        expectTypeOf<HandlerFnArgs["parsedInput"]>().toEqualTypeOf<{}>();
       };
     test("should type parsed input as inputSchema for primitives ", () => {
       const inputSchema = z.string();
       const safeFn = SafeFnBuilder.new().input(inputSchema);
 
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnArgs = Parameters<ActionFn>[0];
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnArgs = Parameters<HandlerFn>[0];
 
-      expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<
+      expectTypeOf<HandlerFnArgs["parsedInput"]>().toEqualTypeOf<
         z.output<typeof inputSchema>
       >();
     });
@@ -116,10 +116,10 @@ describe("action", () => {
       });
       const safeFn = SafeFnBuilder.new().input(inputSchema);
 
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnArgs = Parameters<ActionFn>[0];
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnArgs = Parameters<HandlerFn>[0];
 
-      expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<
+      expectTypeOf<HandlerFnArgs["parsedInput"]>().toEqualTypeOf<
         z.output<typeof inputSchema>
       >();
     });
@@ -135,30 +135,30 @@ describe("action", () => {
         .transform(({ test }) => ({ test, newProperty: "test" }));
       const safeFn = SafeFnBuilder.new().input(inputSchema);
 
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnArgs = Parameters<ActionFn>[0];
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnArgs = Parameters<HandlerFn>[0];
 
-      expectTypeOf<ActionFnArgs["parsedInput"]>().toEqualTypeOf<
+      expectTypeOf<HandlerFnArgs["parsedInput"]>().toEqualTypeOf<
         z.output<typeof inputSchema>
       >();
     });
 
     test("should type unparsed input as unknown without input schema", () => {
       const safeFn = SafeFnBuilder.new();
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnArgs = Parameters<ActionFn>[0];
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnArgs = Parameters<HandlerFn>[0];
 
-      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<unknown>();
+      expectTypeOf<HandlerFnArgs["unparsedInput"]>().toEqualTypeOf<unknown>();
     });
 
     test("should type unparsed input as inputSchema for primitives", () => {
       const inputSchema = z.string();
       const safeFn = SafeFnBuilder.new().input(inputSchema);
 
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnArgs = Parameters<ActionFn>[0];
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnArgs = Parameters<HandlerFn>[0];
 
-      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<
+      expectTypeOf<HandlerFnArgs["unparsedInput"]>().toEqualTypeOf<
         z.input<typeof inputSchema>
       >();
     });
@@ -172,10 +172,10 @@ describe("action", () => {
       });
       const safeFn = SafeFnBuilder.new().input(inputSchema);
 
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnArgs = Parameters<ActionFn>[0];
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnArgs = Parameters<HandlerFn>[0];
 
-      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<
+      expectTypeOf<HandlerFnArgs["unparsedInput"]>().toEqualTypeOf<
         z.input<typeof inputSchema>
       >();
     });
@@ -191,10 +191,10 @@ describe("action", () => {
         .transform(({ test }) => ({ test, newProperty: "test" }));
       const safeFn = SafeFnBuilder.new().input(inputSchema);
 
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnArgs = Parameters<ActionFn>[0];
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnArgs = Parameters<HandlerFn>[0];
 
-      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<
+      expectTypeOf<HandlerFnArgs["unparsedInput"]>().toEqualTypeOf<
         z.input<typeof inputSchema>
       >();
     });
@@ -204,10 +204,10 @@ describe("action", () => {
     test("Should allow manually setting unparsedInput type", () => {
       const safeFn = SafeFnBuilder.new().unparsedInput<{ test: string }>();
 
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnArgs = Parameters<ActionFn>[0];
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnArgs = Parameters<HandlerFn>[0];
 
-      expectTypeOf<ActionFnArgs["unparsedInput"]>().toEqualTypeOf<{
+      expectTypeOf<HandlerFnArgs["unparsedInput"]>().toEqualTypeOf<{
         test: string;
       }>();
     });
@@ -216,20 +216,20 @@ describe("action", () => {
   describe("output", () => {
     test("should type output as any without output schema", () => {
       const safeFn = SafeFnBuilder.new();
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnReturn = Awaited<ReturnType<HandlerFn>>;
 
-      expectTypeOf<ActionFnReturn>().toEqualTypeOf<Result<any, any>>();
+      expectTypeOf<HandlerFnReturn>().toEqualTypeOf<Result<any, any>>();
     });
 
     test("should type output as outputSchema for primitives", () => {
       const outputSchema = z.string();
       const safeFn = SafeFnBuilder.new().output(outputSchema);
 
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnReturn = Awaited<ReturnType<HandlerFn>>;
 
-      expectTypeOf<ActionFnReturn>().toEqualTypeOf<
+      expectTypeOf<HandlerFnReturn>().toEqualTypeOf<
         Result<z.input<typeof outputSchema>, any>
       >();
     });
@@ -243,10 +243,10 @@ describe("action", () => {
       });
       const safeFn = SafeFnBuilder.new().output(outputSchema);
 
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnReturn = Awaited<ReturnType<HandlerFn>>;
 
-      expectTypeOf<ActionFnReturn>().toEqualTypeOf<
+      expectTypeOf<HandlerFnReturn>().toEqualTypeOf<
         Result<z.infer<typeof outputSchema>, any>
       >();
     });
@@ -262,10 +262,10 @@ describe("action", () => {
         .transform(({ test }) => ({ test, newProperty: "test" }));
       const safeFn = SafeFnBuilder.new().output(outputSchema);
 
-      type ActionFn = Parameters<typeof safeFn.handler>[0];
-      type ActionFnReturn = Awaited<ReturnType<ActionFn>>;
+      type HandlerFn = Parameters<typeof safeFn.handler>[0];
+      type HandlerFnReturn = Awaited<ReturnType<HandlerFn>>;
 
-      expectTypeOf<ActionFnReturn>().toEqualTypeOf<
+      expectTypeOf<HandlerFnReturn>().toEqualTypeOf<
         Result<z.infer<typeof outputSchema>, any>
       >();
     });
@@ -332,7 +332,7 @@ describe("run", () => {
     //     Result<never, ReturnType<SafeFnDefaultActionFn>["error"]>
     //   >();
     // });
-    test("should infer success return type from action when no output schema is provided", async () => {
+    test("should infer success return type from handler when no output schema is provided", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
 
       expectTypeOf(safeFn.run({})).resolves.toMatchTypeOf<
@@ -364,7 +364,7 @@ describe("run", () => {
       >();
     });
 
-    test("should infer Err return type from action when no error function is set", async () => {
+    test("should infer Err return type from handler when no error function is set", async () => {
       const safeFn = SafeFnBuilder.new().handler(() =>
         err("my error" as const),
       );
@@ -375,7 +375,7 @@ describe("run", () => {
       >();
     });
 
-    test("should infer Err return type from action when error function is set", async () => {
+    test("should infer Err return type from handler when error function is set", async () => {
       const safeFn = SafeFnBuilder.new()
         .handler(() => {
           return err("error" as const);
@@ -516,7 +516,7 @@ describe("parent", () => {
     expectTypeOf(safeFn2._internals.parent).toEqualTypeOf(safeFn1);
   });
 
-  describe("action", () => {
+  describe("handler", () => {
     describe("args", () => {
       // TODO: test unparsed input
       test.todo("should merge unparsedInput");
