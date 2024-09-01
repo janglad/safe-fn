@@ -87,7 +87,7 @@ export class SafeFnBuilder<
       TParent,
       TNewInputSchema,
       TOutputSchema,
-      TUnparsedInput,
+      z.input<TNewInputSchema>,
       SafeFnHandlerFn<
         TNewInputSchema,
         TOutputSchema,

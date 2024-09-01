@@ -50,7 +50,7 @@ export class RunnableSafeFn<
   }
 
   createAction(): (
-    args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
+    args: SafeFnRunArgs<TUnparsedInput, TParent>,
   ) => SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler> {
     // TODO: strip stack traces etc here
     return this.run.bind(this);
@@ -88,7 +88,7 @@ export class RunnableSafeFn<
 ################################
   */
   run(
-    args: SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>,
+    args: SafeFnRunArgs<TUnparsedInput, TParent>,
   ): SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler> {
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;

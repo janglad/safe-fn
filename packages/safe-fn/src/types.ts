@@ -165,13 +165,7 @@ type SafeFnHandlerArgsWParent<
     SchemaOutputOrFallback<TInputSchema, {}> &
       SchemaOutputOrFallback<InferInputSchema<TParent>, {}>
   >;
-  unparsedInput: Prettify<
-    SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
-      SchemaInputOrFallback<
-        InferInputSchema<TParent>,
-        InferUnparsedInput<TParent>
-      >
-  >;
+  unparsedInput: Prettify<TUnparsedInput & InferUnparsedInput<TParent>>;
   // TODO: look at if empty object is good fit here
   ctx: TOrFallback<InferOkData<Awaited<ReturnType<TParent["run"]>>>, {}>;
 };
@@ -181,7 +175,7 @@ type SafeFnHandlerArgsNoParent<
   TUnparsedInput,
 > = {
   parsedInput: SchemaOutputOrFallback<TInputSchema, {}>;
-  unparsedInput: SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
+  unparsedInput: TUnparsedInput;
   ctx: undefined;
 };
 
@@ -281,16 +275,14 @@ export type SafeFnOutputParseError<TOutputSchema extends SafeFnOutput> =
  * Otherwise, this is the unparsed input of the handler function (can be typed through `unparsedInput<>()`).
  */
 export type SafeFnRunArgs<
-  TInputSchema extends SafeFnInput,
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn | undefined,
 > = TParent extends AnyRunnableSafeFn
   ? Prettify<
-      SchemaInputOrFallback<TInputSchema, TUnparsedInput> &
-        InferRunArgs<TParent>
+      TUnparsedInput & InferRunArgs<TParent>
       // SchemaInputOrFallback<TParentInputSchema, TParentUnparsedInput>
     >
-  : SchemaInputOrFallback<TInputSchema, TUnparsedInput>;
+  : TUnparsedInput;
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
@@ -366,10 +358,9 @@ export type SafeFnReturn<
 
 // Note: these are identical to run right now but will change in the future
 export type SafeFnActionArgs<
-  TInputSchema extends SafeFnInput,
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn | undefined,
-> = SafeFnRunArgs<TInputSchema, TUnparsedInput, TParent>;
+> = SafeFnRunArgs<TUnparsedInput, TParent>;
 
 export type SafeFnActionReturn<
   TInputSchema extends SafeFnInput,
@@ -387,7 +378,7 @@ export type SafeFnAction<
   THandlerFn extends AnySafeFnHandlerFn,
   TThrownHandler extends AnySafeFnThrownHandler,
 > = (
-  args: SafeFnActionArgs<TInputSchema, TUnparsedInput, TParent>,
+  args: SafeFnActionArgs<TUnparsedInput, TParent>,
 ) => SafeFnActionReturn<
   TInputSchema,
   TOutputSchema,
