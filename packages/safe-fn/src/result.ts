@@ -1,29 +1,17 @@
-export type Result<TData, TError> = Ok<TData> | Err<TError>;
+import * as NT from "neverthrow";
+
+export type Result<TData, TError> = NT.Result<TData, TError>;
 export type AnyResult = Result<any, any>;
 
-export type Ok<TData> = {
-  success: true;
-  data: TData;
-  error: undefined;
-};
-export type InferOkData<T> = T extends Ok<infer TData> ? TData : never;
+export type Ok<TData, TError = never> = NT.Ok<TData, TError>;
+export type InferOkData<T> = T extends Ok<infer TData, any> ? TData : never;
 
-export const ok = <const TData>(data: TData): Ok<TData> => ({
-  success: true,
-  data,
-  error: undefined,
-});
+export const ok = <const TData>(data: TData): Ok<TData, never> => NT.ok(data);
 
-export type Err<TError> = {
-  success: false;
-  error: TError;
-  data: undefined;
-};
-export type InferErrError<T> = T extends Err<infer TError> ? TError : never;
+export type Err<TData = never, TError = unknown> = NT.Err<TData, TError>;
+export type InferErrError<T> =
+  T extends Err<any, infer TError> ? TError : never;
 
-export type AnyErr = Err<any>;
-export const err = <const TError>(error: TError): Err<TError> => ({
-  success: false,
-  error,
-  data: undefined as never,
-});
+export type AnyErr = Err<never, any>;
+export const err = <const TError>(error: TError): Err<never, TError> =>
+  NT.err(error);

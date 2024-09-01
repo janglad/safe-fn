@@ -57,8 +57,8 @@ describe("internals", () => {
         .input(inputSchema)
         .handler(() => ok(""));
       const res = await safeFn._parseInput(123);
-      expect(res.success).toBe(false);
-      expect(res.data).toBeUndefined();
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
       expect(res.error).toBeDefined();
       assert(res.error !== undefined);
       expect(res.error.cause).toBeInstanceOf(z.ZodError);
@@ -95,8 +95,8 @@ describe("internals", () => {
         .output(outputSchema)
         .handler(() => ok(""));
       const res = await safeFn._parseOutput(123);
-      expect(res.success).toBe(false);
-      expect(res.data).toBeUndefined();
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
       expect(res.error).toBeDefined();
       assert(res.error !== undefined);
       expect(res.error.cause).toBeInstanceOf(z.ZodError);
@@ -155,8 +155,8 @@ describe("run", () => {
         // @ts-expect-error
         .run(123);
 
-      expect(res.success).toBe(false);
-      expect(res.data).toBeUndefined();
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
       expect(res.error).toBeDefined();
       assert(res.error !== undefined);
       expect(res.error.code).toBe("INPUT_PARSING");
@@ -189,8 +189,8 @@ describe("run", () => {
         // @ts-expect-error
         .handler((args) => ok(123))
         .run({});
-      expect(res.success).toBe(false);
-      expect(res.data).toBeUndefined();
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
       expect(res.error).toBeDefined();
       expect(res.error.cause).toBeInstanceOf(z.ZodError);
     });
@@ -226,7 +226,8 @@ describe("run", () => {
 
       const res = await safeFn.run({});
 
-      expect(res.success).toBe(false);
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
       expect(res.error).toBeInstanceOf(Error);
       // Double assert for type checking
       assert(res.error instanceof Error);

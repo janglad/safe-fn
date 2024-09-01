@@ -98,19 +98,19 @@ export class RunnableSafeFn<
 
       if (this._internals.parent !== undefined) {
         const parentRes = await this._internals.parent.run(args);
-        if (!parentRes.success) {
+        if (!parentRes.isOk()) {
           return parentRes as any;
         }
-        ctx = parentRes.data;
+        ctx = parentRes.value;
       }
 
       let parsedInput: typeof args.parsedInput = undefined;
       if (this._internals.inputSchema !== undefined) {
         const parseRes = await this._parseInput(args);
-        if (!parseRes.success) {
-          return parseRes;
+        if (!parseRes.isOk()) {
+          return parseRes as any;
         } else {
-          parsedInput = parseRes.data;
+          parsedInput = parseRes.value;
         }
       }
       const handlerRes = await this._internals.handler({
@@ -120,12 +120,12 @@ export class RunnableSafeFn<
         ctx,
       } as any);
 
-      if (!handlerRes.success) {
+      if (!handlerRes.isOk()) {
         return handlerRes;
       }
 
       if (this._internals.outputSchema !== undefined) {
-        return await this._parseOutput(handlerRes.data);
+        return await this._parseOutput(handlerRes.value);
       }
 
       return handlerRes;
@@ -166,7 +166,7 @@ export class RunnableSafeFn<
     return err({
       code: "INPUT_PARSING",
       cause: res.error,
-    }) as Err<SafeFnInputParseError<TInputSchema>>;
+    }) as Err<never, SafeFnInputParseError<TInputSchema>>;
   }
 
   async _parseOutput(
@@ -190,6 +190,6 @@ export class RunnableSafeFn<
     return err({
       code: "OUTPUT_PARSING",
       cause: res.error,
-    }) as Err<SafeFnOutputParseError<TOutputSchema>>;
+    }) as Err<never, SafeFnOutputParseError<TOutputSchema>>;
   }
 }
