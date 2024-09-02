@@ -38,7 +38,7 @@ describe("internals", () => {
   describe("_parseInput", () => {
     test("should throw when no input schema is defined", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as any));
-      expect(() => safeFn._parseInput("data")).toThrow();
+      expect(() => safeFn._parseInput("data", false)).toThrow();
     });
 
     test("should return Ok when input is valid", async () => {
@@ -46,7 +46,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseInput("data");
+      const res = await safeFn._parseInput("data", false);
       expect(res).toEqual(ok("data"));
     });
 
@@ -56,7 +56,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseInput(123);
+      const res = await safeFn._parseInput(123, false);
       expect(res.isOk()).toBe(false);
       assert(res.isErr());
       expect(res.error).toBeDefined();
@@ -69,7 +69,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseInput("data");
+      const res = await safeFn._parseInput("data", false);
       expect(res).toEqual(ok("data!"));
     });
   });
@@ -77,7 +77,7 @@ describe("internals", () => {
   describe("_parseOutput", () => {
     test("should throw when no output schema is defined", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as any));
-      expect(() => safeFn._parseOutput("data")).toThrow();
+      expect(() => safeFn._parseOutput("data", false)).toThrow();
     });
 
     test("should return Ok when output is valid", async () => {
@@ -85,7 +85,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseOutput("data");
+      const res = await safeFn._parseOutput("data", false);
       expect(res).toEqual(ok("data"));
     });
 
@@ -94,7 +94,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseOutput(123);
+      const res = await safeFn._parseOutput(123, false);
       expect(res.isOk()).toBe(false);
       assert(res.isErr());
       expect(res.error).toBeDefined();
@@ -135,7 +135,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseOutput("data");
+      const res = await safeFn._parseOutput("data", false);
       expect(res).toEqual(ok("data!"));
     });
   });

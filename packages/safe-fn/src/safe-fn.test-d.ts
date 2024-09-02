@@ -429,7 +429,7 @@ describe("internals", () => {
   describe("_parseInput", () => {
     test("should return Result Ok as never when no input schema is defined", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
-      const res = await safeFn._parseInput("data");
+      const res = await safeFn._parseInput("data", false);
       assert(res.isOk());
       expectTypeOf(res.value).toEqualTypeOf<never>();
     });
@@ -446,14 +446,14 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseInput("data");
+      const res = await safeFn._parseInput("data", false);
       assert(res.isOk());
       expectTypeOf(res.value).toEqualTypeOf<z.output<typeof inputSchema>>();
     });
 
     test("should type Result Err as never without input schema", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok(""));
-      const res = await safeFn._parseInput(123);
+      const res = await safeFn._parseInput(123, false);
       assert(res.isOk());
       expectTypeOf(res.value).toEqualTypeOf<never>();
     });
@@ -470,7 +470,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseInput(123);
+      const res = await safeFn._parseInput(123, false);
       assert(res.isErr());
       expectTypeOf(res.error).toEqualTypeOf<
         SafeFnInputParseError<typeof inputSchema, false>
@@ -481,7 +481,7 @@ describe("internals", () => {
   describe("_parseOutput", () => {
     test("should return Result Ok as never when no output schema is defined", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
-      const res = await safeFn._parseOutput("data");
+      const res = await safeFn._parseOutput("data", false);
       assert(res.isOk());
       expectTypeOf(res.value).toEqualTypeOf<never>();
     });
@@ -498,14 +498,14 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
         .handler(() => ok("" as any));
-      const res = await safeFn._parseOutput("data");
+      const res = await safeFn._parseOutput("data", false);
       assert(res.isOk());
       expectTypeOf(res.value).toEqualTypeOf<z.output<typeof outputSchema>>();
     });
 
     test("should type Result Err as never without output schema", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("" as any));
-      const res = await safeFn._parseOutput(123);
+      const res = await safeFn._parseOutput(123, false);
       assert(res.isOk());
       expectTypeOf(res.value).toEqualTypeOf<never>();
     });
@@ -522,7 +522,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
         .handler(() => ok("" as any));
-      const res = await safeFn._parseOutput(123);
+      const res = await safeFn._parseOutput(123, false);
       assert(res.isErr());
       expectTypeOf(res.error).toEqualTypeOf<
         SafeFnOutputParseError<typeof outputSchema, false>

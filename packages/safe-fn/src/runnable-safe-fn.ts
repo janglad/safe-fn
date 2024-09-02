@@ -91,6 +91,12 @@ export class RunnableSafeFn<
   run(
     args: SafeFnRunArgs<TUnparsedInput, TParent>,
   ): SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes> {
+    return this._run(args, false);
+  }
+  _run<TAsAction extends boolean>(
+    args: SafeFnRunArgs<TUnparsedInput, TParent>,
+    tAsAction: TAsAction,
+  ): SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes> {
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;
     const handler = this._internals.handler;
@@ -106,7 +112,7 @@ export class RunnableSafeFn<
       const parsedInput =
         inputSchema === undefined
           ? undefined
-          : yield* _parseInput(args).safeUnwrap();
+          : yield* _parseInput(args, tAsAction).safeUnwrap();
 
       const handlerRes = yield* (
         await handler({
@@ -119,7 +125,7 @@ export class RunnableSafeFn<
       const parsedOutput =
         outputSchema === undefined
           ? undefined
-          : yield* _parseOutput(handlerRes).safeUnwrap();
+          : yield* _parseOutput(handlerRes, tAsAction).safeUnwrap();
 
       return parsedOutput === undefined ? ok(handlerRes) : ok(parsedOutput);
     });
@@ -143,7 +149,7 @@ export class RunnableSafeFn<
     THandlerRes,
     TThrownHandlerRes
   > {
-    const res = await this.run(args);
+    const res = await this._run(args, true);
     if (res.isOk()) {
       return actionOk(res.value);
     }
@@ -160,7 +166,7 @@ export class RunnableSafeFn<
 
   _parseInput<TAsAction extends boolean = false>(
     input: unknown,
-    asAction: TAsAction = false as TAsAction,
+    asAction: TAsAction,
   ): ResultAsync<
     SchemaOutputOrFallback<TInputSchema, never>,
     SafeFnInputParseError<TInputSchema, TAsAction>
@@ -193,7 +199,7 @@ export class RunnableSafeFn<
 
   _parseOutput<TAsAction extends boolean = false>(
     output: unknown,
-    asAction: TAsAction = false as TAsAction,
+    asAction: TAsAction,
   ): ResultAsync<
     SchemaOutputOrFallback<TOutputSchema, never>,
     SafeFnOutputParseError<TOutputSchema, TAsAction>
