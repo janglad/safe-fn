@@ -231,8 +231,8 @@ describe("run", () => {
       console.log(e);
       expect(e).toBeInstanceOf(Error);
       // Double assert for type checking
-      // assert(res.error instanceof Error);
-      // expect(res.error.message).toBe("a new error");
+      assert(res.error instanceof Error);
+      expect(res.error.message).toBe("a new error");
     });
   });
 });
