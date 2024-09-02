@@ -108,14 +108,12 @@ export class RunnableSafeFn<
           ? undefined
           : yield* _parseInput(args).safeUnwrap();
 
-      const handlerRes = yield* ResultAsync.fromSafePromise(
-        (async () => {
-          return await handler({
-            parsedInput,
-            unparsedInput: args,
-            ctx,
-          } as any);
-        })(),
+      const handlerRes = yield* (
+        await handler({
+          parsedInput,
+          unparsedInput: args,
+          ctx,
+        } as any)
       ).safeUnwrap();
 
       const parsedOutput =
@@ -123,7 +121,7 @@ export class RunnableSafeFn<
           ? undefined
           : yield* _parseOutput(handlerRes).safeUnwrap();
 
-      return parsedOutput === undefined ? handlerRes : ok(parsedOutput);
+      return parsedOutput === undefined ? ok(handlerRes) : ok(parsedOutput);
     });
 
     return ResultAsync.fromPromise(res, (error) => {
@@ -147,13 +145,9 @@ export class RunnableSafeFn<
   > {
     const res = await this.run(args);
     if (res.isOk()) {
-      const ok = actionOk(res.value);
-      console.log(ok);
-      return ok;
+      return actionOk(res.value);
     }
-    const err = actionErr(res.error);
-    console.log(err);
-    return err;
+    return actionErr(res.error);
   }
 
   /*

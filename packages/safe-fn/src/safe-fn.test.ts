@@ -182,6 +182,15 @@ describe("run", () => {
       expect(res).toEqual(ok("parsed"));
     });
 
+    test("should return transformed output when output schema is defined", async () => {
+      const outputSchema = z.string().transform((data) => data + "!");
+      const res = await SafeFnBuilder.new()
+        .output(outputSchema)
+        .handler((args) => ok("data"))
+        .run({});
+      expect(res).toEqual(ok("data!"));
+    });
+
     test("should return Err when output is invalid", async () => {
       const outputSchema = z.string();
       const res = await SafeFnBuilder.new()
@@ -228,7 +237,6 @@ describe("run", () => {
       expect(res.isOk()).toBe(false);
       assert(res.isErr());
       const e = await res.error;
-      console.log(e);
       expect(e).toBeInstanceOf(Error);
       // Double assert for type checking
       assert(res.error instanceof Error);
