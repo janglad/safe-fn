@@ -2,8 +2,9 @@ import { ResultAsync, safeTry } from "neverthrow";
 import { ok } from "./result";
 import type {
   AnyRunnableSafeFn,
+  AnySafeFnHandlerRes,
   AnySafeFnThrownHandler,
-  SafeFnHandlerFn,
+  AnySafeFnThrownHandlerRes,
   SafeFnInput,
   SafeFnInputParseError,
   SafeFnInternals,
@@ -19,21 +20,14 @@ export class RunnableSafeFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
-  THandlerFn extends SafeFnHandlerFn<
-    TInputSchema,
-    TOutputSchema,
-    TUnparsedInput,
-    TParent
-  >,
-  TThrownHandler extends AnySafeFnThrownHandler,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
 > {
   readonly _internals: SafeFnInternals<
     TParent,
     TInputSchema,
     TOutputSchema,
-    TUnparsedInput,
-    THandlerFn,
-    TThrownHandler
+    TUnparsedInput
   >;
 
   constructor(
@@ -41,9 +35,7 @@ export class RunnableSafeFn<
       TParent,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput,
-      THandlerFn,
-      TThrownHandler
+      TUnparsedInput
     >,
   ) {
     this._internals = internals;
@@ -51,9 +43,9 @@ export class RunnableSafeFn<
 
   createAction(): (
     args: SafeFnRunArgs<TUnparsedInput, TParent>,
-  ) => SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler> {
+  ) => THandlerRes {
     // TODO: strip stack traces etc here
-    return this.run.bind(this);
+    return this.run.bind(this) as any;
   }
 
   /*
@@ -71,8 +63,8 @@ export class RunnableSafeFn<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    THandlerFn,
-    TNewThrownHandler
+    THandlerRes,
+    ReturnType<TNewThrownHandler>
   > {
     return new RunnableSafeFn({
       ...this._internals,
@@ -89,7 +81,7 @@ export class RunnableSafeFn<
   */
   run(
     args: SafeFnRunArgs<TUnparsedInput, TParent>,
-  ): SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler> {
+  ): SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes> {
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;
     const handler = this._internals.handler;
@@ -135,7 +127,7 @@ export class RunnableSafeFn<
           return res;
         })(),
       ).andThen((res) => res);
-    }).andThen((res) => res);
+    }).andThen((res) => res) as any;
   }
 
   /*

@@ -16,3 +16,20 @@ export type InferErrError<T> =
 export type AnyErr = Err<never, any>;
 export const err = <const TError>(error: TError): Err<never, TError> =>
   NT.err(error);
+
+export type MergeResults<T1, T2> =
+  T1 extends NT.Result<infer D1, infer E1>
+    ? T2 extends NT.Result<infer D2, infer E2>
+      ? NT.Result<D1 | D2, E1 | E2>
+      : never
+    : never;
+
+export type ResultToResultAsync<T extends Result<unknown, unknown>> =
+  T extends Result<infer D, infer E> ? ResultAsync<D, E> : never;
+
+export type MergeResultAsync<T1, T2> =
+  T1 extends ResultAsync<infer D1, infer E1>
+    ? T2 extends ResultAsync<infer D2, infer E2>
+      ? ResultAsync<D1 | D2, E1 | E2>
+      : never
+    : never;

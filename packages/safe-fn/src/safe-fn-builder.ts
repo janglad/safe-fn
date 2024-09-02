@@ -4,9 +4,10 @@ import { err } from "./result";
 import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
-  SafeFnDefaultHandlerFn,
+  MaybePromise,
   SafeFnDefaultThrowHandler,
-  SafeFnHandlerFn,
+  SafeFnHandlerArgs,
+  SafeFnHandlerReturn,
   SafeFnInput,
   SafeFnInternals,
 } from "./types";
@@ -21,9 +22,7 @@ export class SafeFnBuilder<
     TParent,
     TInputSchema,
     TOutputSchema,
-    TUnparsedInput,
-    SafeFnDefaultHandlerFn,
-    SafeFnDefaultThrowHandler
+    TUnparsedInput
   >;
 
   protected constructor(
@@ -31,9 +30,7 @@ export class SafeFnBuilder<
       TParent,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput,
-      SafeFnDefaultHandlerFn,
-      SafeFnDefaultThrowHandler
+      TUnparsedInput
     >,
   ) {
     this._internals = internals;
@@ -108,12 +105,9 @@ export class SafeFnBuilder<
   }
 
   handler<
-    TNewHandlerFn extends SafeFnHandlerFn<
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput,
-      TParent
-    >,
+    TNewHandlerFn extends (
+      input: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+    ) => MaybePromise<SafeFnHandlerReturn<TOutputSchema>>,
   >(
     handlerFn: TNewHandlerFn,
   ): RunnableSafeFn<
@@ -121,8 +115,8 @@ export class SafeFnBuilder<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    TNewHandlerFn,
-    SafeFnDefaultThrowHandler
+    Awaited<ReturnType<TNewHandlerFn>>,
+    ReturnType<SafeFnDefaultThrowHandler>
   > {
     return new RunnableSafeFn({
       ...this._internals,

@@ -1,12 +1,5 @@
 import type { z, ZodTypeAny } from "zod";
-import type {
-  AnyResult,
-  Err,
-  InferErrError,
-  InferOkData,
-  Result,
-  ResultAsync,
-} from "./result";
+import type { InferErrError, InferOkData, Result, ResultAsync } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
 
 // TODO: organize/optimize types
@@ -16,19 +9,14 @@ export type SafeFnInternals<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
-  THandlerFn extends SafeFnHandlerFn<
-    TInputSchema,
-    TOutputSchema,
-    TUnparsedInput,
-    TParent
-  >,
-  TThrownHandler extends AnySafeFnThrownHandler,
 > = {
   parent: TParent;
   inputSchema: TInputSchema;
   outputSchema: TOutputSchema;
-  handler: THandlerFn;
-  uncaughtErrorHandler: TThrownHandler;
+  handler: (
+    input: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+  ) => SafeFnHandlerReturn<TOutputSchema>;
+  uncaughtErrorHandler: (error: unknown) => Result<never, unknown>;
 };
 
 export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
@@ -114,11 +102,13 @@ export type SchemaOutputOrFallback<
 ################################
 */
 
+export type AnySafeFnThrownHandlerRes = Result<never, any>;
+
 export type AnySafeFnThrownHandler = (
   error: unknown,
-) => MaybePromise<AnyResult>;
+) => AnySafeFnThrownHandlerRes;
 
-export type SafeFnDefaultThrowHandler = (error: unknown) => Err<
+export type SafeFnDefaultThrowHandler = (error: unknown) => Result<
   never,
   {
     code: "UNCAUGHT_ERROR";
@@ -126,7 +116,7 @@ export type SafeFnDefaultThrowHandler = (error: unknown) => Err<
   }
 >;
 
-export type SafeFnDefaultHandlerFn = () => Err<
+export type SafeFnDefaultHandlerFn = () => Result<
   never,
   {
     code: "NO_HANDLER";
@@ -141,12 +131,14 @@ export type SafeFnDefaultHandlerFn = () => Err<
 ################################
 */
 
+export type AnySafeFnHandlerRes = Result<any, any>;
+
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TUnparsedInput the unparsed input type. This is inferred from TInputSchema. When none is provided, this is `never` by default or overridden by using `unparsedInput<>()`
  * @param TParent the parent safe function or undefined
  */
-type SafeFnHandlerArgs<
+export type SafeFnHandlerArgs<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn | undefined,
@@ -183,8 +175,8 @@ type SafeFnHandlerArgsNoParent<
  * @param TOutputSchema a Zod schema or undefined
  * @returns the output type of the handler function. If the schema is undefined, this is `any`. Otherwise this needs to be the input (`z.infer<typeof outputSchema`) of the output schema.
  */
-type SafeFnHandlerReturn<TOutputSchema extends SafeFnOutput> = Result<
-  SchemaOutputOrFallback<TOutputSchema, any>,
+export type SafeFnHandlerReturn<TOutputSchema extends SafeFnOutput> = Result<
+  SchemaInputOrFallback<TOutputSchema, any>,
   any
 >;
 
@@ -222,11 +214,8 @@ export type AnySafeFnHandlerFn = SafeFnHandlerFn<any, any, any, any>;
  */
 export type SafeFnReturnData<
   TOutputSchema extends SafeFnOutput,
-  THandlerFn extends AnySafeFnHandlerFn,
-> = SchemaOutputOrFallback<
-  TOutputSchema,
-  InferOkData<Awaited<ReturnType<THandlerFn>>>
->;
+  THandlerRes extends AnySafeFnHandlerRes,
+> = SchemaOutputOrFallback<TOutputSchema, InferOkData<THandlerRes>>;
 
 /**
  * @param TInputSchema a Zod schema or undefined
@@ -244,11 +233,11 @@ export type SafeFnReturnData<
 export type SafeFnReturnError<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
-  THandlerFn extends AnySafeFnHandlerFn,
-  TThrownHandler extends AnySafeFnThrownHandler,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
 > =
-  | InferErrError<Awaited<ReturnType<THandlerFn>>>
-  | InferErrError<Awaited<ReturnType<TThrownHandler>>>
+  | InferErrError<THandlerRes>
+  | InferErrError<TThrownHandlerRes>
   | SafeFnInputParseError<TInputSchema>
   | SafeFnOutputParseError<TOutputSchema>;
 
@@ -341,11 +330,11 @@ export type SafeFnRunArgs<
 export type SafeFnReturn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
-  THandlerFn extends SafeFnHandlerFn<any, any, any, any>,
-  TThrownHandler extends AnySafeFnThrownHandler,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
 > = ResultAsync<
-  SafeFnReturnData<TOutputSchema, THandlerFn>,
-  SafeFnReturnError<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler>
+  SafeFnReturnData<TOutputSchema, THandlerRes>,
+  SafeFnReturnError<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes>
 >;
 
 /* 
@@ -365,25 +354,25 @@ export type SafeFnActionArgs<
 export type SafeFnActionReturn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
-  THandlerFn extends AnySafeFnHandlerFn,
-  TThrownHandler extends AnySafeFnThrownHandler,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
 > = Promise<
-  SafeFnReturn<TInputSchema, TOutputSchema, THandlerFn, TThrownHandler>
+  SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes>
 >;
 export type SafeFnAction<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
-  THandlerFn extends AnySafeFnHandlerFn,
-  TThrownHandler extends AnySafeFnThrownHandler,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
 > = (
   args: SafeFnActionArgs<TUnparsedInput, TParent>,
 ) => SafeFnActionReturn<
   TInputSchema,
   TOutputSchema,
-  THandlerFn,
-  TThrownHandler
+  THandlerRes,
+  TThrownHandlerRes
 >;
 export type AnySafeFnAction = SafeFnAction<any, any, any, any, any, any>;
 export type InferSafeFnActionReturn<T extends AnySafeFnAction> = Awaited<
