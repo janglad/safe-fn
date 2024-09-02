@@ -214,8 +214,7 @@ describe("run", () => {
 
       expect(() => safeFn.run({})).not.toThrow();
     });
-    // TODO: fix this
-    test.todo("should pass uncaught error on to error handler", async () => {
+    test("should pass uncaught error on to error handler", async () => {
       const safeFn = SafeFnBuilder.new()
         .handler(() => {
           throw new Error("a new error");

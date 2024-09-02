@@ -121,12 +121,10 @@ export class RunnableSafeFn<
       if (isFrameworkError(error)) {
         throw error;
       }
-      return ResultAsync.fromSafePromise(
-        (async () => {
-          const res = await uncaughtErrorHandler(error);
-          return res;
-        })(),
-      ).andThen((res) => res);
+      const handledErr = uncaughtErrorHandler(error);
+      if (handledErr.isOk())
+        throw new Error("uncaught error handler returned ok");
+      return handledErr.error;
     }).andThen((res) => res) as any;
   }
 
