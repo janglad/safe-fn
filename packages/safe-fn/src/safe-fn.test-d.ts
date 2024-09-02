@@ -1,9 +1,11 @@
+import assert from "assert";
 import { describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 import type { InferInputSchema } from "../dist";
 import { err, ok, type InferErrError, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
+  Prettify,
   SafeFnDefaultThrowHandler,
   SafeFnInputParseError,
   SafeFnOutputParseError,
@@ -334,9 +336,16 @@ describe("run", () => {
     // });
     test("should infer success return type from handler when no output schema is provided", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
+      const safeFnAsync = SafeFnBuilder.new().handler(async () =>
+        ok("data" as const),
+      );
       const res = await safeFn.run({});
+      const resAsync = await safeFnAsync.run({});
+      assert(res.isOk());
+      assert(resAsync.isOk());
 
-      expectTypeOf(res).toMatchTypeOf<Result<"data", any>>();
+      expectTypeOf(res.value).toEqualTypeOf<"data">();
+      expectTypeOf(resAsync.value).toEqualTypeOf<"data">();
     });
 
     test("should type output as Ok<outputSchema> for transformed values", async () => {
@@ -346,10 +355,17 @@ describe("run", () => {
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
         .handler(() => ok(""));
+      const safeFnAsync = SafeFnBuilder.new()
+        .output(outputSchema)
+        .handler(async () => ok(""));
 
       const res = await safeFn.run({});
-      expectTypeOf(res).toMatchTypeOf<
-        Result<z.output<typeof outputSchema>, any>
+      assert(res.isOk());
+      const resAsync = await safeFnAsync.run({});
+      assert(resAsync.isOk());
+      expectTypeOf(res.value).toEqualTypeOf<z.output<typeof outputSchema>>();
+      expectTypeOf(resAsync.value).toEqualTypeOf<
+        z.output<typeof outputSchema>
       >();
     });
   });
@@ -357,10 +373,18 @@ describe("run", () => {
   describe("error", () => {
     test("should infer Err return as default when no error function is set", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
+      const safeFnAsync = SafeFnBuilder.new().handler(async () =>
+        ok("data" as const),
+      );
 
       type Res = Awaited<ReturnType<typeof safeFn.run>>;
+      type ResAsync = Awaited<ReturnType<typeof safeFnAsync.run>>;
       type InferredErrError = InferErrError<Res>;
+      type InferredErrErrorAsync = InferErrError<ResAsync>;
       expectTypeOf<InferredErrError>().toEqualTypeOf<
+        InferErrError<ReturnType<SafeFnDefaultThrowHandler>>
+      >();
+      expectTypeOf<InferredErrErrorAsync>().toEqualTypeOf<
         InferErrError<ReturnType<SafeFnDefaultThrowHandler>>
       >();
     });
@@ -369,9 +393,19 @@ describe("run", () => {
       const safeFn = SafeFnBuilder.new().handler(() =>
         err("my error" as const),
       );
+      const safeFnAsync = SafeFnBuilder.new().handler(async () =>
+        err("my error" as const),
+      );
+      const res = await safeFn.run({});
+      const resAsync = await safeFnAsync.run({});
       type Res = Awaited<ReturnType<typeof safeFn.run>>;
+      type ResAsync = Awaited<ReturnType<typeof safeFnAsync.run>>;
       type InferredErrError = InferErrError<Res>;
+      type InferredErrErrorAsync = InferErrError<ResAsync>;
       expectTypeOf<InferredErrError>().toEqualTypeOf<
+        "my error" | InferErrError<ReturnType<SafeFnDefaultThrowHandler>>
+      >();
+      expectTypeOf<InferredErrErrorAsync>().toEqualTypeOf<
         "my error" | InferErrError<ReturnType<SafeFnDefaultThrowHandler>>
       >();
     });
@@ -396,7 +430,8 @@ describe("internals", () => {
     test("should return Result Ok as never when no input schema is defined", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
       const res = await safeFn._parseInput("data");
-      expectTypeOf(res).toMatchTypeOf<Result<never, any>>();
+      assert(res.isOk());
+      expectTypeOf(res.value).toEqualTypeOf<never>();
     });
 
     test("should type Result Ok as inputSchema for transformed schemas", async () => {
@@ -412,15 +447,15 @@ describe("internals", () => {
         .input(inputSchema)
         .handler(() => ok(""));
       const res = await safeFn._parseInput("data");
-      expectTypeOf(res).toMatchTypeOf<
-        Result<z.output<typeof inputSchema>, any>
-      >();
+      assert(res.isOk());
+      expectTypeOf(res.value).toEqualTypeOf<z.output<typeof inputSchema>>();
     });
 
     test("should type Result Err as never without input schema", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok(""));
       const res = await safeFn._parseInput(123);
-      expectTypeOf(res).toEqualTypeOf<Result<never, never>>();
+      assert(res.isOk());
+      expectTypeOf(res.value).toEqualTypeOf<never>();
     });
 
     test("should type Result Err as typed ZodError for transformed schemas", async () => {
@@ -436,8 +471,9 @@ describe("internals", () => {
         .input(inputSchema)
         .handler(() => ok(""));
       const res = await safeFn._parseInput(123);
-      expectTypeOf(res).toMatchTypeOf<
-        Result<any, SafeFnInputParseError<typeof inputSchema>>
+      assert(res.isErr());
+      expectTypeOf(res.error).toEqualTypeOf<
+        SafeFnInputParseError<typeof inputSchema>
       >();
     });
   });
@@ -446,7 +482,8 @@ describe("internals", () => {
     test("should return Result Ok as never when no output schema is defined", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
       const res = await safeFn._parseOutput("data");
-      expectTypeOf(res).toMatchTypeOf<Result<never, any>>();
+      assert(res.isOk());
+      expectTypeOf(res.value).toEqualTypeOf<never>();
     });
 
     test("should type Result Ok as outputSchema for transformed schemas", async () => {
@@ -462,15 +499,15 @@ describe("internals", () => {
         .output(outputSchema)
         .handler(() => ok("" as any));
       const res = await safeFn._parseOutput("data");
-      expectTypeOf(res).toMatchTypeOf<
-        Result<z.output<typeof outputSchema>, any>
-      >();
+      assert(res.isOk());
+      expectTypeOf(res.value).toEqualTypeOf<z.output<typeof outputSchema>>();
     });
 
     test("should type Result Err as never without output schema", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("" as any));
       const res = await safeFn._parseOutput(123);
-      expectTypeOf(res).toEqualTypeOf<Result<never, never>>();
+      assert(res.isOk());
+      expectTypeOf(res.value).toEqualTypeOf<never>();
     });
 
     test("should type Result Err as typed ZodError for transformed schemas", async () => {
@@ -486,8 +523,9 @@ describe("internals", () => {
         .output(outputSchema)
         .handler(() => ok("" as any));
       const res = await safeFn._parseOutput(123);
-      expectTypeOf(res).toMatchTypeOf<
-        Result<any, SafeFnOutputParseError<typeof outputSchema>>
+      assert(res.isErr());
+      expectTypeOf(res.error).toEqualTypeOf<
+        SafeFnOutputParseError<typeof outputSchema>
       >();
     });
   });
@@ -500,7 +538,8 @@ describe("error", () => {
       .error((error) => err("hello" as const));
 
     const res = await safeFn.run({});
-    expectTypeOf(res).toMatchTypeOf<Result<"", "hello">>();
+    assert(res.isErr());
+    expectTypeOf(res.error).toEqualTypeOf<"hello">();
   });
 });
 
@@ -537,8 +576,8 @@ describe("parent", () => {
             Parameters<typeof safeFn2.handler>[0]
           >[0]["unparsedInput"];
 
-          expectTypeOf<S2UnparsedInput>().toMatchTypeOf<
-            z.input<typeof input1> & z.input<typeof input2>
+          expectTypeOf<S2UnparsedInput>().toEqualTypeOf<
+            Prettify<z.input<typeof input1> & z.input<typeof input2>>
           >();
         });
       });
@@ -555,7 +594,7 @@ describe("parent", () => {
           Parameters<typeof safeFn2.handler>[0]
         >[0]["unparsedInput"];
 
-        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<{
+        expectTypeOf<S2UnparsedInput>().toEqualTypeOf<{
           name: string;
           age: number;
         }>();
@@ -572,7 +611,7 @@ describe("parent", () => {
           Parameters<typeof safeFn2.handler>[0]
         >[0]["unparsedInput"];
 
-        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<{
+        expectTypeOf<S2UnparsedInput>().toEqualTypeOf<{
           name: string;
           age: number;
         }>();
@@ -591,7 +630,7 @@ describe("parent", () => {
           Parameters<typeof safeFn2.handler>[0]
         >[0]["unparsedInput"];
 
-        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<{
+        expectTypeOf<S2UnparsedInput>().toEqualTypeOf<{
           name: string;
           age: number;
         }>();
@@ -606,7 +645,7 @@ describe("parent", () => {
           Parameters<typeof safeFn2.handler>[0]
         >[0]["unparsedInput"];
 
-        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<z.input<typeof input>>();
+        expectTypeOf<S2UnparsedInput>().toEqualTypeOf<z.input<typeof input>>();
       });
 
       test("should type unparsedInput as parent when child has none", () => {
@@ -620,7 +659,7 @@ describe("parent", () => {
           Parameters<typeof safeFn2.handler>[0]
         >[0]["unparsedInput"];
 
-        expectTypeOf<S2UnparsedInput>().toMatchTypeOf<z.input<typeof input>>();
+        expectTypeOf<S2UnparsedInput>().toEqualTypeOf<z.input<typeof input>>();
       });
 
       describe("parsedInput", () => {
@@ -638,8 +677,8 @@ describe("parent", () => {
 
           type test = InferInputSchema<typeof safeFn1>;
 
-          expectTypeOf<S2ParsedInput>().toMatchTypeOf<
-            z.output<typeof input1> & z.output<typeof input2>
+          expectTypeOf<S2ParsedInput>().toEqualTypeOf<
+            Prettify<z.output<typeof input1> & z.output<typeof input2>>
           >();
         });
 
@@ -664,8 +703,8 @@ describe("parent", () => {
             Parameters<typeof safeFn2.handler>[0]
           >[0]["parsedInput"];
 
-          expectTypeOf<S2ParsedInput>().toMatchTypeOf<
-            z.output<typeof input1> & z.output<typeof input2>
+          expectTypeOf<S2ParsedInput>().toEqualTypeOf<
+            Prettify<z.output<typeof input1> & z.output<typeof input2>>
           >();
         });
 
@@ -680,7 +719,7 @@ describe("parent", () => {
             Parameters<typeof safeFn2.handler>[0]
           >[0]["parsedInput"];
 
-          expectTypeOf<S2ParsedInput>().toMatchTypeOf<z.output<typeof input>>();
+          expectTypeOf<S2ParsedInput>().toEqualTypeOf<z.output<typeof input>>();
         });
 
         test("should take parsedInput from parent when child has no input schema", () => {
@@ -694,7 +733,7 @@ describe("parent", () => {
             Parameters<typeof safeFn2.handler>[0]
           >[0]["parsedInput"];
 
-          expectTypeOf<S2ParsedInput>().toMatchTypeOf<z.output<typeof input>>();
+          expectTypeOf<S2ParsedInput>().toEqualTypeOf<z.output<typeof input>>();
         });
       });
 
