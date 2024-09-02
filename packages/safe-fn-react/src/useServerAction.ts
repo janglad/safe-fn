@@ -48,7 +48,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
   return {
     result,
     isPending: isExecuting || isTransitioning,
-    isSuccess: !!result?.data,
+    isSuccess: !!result?.isOk(),
     execute,
   } as unknown as UseServerActionReturn<TAction>;
 };
