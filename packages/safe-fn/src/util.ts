@@ -1,5 +1,6 @@
 import { ResultAsync, err, ok } from "neverthrow";
 import { z } from "zod";
+import type { ParseError } from "./types";
 
 const NEXT_JS_ERROR_MESSAGES = ["NEXT_REDIRECT", "NEXT_NOT_FOUND"];
 
@@ -51,4 +52,11 @@ export const safeZodAsyncParse = <T extends z.ZodTypeAny>(
       cause: res.error,
     } as const);
   });
+};
+
+export const mapZodError = <T extends z.ZodError>(err: T) => {
+  return {
+    formattedError: err.format(),
+    flattenedError: err.flatten(),
+  } satisfies ParseError<any, true>;
 };

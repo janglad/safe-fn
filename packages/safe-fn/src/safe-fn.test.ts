@@ -102,6 +102,34 @@ describe("internals", () => {
       expect(res.error.cause).toBeInstanceOf(z.ZodError);
     });
 
+    test("should return Err formatted for action when output is invalid and action flag is passed", async () => {
+      const outputSchema = z.object({
+        hello: z.string(),
+        world: z.number(),
+      });
+
+      const res = await SafeFnBuilder.new()
+        .output(outputSchema)
+        // @ts-expect-error
+        .handler(() => ok(""))
+        ._parseOutput({ hello: 123, world: "world" }, true);
+
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
+      expect(res.error).toBeDefined();
+      assert(res.error !== undefined);
+      expect(res.error.cause).toBeDefined();
+      assert(res.error.cause !== undefined);
+      expect(res.error.cause.formattedError).toBeDefined();
+      assert(res.error.cause.formattedError !== undefined);
+      expect(res.error.cause.formattedError.hello).toBeDefined();
+      expect(res.error.cause.formattedError.world).toBeDefined();
+      expect(res.error.cause.flattenedError).toBeDefined();
+      assert(res.error.cause.flattenedError !== undefined);
+      expect(res.error.cause.flattenedError.fieldErrors.hello).toBeDefined();
+      expect(res.error.cause.flattenedError.fieldErrors.world).toBeDefined();
+    });
+
     test("should transform output", async () => {
       const outputSchema = z.string().transform((data) => data + "!");
       const safeFn = SafeFnBuilder.new()

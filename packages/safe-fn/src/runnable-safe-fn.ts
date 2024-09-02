@@ -17,7 +17,7 @@ import type {
   SafeFnRunArgs,
   SchemaOutputOrFallback,
 } from "./types";
-import { isFrameworkError, safeZodAsyncParse } from "./util";
+import { isFrameworkError, mapZodError, safeZodAsyncParse } from "./util";
 
 export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -158,11 +158,12 @@ export class RunnableSafeFn<
 ################################
 */
 
-  _parseInput(
+  _parseInput<TAsAction extends boolean = false>(
     input: unknown,
+    asAction: TAsAction = false as TAsAction,
   ): ResultAsync<
     SchemaOutputOrFallback<TInputSchema, never>,
-    SafeFnInputParseError<TInputSchema>
+    SafeFnInputParseError<TInputSchema, TAsAction>
   > {
     if (this._internals.inputSchema === undefined) {
       throw new Error("No input schema defined");
@@ -173,19 +174,29 @@ export class RunnableSafeFn<
         if (error.code === "PARSING_UNHANDLED") {
           throw error.cause;
         }
+
+        if (asAction) {
+          const cause = mapZodError(error.cause as any);
+          return {
+            code: "INPUT_PARSING",
+            cause,
+          } as SafeFnInputParseError<TInputSchema, TAsAction>;
+        }
+
         return {
           code: "INPUT_PARSING",
           cause: error.cause,
-        } as SafeFnInputParseError<TInputSchema>;
+        } as SafeFnInputParseError<TInputSchema, TAsAction>;
       },
     );
   }
 
-  _parseOutput(
+  _parseOutput<TAsAction extends boolean = false>(
     output: unknown,
+    asAction: TAsAction = false as TAsAction,
   ): ResultAsync<
     SchemaOutputOrFallback<TOutputSchema, never>,
-    SafeFnOutputParseError<TOutputSchema>
+    SafeFnOutputParseError<TOutputSchema, TAsAction>
   > {
     if (this._internals.outputSchema === undefined) {
       throw new Error("No output schema defined");
@@ -196,10 +207,19 @@ export class RunnableSafeFn<
         if (error.code === "PARSING_UNHANDLED") {
           throw error.cause;
         }
+
+        if (asAction) {
+          const cause = mapZodError(error.cause as any);
+          return {
+            code: "OUTPUT_PARSING",
+            cause,
+          } as SafeFnOutputParseError<TOutputSchema, TAsAction>;
+        }
+
         return {
           code: "OUTPUT_PARSING",
           cause: error.cause,
-        } as SafeFnOutputParseError<TOutputSchema>;
+        } as SafeFnOutputParseError<TOutputSchema, TAsAction>;
       },
     );
   }

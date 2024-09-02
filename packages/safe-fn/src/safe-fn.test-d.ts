@@ -473,7 +473,7 @@ describe("internals", () => {
       const res = await safeFn._parseInput(123);
       assert(res.isErr());
       expectTypeOf(res.error).toEqualTypeOf<
-        SafeFnInputParseError<typeof inputSchema>
+        SafeFnInputParseError<typeof inputSchema, false>
       >();
     });
   });
@@ -525,7 +525,7 @@ describe("internals", () => {
       const res = await safeFn._parseOutput(123);
       assert(res.isErr());
       expectTypeOf(res.error).toEqualTypeOf<
-        SafeFnOutputParseError<typeof outputSchema>
+        SafeFnOutputParseError<typeof outputSchema, false>
       >();
     });
   });

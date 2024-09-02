@@ -1,4 +1,4 @@
-import type { z, ZodTypeAny } from "zod";
+import type { z, ZodFormattedError, ZodTypeAny } from "zod";
 import type {
   InferErrError,
   InferOkData,
@@ -123,6 +123,21 @@ export type SchemaOutputOrFallback<
 export type AnySafeFnThrownHandlerRes = Result<never, any>;
 
 /**
+ * @param TSchema a Zod schema or undefined
+ * @param TAsAction indicates weather the error will be returned in an error.
+ * These types need to be differentiated as `Error` classes can not be sent over the wire in server actions.
+ */
+export type ParseError<
+  TSchema extends z.ZodTypeAny,
+  TAsAction extends boolean,
+> = TAsAction extends true
+  ? {
+      formattedError: ZodFormattedError<z.input<TSchema>>;
+      flattenedError: z.typeToFlattenedError<z.input<TSchema>>;
+    }
+  : z.ZodError<z.input<TSchema>>;
+
+/**
  * Convenience type for any thrown handler function.
  */
 export type AnySafeFnThrownHandler = (
@@ -140,21 +155,25 @@ export type SafeFnDefaultThrowHandler = (error: unknown) => Result<
   }
 >;
 
-export type SafeFnInputParseError<TInputSchema extends SafeFnInput> =
-  TInputSchema extends z.ZodTypeAny
-    ? {
-        code: "INPUT_PARSING";
-        cause: z.ZodError<z.input<TInputSchema>>;
-      }
-    : never;
+export type SafeFnInputParseError<
+  TInputSchema extends SafeFnInput,
+  TAsAction extends boolean,
+> = TInputSchema extends z.ZodTypeAny
+  ? {
+      code: "INPUT_PARSING";
+      cause: ParseError<TInputSchema, TAsAction>;
+    }
+  : never;
 
-export type SafeFnOutputParseError<TOutputSchema extends SafeFnOutput> =
-  TOutputSchema extends z.ZodTypeAny
-    ? {
-        code: "OUTPUT_PARSING";
-        cause: z.ZodError<z.input<TOutputSchema>>;
-      }
-    : never;
+export type SafeFnOutputParseError<
+  TOutputSchema extends SafeFnOutput,
+  TAsAction extends boolean,
+> = TOutputSchema extends z.ZodTypeAny
+  ? {
+      code: "OUTPUT_PARSING";
+      cause: ParseError<TOutputSchema, TAsAction>;
+    }
+  : never;
 
 /*
 ################################
@@ -289,11 +308,12 @@ export type SafeFnReturnError<
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
+  TAsAction extends boolean = false,
 > =
   | InferErrError<THandlerRes>
   | InferErrError<TThrownHandlerRes>
-  | SafeFnInputParseError<TInputSchema>
-  | SafeFnOutputParseError<TOutputSchema>;
+  | SafeFnInputParseError<TInputSchema, TAsAction>
+  | SafeFnOutputParseError<TOutputSchema, TAsAction>;
 
 /**
  * @param TInputSchema a Zod schema or undefined
@@ -370,6 +390,7 @@ export type SafeFnReturn<
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
+  TAsAction extends boolean = false,
 > = ResultAsync<
   SafeFnReturnData<TOutputSchema, Awaited<THandlerRes>>,
   DistributeUnion<
@@ -377,7 +398,8 @@ export type SafeFnReturn<
       TInputSchema,
       TOutputSchema,
       Awaited<THandlerRes>,
-      TThrownHandlerRes
+      TThrownHandlerRes,
+      TAsAction
     >
   >
 >;
