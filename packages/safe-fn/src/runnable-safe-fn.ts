@@ -1,10 +1,14 @@
 import { ResultAsync, safeTry } from "neverthrow";
-import { ok } from "./result";
+
+import { actionErr, actionOk, ok } from "./result";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnHandlerRes,
   AnySafeFnThrownHandler,
   AnySafeFnThrownHandlerRes,
+  SafeFnAction,
+  SafeFnActionArgs,
+  SafeFnActionReturn,
   SafeFnInput,
   SafeFnInputParseError,
   SafeFnInternals,
@@ -41,11 +45,16 @@ export class RunnableSafeFn<
     this._internals = internals;
   }
 
-  createAction(): (
-    args: SafeFnRunArgs<TUnparsedInput, TParent>,
-  ) => THandlerRes {
+  createAction(): SafeFnAction<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    THandlerRes,
+    TThrownHandlerRes
+  > {
     // TODO: strip stack traces etc here
-    return this.run.bind(this) as any;
+    return this.runAsAction.bind(this);
   }
 
   /*
@@ -126,6 +135,25 @@ export class RunnableSafeFn<
         throw new Error("uncaught error handler returned ok");
       return handledErr.error;
     }).andThen((res) => res) as any;
+  }
+
+  async runAsAction(
+    args: SafeFnActionArgs<TUnparsedInput, TParent>,
+  ): SafeFnActionReturn<
+    TInputSchema,
+    TOutputSchema,
+    THandlerRes,
+    TThrownHandlerRes
+  > {
+    const res = await this.run(args);
+    if (res.isOk()) {
+      const ok = actionOk(res.value);
+      console.log(ok);
+      return ok;
+    }
+    const err = actionErr(res.error);
+    console.log(err);
+    return err;
   }
 
   /*

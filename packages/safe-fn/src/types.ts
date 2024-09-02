@@ -1,5 +1,11 @@
 import type { z, ZodTypeAny } from "zod";
-import type { InferErrError, InferOkData, Result, ResultAsync } from "./result";
+import type {
+  InferErrError,
+  InferOkData,
+  Result,
+  ResultAsync,
+  ResultAsyncToPromiseActionResult,
+} from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
 
 //TODO: organize and update JSDoc
@@ -407,7 +413,7 @@ export type SafeFnActionReturn<
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
-> = Promise<
+> = ResultAsyncToPromiseActionResult<
   SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes>
 >;
 export type SafeFnAction<

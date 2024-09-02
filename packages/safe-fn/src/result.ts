@@ -33,3 +33,25 @@ export type MergeResultAsync<T1, T2> =
       ? ResultAsync<D1 | D2, E1 | E2>
       : never
     : never;
+
+/**
+ * Converts a `ResultAsync<T,E>` to a `Promise<Result<T,E>>`.
+ */
+export type ResultAsyncToPromiseActionResult<T> =
+  T extends ResultAsync<infer D, infer E> ? Promise<ActionResult<D, E>> : never;
+
+// These are needed for the `createAction()` method to work.
+// neverthrow results can not be sent over the wire in server actions.
+export type ActionResult<T, E> = ActionOk<T> | ActionErr<E>;
+
+export type ActionOk<T> = {
+  ok: true;
+  value: T;
+};
+export const actionOk = <T>(value: T): ActionOk<T> => ({ ok: true, value });
+
+export type ActionErr<E> = {
+  ok: false;
+  error: E;
+};
+export const actionErr = <E>(error: E): ActionErr<E> => ({ ok: false, error });
