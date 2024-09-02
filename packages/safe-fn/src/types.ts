@@ -2,7 +2,15 @@ import type { z, ZodTypeAny } from "zod";
 import type { InferErrError, InferOkData, Result, ResultAsync } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
 
-// TODO: organize/optimize types
+//TODO: organize and update JSDoc
+
+/*
+################################
+||                            ||
+||         Internals          ||
+||                            ||
+################################
+*/
 
 export type SafeFnInternals<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -19,36 +27,15 @@ export type SafeFnInternals<
   uncaughtErrorHandler: (error: unknown) => Result<never, unknown>;
 };
 
-export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
-
 /*
 ################################
 ||                            ||
-||           Infer            ||
+||       RunnableSafeFn       ||
 ||                            ||
 ################################
 */
-export type InferInputSchema<T> = T extends AnyRunnableSafeFn
-  ? T["_internals"]["inputSchema"]
-  : never;
-export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
-  ? T["_internals"]["outputSchema"]
-  : never;
-export type InferUnparsedInput<T> =
-  T extends RunnableSafeFn<any, any, any, infer TUnparsed, any, any>
-    ? TUnparsed
-    : never;
 
-export type InferRunArgs<T extends AnyRunnableSafeFn> = Parameters<T["run"]>[0];
-export type InferReturn<T extends AnyRunnableSafeFn> = Prettify<
-  Awaited<ReturnType<T["run"]>>
->;
-export type InferReturnData<T extends AnyRunnableSafeFn> = InferOkData<
-  InferReturn<T>
->;
-export type InferReturnError<T extends AnyRunnableSafeFn> = InferErrError<
-  InferReturn<T>
->;
+export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
 
 /*
 ################################
@@ -85,6 +72,17 @@ export type SafeFnInput = z.ZodTypeAny | undefined;
  * A Zod schema that is used to parse the output of the `handler()` and return the final value on `run()`, or undefined.
  */
 export type SafeFnOutput = z.ZodTypeAny | undefined;
+
+export type InferInputSchema<T> = T extends AnyRunnableSafeFn
+  ? T["_internals"]["inputSchema"]
+  : never;
+export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
+  ? T["_internals"]["outputSchema"]
+  : never;
+export type InferUnparsedInput<T> =
+  T extends RunnableSafeFn<any, any, any, infer TUnparsed, any, any>
+    ? TUnparsed
+    : never;
 
 /**
  * @param TSchema a Zod schema or undefined
@@ -135,6 +133,22 @@ export type SafeFnDefaultThrowHandler = (error: unknown) => Result<
     cause: unknown;
   }
 >;
+
+export type SafeFnInputParseError<TInputSchema extends SafeFnInput> =
+  TInputSchema extends z.ZodTypeAny
+    ? {
+        code: "INPUT_PARSING";
+        cause: z.ZodError<z.input<TInputSchema>>;
+      }
+    : never;
+
+export type SafeFnOutputParseError<TOutputSchema extends SafeFnOutput> =
+  TOutputSchema extends z.ZodTypeAny
+    ? {
+        code: "OUTPUT_PARSING";
+        cause: z.ZodError<z.input<TOutputSchema>>;
+      }
+    : never;
 
 /*
 ################################
@@ -229,6 +243,18 @@ export type SafeFnHandlerFn<
 ||                            ||
 ################################
 */
+
+export type InferRunArgs<T extends AnyRunnableSafeFn> = Parameters<T["run"]>[0];
+export type InferReturn<T extends AnyRunnableSafeFn> = Prettify<
+  Awaited<ReturnType<T["run"]>>
+>;
+export type InferReturnData<T extends AnyRunnableSafeFn> = InferOkData<
+  InferReturn<T>
+>;
+export type InferReturnError<T extends AnyRunnableSafeFn> = InferErrError<
+  InferReturn<T>
+>;
+
 /**
  * @param TOutputSchema a Zod schema or undefined
  * @param THandlerFn the handler function of the safe function
@@ -262,22 +288,6 @@ export type SafeFnReturnError<
   | InferErrError<TThrownHandlerRes>
   | SafeFnInputParseError<TInputSchema>
   | SafeFnOutputParseError<TOutputSchema>;
-
-export type SafeFnInputParseError<TInputSchema extends SafeFnInput> =
-  TInputSchema extends z.ZodTypeAny
-    ? {
-        code: "INPUT_PARSING";
-        cause: z.ZodError<z.input<TInputSchema>>;
-      }
-    : never;
-
-export type SafeFnOutputParseError<TOutputSchema extends SafeFnOutput> =
-  TOutputSchema extends z.ZodTypeAny
-    ? {
-        code: "OUTPUT_PARSING";
-        cause: z.ZodError<z.input<TOutputSchema>>;
-      }
-    : never;
 
 /**
  * @param TInputSchema a Zod schema or undefined
@@ -373,6 +383,18 @@ export type SafeFnReturn<
 ||                            ||
 ################################
 */
+export type AnySafeFnAction = SafeFnAction<any, any, any, any, any, any>;
+
+export type InferSafeFnActionReturn<T extends AnySafeFnAction> = Awaited<
+  ReturnType<T>
+>;
+export type InferSafeFnActionArgs<T extends AnySafeFnAction> = Parameters<T>[0];
+export type InferSafeFnActionOkData<T extends AnySafeFnAction> = InferOkData<
+  InferSafeFnActionReturn<T>
+>;
+export type InferSafeFnActionError<T extends AnySafeFnAction> = InferErrError<
+  InferSafeFnActionReturn<T>
+>;
 
 // Note: these are identical to run right now but will change in the future
 export type SafeFnActionArgs<
@@ -402,15 +424,4 @@ export type SafeFnAction<
   TOutputSchema,
   THandlerRes,
   TThrownHandlerRes
->;
-export type AnySafeFnAction = SafeFnAction<any, any, any, any, any, any>;
-export type InferSafeFnActionReturn<T extends AnySafeFnAction> = Awaited<
-  ReturnType<T>
->;
-export type InferSafeFnActionArgs<T extends AnySafeFnAction> = Parameters<T>[0];
-export type InferSafeFnActionOkData<T extends AnySafeFnAction> = InferOkData<
-  InferSafeFnActionReturn<T>
->;
-export type InferSafeFnActionError<T extends AnySafeFnAction> = InferErrError<
-  InferSafeFnActionReturn<T>
 >;
