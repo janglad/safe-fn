@@ -24,19 +24,10 @@ export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
 /*
 ################################
 ||                            ||
-||            Util            ||
+||           Infer            ||
 ||                            ||
 ################################
 */
-type Prettify<T> = {
-  [K in keyof T]: T[K];
-} & {};
-
-type TODO = any;
-type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
-  ? TFallback
-  : T;
-export type MaybePromise<T> = T | Promise<T>;
 export type InferInputSchema<T> = T extends AnyRunnableSafeFn
   ? T["_internals"]["inputSchema"]
   : never;
@@ -58,6 +49,26 @@ export type InferReturnData<T extends AnyRunnableSafeFn> = InferOkData<
 export type InferReturnError<T extends AnyRunnableSafeFn> = InferErrError<
   InferReturn<T>
 >;
+
+/*
+################################
+||                            ||
+||            Util            ||
+||                            ||
+################################
+*/
+type TODO = any;
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {};
+
+export type DistributeUnion<T> = T extends any ? T : never;
+
+type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
+  ? TFallback
+  : T;
+type MaybePromise<T> = T | Promise<T>;
+
 /*
 ################################
 ||                            ||
@@ -102,24 +113,26 @@ export type SchemaOutputOrFallback<
 ################################
 */
 
+/**
+ * Convenience type for any thrown handler result.
+ */
 export type AnySafeFnThrownHandlerRes = Result<never, any>;
 
+/**
+ * Convenience type for any thrown handler function.
+ */
 export type AnySafeFnThrownHandler = (
   error: unknown,
 ) => AnySafeFnThrownHandlerRes;
 
+/**
+ * Default throw handler function. Overridden by `error()`
+ */
 export type SafeFnDefaultThrowHandler = (error: unknown) => Result<
   never,
   {
     code: "UNCAUGHT_ERROR";
     cause: unknown;
-  }
->;
-
-export type SafeFnDefaultHandlerFn = () => Result<
-  never,
-  {
-    code: "NO_HANDLER";
   }
 >;
 
@@ -131,7 +144,20 @@ export type SafeFnDefaultHandlerFn = () => Result<
 ################################
 */
 
-export type AnySafeFnHandlerRes = Result<any, any>;
+/**
+ * Convenience type for any handler result.
+ */
+export type AnySafeFnHandlerRes = MaybePromise<Result<any, any>>;
+
+/**
+ * Default handler function. Overridden by `handler()`
+ */
+export type SafeFnDefaultHandlerFn = () => Result<
+  never,
+  {
+    code: "NO_HANDLER";
+  }
+>;
 
 /**
  * @param TInputSchema a Zod schema or undefined
@@ -141,7 +167,7 @@ export type AnySafeFnHandlerRes = Result<any, any>;
 export type SafeFnHandlerArgs<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
-  TParent extends AnyRunnableSafeFn | undefined,
+  TParent,
 > = TParent extends AnyRunnableSafeFn
   ? SafeFnHandlerArgsWParent<TInputSchema, TUnparsedInput, TParent>
   : SafeFnHandlerArgsNoParent<TInputSchema, TUnparsedInput>;
@@ -172,13 +198,12 @@ type SafeFnHandlerArgsNoParent<
 };
 
 /**
+ * Type used to constrain the return type of the handler function.
  * @param TOutputSchema a Zod schema or undefined
  * @returns the output type of the handler function. If the schema is undefined, this is `any`. Otherwise this needs to be the input (`z.infer<typeof outputSchema`) of the output schema.
  */
-export type SafeFnHandlerReturn<TOutputSchema extends SafeFnOutput> = Result<
-  SchemaInputOrFallback<TOutputSchema, any>,
-  any
->;
+export type SafeFnHandlerReturn<TOutputSchema extends SafeFnOutput> =
+  MaybePromise<Result<SchemaInputOrFallback<TOutputSchema, any>, any>>;
 
 /**
  * @param TInputSchema a Zod schema or undefined
@@ -195,9 +220,7 @@ export type SafeFnHandlerFn<
   TParent extends AnyRunnableSafeFn | undefined,
 > = (
   args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
-) => MaybePromise<SafeFnHandlerReturn<TOutputSchema>>;
-
-export type AnySafeFnHandlerFn = SafeFnHandlerFn<any, any, any, any>;
+) => SafeFnHandlerReturn<TOutputSchema>;
 
 /* 
 ################################
@@ -229,7 +252,6 @@ export type SafeFnReturnData<
  * - A `SafeFnOutputParseError` if the output schema is defined and the output could not be parsed
  * Note that this is wrapped in a `Result` type.
  */
-
 export type SafeFnReturnError<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
@@ -333,8 +355,15 @@ export type SafeFnReturn<
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
 > = ResultAsync<
-  SafeFnReturnData<TOutputSchema, THandlerRes>,
-  SafeFnReturnError<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes>
+  SafeFnReturnData<TOutputSchema, Awaited<THandlerRes>>,
+  DistributeUnion<
+    SafeFnReturnError<
+      TInputSchema,
+      TOutputSchema,
+      Awaited<THandlerRes>,
+      TThrownHandlerRes
+    >
+  >
 >;
 
 /* 
