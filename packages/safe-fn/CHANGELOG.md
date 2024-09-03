@@ -1,5 +1,22 @@
 # @safe-fn/safe-fn
 
+## 0.1.3
+
+### Patch Changes
+
+- 7b2cb2b: Fix [#7](https://github.com/janglad/safe-fn/issues/7) where `UnparsedInput` type if not properly merged.
+- 92bb8e5: Features
+
+  - Implement NeverThrow instead of own Result type
+  - Add separate typing for running as a server action, in which case Zod errors are stripped from stack traces etc.
+  - move Zod to peer dependency
+
+- 687640d: Clean up internal workings
+
+  - set up Knip
+  - Move safe-fn to separate builder and runnable classes
+  - clean up types
+
 ## 0.1.2
 
 ### Patch Changes
