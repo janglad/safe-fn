@@ -9,44 +9,43 @@ import {
 
 type UseServerActionReturn<
   TAction extends AnySafeFnAction,
-  ActionResult = InferSafeFnActionReturn<TAction>,
-  Result = ActionResultToResult<ActionResult>,
+  // Original `ActionResult<T,E>`
+  TActionActionResult = InferSafeFnActionReturn<TAction>,
+  // Converted `ActionResult<T,E>` -> `Result<T,E>` to be returned to the user
+  TActionResult = ActionResultToResult<TActionActionResult>,
 > = {
   isPending: boolean;
   isSuccess: boolean;
-  result: Result | undefined;
-  execute: (args: InferSafeFnActionArgs<TAction>) => Promise<Result>;
+  result: TActionResult | undefined;
+  execute: (args: InferSafeFnActionArgs<TAction>) => Promise<TActionResult>;
 };
 
 export const useServerAction = <TAction extends AnySafeFnAction>(
   action: TAction,
 ): UseServerActionReturn<TAction> => {
-  type ActionResult = InferSafeFnActionReturn<TAction>;
   type ActionArgs = InferSafeFnActionArgs<TAction>;
+  /** Original `ActionResult<T,E>` */
+  type ActionActionResult = InferSafeFnActionReturn<TAction>;
+  /** Converted `ActionResult<T,E>` -\> `Result<T,E>` to be returned to the user  */
+  type ActionResult = ActionResultToResult<ActionActionResult>;
 
-  const [result, setResult] = useState<
-    ActionResultToResult<ActionResult> | undefined
-  >(undefined);
+  const [result, setResult] = useState<ActionResult | undefined>(undefined);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isTransitioning, startTransition] = useTransition();
 
-  const resolveRef = useRef<
-    ((args: ActionResultToResult<ActionResult>) => void) | undefined
-  >(undefined);
+  const resolveRef = useRef<((args: ActionResult) => void) | undefined>(
+    undefined,
+  );
 
   const _execute = async (args: ActionArgs): Promise<void> => {
-    const res = (await action(args)) as ActionResult;
-    const converted = actionResultToResult(
-      res,
-    ) as ActionResultToResult<ActionResult>;
+    const res = (await action(args)) as ActionActionResult;
+    const converted = actionResultToResult(res) as ActionResult;
     setResult(converted);
     resolveRef.current?.(converted);
     setIsExecuting(false);
   };
 
-  const execute = async (
-    args: ActionArgs,
-  ): Promise<ActionResultToResult<ActionResult>> => {
+  const execute = async (args: ActionArgs): Promise<ActionResult> => {
     return new Promise((resolve) => {
       setIsExecuting(true);
       startTransition(() => {
@@ -56,7 +55,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
           throw e;
         });
       });
-    }) as Promise<ActionResultToResult<ActionResult>>;
+    }) as Promise<ActionResult>;
   };
 
   return {
