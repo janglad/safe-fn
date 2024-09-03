@@ -1,5 +1,11 @@
 # @safe-fn/safe-fn
 
+## 0.2.0
+
+### Minor Changes
+
+- 9b6b0d0: Implements `safeHandler`, a function that takes in an async generator similar to Neverthrow's own `safeTry` enabling an ergonomic way to deal with return early upon error.
+
 ## 0.1.3
 
 ### Patch Changes
