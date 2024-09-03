@@ -38,7 +38,7 @@ describe("internals", () => {
   describe("_parseInput", () => {
     test("should throw when no input schema is defined", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as any));
-      expect(() => safeFn._parseInput("data")).rejects.toThrow();
+      expect(() => safeFn._parseInput("data", false)).toThrow();
     });
 
     test("should return Ok when input is valid", async () => {
@@ -46,7 +46,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseInput("data");
+      const res = await safeFn._parseInput("data", false);
       expect(res).toEqual(ok("data"));
     });
 
@@ -56,9 +56,9 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseInput(123);
-      expect(res.success).toBe(false);
-      expect(res.data).toBeUndefined();
+      const res = await safeFn._parseInput(123, false);
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
       expect(res.error).toBeDefined();
       assert(res.error !== undefined);
       expect(res.error.cause).toBeInstanceOf(z.ZodError);
@@ -69,7 +69,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .input(inputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseInput("data");
+      const res = await safeFn._parseInput("data", false);
       expect(res).toEqual(ok("data!"));
     });
   });
@@ -77,7 +77,7 @@ describe("internals", () => {
   describe("_parseOutput", () => {
     test("should throw when no output schema is defined", async () => {
       const safeFn = SafeFnBuilder.new().handler(() => ok("data" as any));
-      expect(() => safeFn._parseOutput("data")).rejects.toThrow();
+      expect(() => safeFn._parseOutput("data", false)).toThrow();
     });
 
     test("should return Ok when output is valid", async () => {
@@ -85,7 +85,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseOutput("data");
+      const res = await safeFn._parseOutput("data", false);
       expect(res).toEqual(ok("data"));
     });
 
@@ -94,12 +94,40 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseOutput(123);
-      expect(res.success).toBe(false);
-      expect(res.data).toBeUndefined();
+      const res = await safeFn._parseOutput(123, false);
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
       expect(res.error).toBeDefined();
       assert(res.error !== undefined);
       expect(res.error.cause).toBeInstanceOf(z.ZodError);
+    });
+
+    test("should return Err formatted for action when output is invalid and action flag is passed", async () => {
+      const outputSchema = z.object({
+        hello: z.string(),
+        world: z.number(),
+      });
+
+      const res = await SafeFnBuilder.new()
+        .output(outputSchema)
+        // @ts-expect-error
+        .handler(() => ok(""))
+        ._parseOutput({ hello: 123, world: "world" }, true);
+
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
+      expect(res.error).toBeDefined();
+      assert(res.error !== undefined);
+      expect(res.error.cause).toBeDefined();
+      assert(res.error.cause !== undefined);
+      expect(res.error.cause.formattedError).toBeDefined();
+      assert(res.error.cause.formattedError !== undefined);
+      expect(res.error.cause.formattedError.hello).toBeDefined();
+      expect(res.error.cause.formattedError.world).toBeDefined();
+      expect(res.error.cause.flattenedError).toBeDefined();
+      assert(res.error.cause.flattenedError !== undefined);
+      expect(res.error.cause.flattenedError.fieldErrors.hello).toBeDefined();
+      expect(res.error.cause.flattenedError.fieldErrors.world).toBeDefined();
     });
 
     test("should transform output", async () => {
@@ -107,7 +135,7 @@ describe("internals", () => {
       const safeFn = SafeFnBuilder.new()
         .output(outputSchema)
         .handler(() => ok(""));
-      const res = await safeFn._parseOutput("data");
+      const res = await safeFn._parseOutput("data", false);
       expect(res).toEqual(ok("data!"));
     });
   });
@@ -155,8 +183,8 @@ describe("run", () => {
         // @ts-expect-error
         .run(123);
 
-      expect(res.success).toBe(false);
-      expect(res.data).toBeUndefined();
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
       expect(res.error).toBeDefined();
       assert(res.error !== undefined);
       expect(res.error.code).toBe("INPUT_PARSING");
@@ -182,6 +210,15 @@ describe("run", () => {
       expect(res).toEqual(ok("parsed"));
     });
 
+    test("should return transformed output when output schema is defined", async () => {
+      const outputSchema = z.string().transform((data) => data + "!");
+      const res = await SafeFnBuilder.new()
+        .output(outputSchema)
+        .handler((args) => ok("data"))
+        .run({});
+      expect(res).toEqual(ok("data!"));
+    });
+
     test("should return Err when output is invalid", async () => {
       const outputSchema = z.string();
       const res = await SafeFnBuilder.new()
@@ -189,8 +226,8 @@ describe("run", () => {
         // @ts-expect-error
         .handler((args) => ok(123))
         .run({});
-      expect(res.success).toBe(false);
-      expect(res.data).toBeUndefined();
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
       expect(res.error).toBeDefined();
       expect(res.error.cause).toBeInstanceOf(z.ZodError);
     });
@@ -214,7 +251,6 @@ describe("run", () => {
 
       expect(() => safeFn.run({})).not.toThrow();
     });
-
     test("should pass uncaught error on to error handler", async () => {
       const safeFn = SafeFnBuilder.new()
         .handler(() => {
@@ -226,8 +262,10 @@ describe("run", () => {
 
       const res = await safeFn.run({});
 
-      expect(res.success).toBe(false);
-      expect(res.error).toBeInstanceOf(Error);
+      expect(res.isOk()).toBe(false);
+      assert(res.isErr());
+      const e = await res.error;
+      expect(e).toBeInstanceOf(Error);
       // Double assert for type checking
       assert(res.error instanceof Error);
       expect(res.error.message).toBe("a new error");

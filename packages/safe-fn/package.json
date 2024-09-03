@@ -14,9 +14,6 @@
   ],
   "author": "janglad",
   "license": "ISC",
-  "dependencies": {
-    "zod": "^3.23.8"
-  },
   "files": [
     "dist/**"
   ],
@@ -32,7 +29,13 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
     "@vitest/coverage-v8": "^2.0.5",
+    "neverthrow": "^7.1.0",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "vitest": "^2.0.5",
+    "zod": "^3.23.8"
+  },
+  "peerDependencies": {
+    "neverthrow": "^7.1.0",
+    "zod": "^3.23.8"
   }
 }

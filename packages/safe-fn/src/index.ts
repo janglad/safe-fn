@@ -1,5 +1,11 @@
 import type { Err, Ok, Result } from "./result";
-import { err, ok } from "./result";
+import {
+  type ActionResult,
+  type ActionResultToResult,
+  actionResultToResult,
+  err,
+  ok,
+} from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 
 import type {
@@ -27,8 +33,10 @@ import type {
   SafeFnRunArgs,
 } from "./types";
 
-export { err, ok, SafeFnBuilder as SafeFn };
+export { actionResultToResult, err, ok, SafeFnBuilder as SafeFn };
 export type {
+  ActionResult,
+  ActionResultToResult,
   AnyRunnableSafeFn,
   AnySafeFnAction,
   AnySafeFnThrownHandler,
