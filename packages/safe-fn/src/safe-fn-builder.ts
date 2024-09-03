@@ -5,6 +5,8 @@ import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
   Prettify,
+  SafeFnDefaultHandlerFn,
+  SafeFnDefaultThrowHandler,
   SafeFnDefaultThrownHandlerErr,
   SafeFnHandlerArgs,
   SafeFnHandlerReturn,
@@ -51,15 +53,19 @@ export class SafeFnBuilder<
       parent,
       inputSchema: undefined,
       outputSchema: undefined,
-      handler: () =>
+      handler: (() =>
         err({
           code: "NO_HANDLER",
-        } as const),
-      uncaughtErrorHandler: (error: unknown) =>
-        err({
+        } as const)) satisfies SafeFnDefaultHandlerFn,
+      uncaughtErrorHandler: ((error: unknown) => {
+        // TODO: Keep track of asAction both at compile and run time, switch error input based on that.
+        console.error(error);
+        return err({
           code: "UNCAUGHT_ERROR",
-          cause: error,
-        } as const),
+          cause:
+            "An uncaught error occurred. You can implement a custom error handler by using `error()`",
+        } as const);
+      }) satisfies SafeFnDefaultThrowHandler,
     }) as any;
   }
 

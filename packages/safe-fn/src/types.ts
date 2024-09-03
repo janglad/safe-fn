@@ -156,7 +156,7 @@ export type SafeFnDefaultThrownHandlerErr = Err<
   never,
   {
     code: "UNCAUGHT_ERROR";
-    cause: unknown;
+    cause: "An uncaught error occurred. You can implement a custom error handler by using `error()`";
   }
 >;
 
