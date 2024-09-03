@@ -1,5 +1,6 @@
 import type { z, ZodFormattedError, ZodTypeAny } from "zod";
 import type {
+  Err,
   InferErrError,
   InferOkData,
   Result,
@@ -147,7 +148,11 @@ export type AnySafeFnThrownHandler = (
 /**
  * Default throw handler function. Overridden by `error()`
  */
-export type SafeFnDefaultThrowHandler = (error: unknown) => Result<
+export type SafeFnDefaultThrowHandler = (
+  error: unknown,
+) => SafeFnDefaultThrownHandlerErr;
+
+export type SafeFnDefaultThrownHandlerErr = Err<
   never,
   {
     code: "UNCAUGHT_ERROR";
@@ -252,7 +257,7 @@ export type SafeFnHandlerReturn<TOutputSchema extends SafeFnOutput> =
  *
  * @returns the type of a handler function for a safe function. See `SafeFnHandlerArgs` and `SafeFnHandlerReturn` for more information.
  */
-export type SafeFnHandlerFn<
+export type SafeFnRegularHandlerFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
@@ -260,6 +265,18 @@ export type SafeFnHandlerFn<
 > = (
   args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
 ) => SafeFnHandlerReturn<TOutputSchema>;
+
+export type SafeFnAsyncGeneratorHandlerFn<
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  TParent extends AnyRunnableSafeFn | undefined,
+> = (
+  args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+) => AsyncGenerator<
+  Err<never, unknown>,
+  Result<SchemaInputOrFallback<TOutputSchema, any>, any>
+>;
 
 /* 
 ################################

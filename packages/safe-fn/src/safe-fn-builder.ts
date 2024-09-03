@@ -1,13 +1,16 @@
 import { z } from "zod";
 
-import { err } from "./result";
+import { err, type MergeResults, type Result } from "./result";
 import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
-  SafeFnDefaultThrowHandler,
-  SafeFnHandlerFn,
+  Prettify,
+  SafeFnDefaultThrownHandlerErr,
+  SafeFnHandlerArgs,
+  SafeFnHandlerReturn,
   SafeFnInput,
   SafeFnInternals,
+  SchemaInputOrFallback,
 } from "./types";
 
 export class SafeFnBuilder<
@@ -102,26 +105,51 @@ export class SafeFnBuilder<
     } as any);
   }
 
-  handler<
-    TNewHandlerFn extends SafeFnHandlerFn<
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput,
-      TParent
-    >,
-  >(
-    handlerFn: TNewHandlerFn,
+  handler<TNewHandlerResult extends SafeFnHandlerReturn<TOutputSchema>>(
+    handler: (
+      args: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+    ) => TNewHandlerResult,
   ): RunnableSafeFn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    ReturnType<TNewHandlerFn>,
-    ReturnType<SafeFnDefaultThrowHandler>
+    TNewHandlerResult,
+    SafeFnDefaultThrownHandlerErr
   > {
     return new RunnableSafeFn({
       ...this._internals,
-      handler: handlerFn,
-    } as any) as any;
+      handler,
+    });
+  }
+
+  safeHandler<
+    YieldErr extends Result<never, unknown>,
+    GeneratorResult extends Result<
+      SchemaInputOrFallback<TOutputSchema, any>,
+      unknown
+    >,
+  >(
+    fn: (
+      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+    ) => AsyncGenerator<YieldErr, GeneratorResult>,
+  ): RunnableSafeFn<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    MergeResults<GeneratorResult, YieldErr>,
+    SafeFnDefaultThrownHandlerErr
+  > {
+    const handler = async (
+      args: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+    ) => {
+      return (await fn(args).next()).value;
+    };
+
+    return new RunnableSafeFn({
+      ...this._internals,
+      handler,
+    });
   }
 }
