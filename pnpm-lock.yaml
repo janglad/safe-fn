@@ -82,6 +82,9 @@ importers:
       eslint:
         specifier: ^8.57.0
         version: 8.57.0
+      neverthrow:
+        specifier: ^7.1.0
+        version: 7.1.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
