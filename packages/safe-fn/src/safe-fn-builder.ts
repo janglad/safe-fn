@@ -1,13 +1,16 @@
 import { z } from "zod";
 
-import { err } from "./result";
+import { err, type MergeResults, type Result } from "./result";
 import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
+  Prettify,
   SafeFnDefaultThrowHandler,
+  SafeFnHandlerArgs,
   SafeFnHandlerFn,
   SafeFnInput,
   SafeFnInternals,
+  SchemaInputOrFallback,
 } from "./types";
 
 export class SafeFnBuilder<
@@ -110,7 +113,7 @@ export class SafeFnBuilder<
       TParent
     >,
   >(
-    handlerFn: TNewHandlerFn,
+    handler: TNewHandlerFn,
   ): RunnableSafeFn<
     TParent,
     TInputSchema,
@@ -121,7 +124,37 @@ export class SafeFnBuilder<
   > {
     return new RunnableSafeFn({
       ...this._internals,
-      handler: handlerFn,
-    } as any) as any;
+      handler,
+    });
+  }
+
+  safeHandler<
+    YieldErr extends Result<never, unknown>,
+    GeneratorResult extends Result<
+      SchemaInputOrFallback<TOutputSchema, any>,
+      unknown
+    >,
+  >(
+    fn: (
+      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+    ) => AsyncGenerator<YieldErr, GeneratorResult>,
+  ): RunnableSafeFn<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    MergeResults<GeneratorResult, YieldErr>,
+    ReturnType<SafeFnDefaultThrowHandler>
+  > {
+    const handler = async (
+      args: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+    ) => {
+      return (await fn(args).next()).value;
+    };
+
+    return new RunnableSafeFn({
+      ...this._internals,
+      handler,
+    });
   }
 }

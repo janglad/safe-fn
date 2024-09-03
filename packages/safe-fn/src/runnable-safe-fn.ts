@@ -150,6 +150,7 @@ export class RunnableSafeFn<
     TThrownHandlerRes
   > {
     const res = await this._run(args, true);
+    console.log("res", res);
     if (res.isOk()) {
       return actionOk(res.value);
     }
