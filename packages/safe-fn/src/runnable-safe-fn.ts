@@ -4,7 +4,6 @@ import { actionErr, actionOk, ok } from "./result";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnHandlerRes,
-  AnySafeFnThrownHandler,
   AnySafeFnThrownHandlerRes,
   SafeFnAction,
   SafeFnActionArgs,
@@ -65,15 +64,15 @@ export class RunnableSafeFn<
 ################################
 */
 
-  error<TNewThrownHandler extends AnySafeFnThrownHandler>(
-    handler: TNewThrownHandler,
+  error<TNewThrownHandlerRes extends AnySafeFnThrownHandlerRes>(
+    handler: (error: unknown) => TNewThrownHandlerRes,
   ): RunnableSafeFn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
-    ReturnType<TNewThrownHandler>
+    TNewThrownHandlerRes
   > {
     return new RunnableSafeFn({
       ...this._internals,

@@ -5,9 +5,9 @@ import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
   Prettify,
-  SafeFnDefaultThrowHandler,
+  SafeFnDefaultThrownHandlerErr,
   SafeFnHandlerArgs,
-  SafeFnHandlerFn,
+  SafeFnHandlerReturn,
   SafeFnInput,
   SafeFnInternals,
   SchemaInputOrFallback,
@@ -105,22 +105,17 @@ export class SafeFnBuilder<
     } as any);
   }
 
-  handler<
-    TNewHandlerFn extends SafeFnHandlerFn<
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput,
-      TParent
-    >,
-  >(
-    handler: TNewHandlerFn,
+  handler<TNewHandlerResult extends SafeFnHandlerReturn<TOutputSchema>>(
+    handler: (
+      args: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+    ) => TNewHandlerResult,
   ): RunnableSafeFn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    ReturnType<TNewHandlerFn>,
-    ReturnType<SafeFnDefaultThrowHandler>
+    TNewHandlerResult,
+    SafeFnDefaultThrownHandlerErr
   > {
     return new RunnableSafeFn({
       ...this._internals,
@@ -144,7 +139,7 @@ export class SafeFnBuilder<
     TOutputSchema,
     TUnparsedInput,
     MergeResults<GeneratorResult, YieldErr>,
-    ReturnType<SafeFnDefaultThrowHandler>
+    SafeFnDefaultThrownHandlerErr
   > {
     const handler = async (
       args: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
