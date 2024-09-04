@@ -144,7 +144,10 @@ export class SafeFnBuilder<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    MergeResults<GeneratorResult, YieldErr>,
+    // YieldErr can be never if the generator never yields an error, [] cause distribution
+    [YieldErr] extends [never]
+      ? GeneratorResult
+      : MergeResults<GeneratorResult, YieldErr>,
     SafeFnDefaultThrownHandlerErr
   > {
     const handler = async (
