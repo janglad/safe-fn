@@ -376,5 +376,66 @@ describe("runnable-safe-fn", () => {
         });
       });
     });
+
+    describe("error", () => {
+      const testCases = [
+        {
+          name: "regular",
+          createSafeFn: () =>
+            SafeFnBuilder.new()
+              .handler(() => {
+                throw new Error("error");
+              })
+              .error((e) =>
+                err({
+                  code: "TEST_ERROR",
+                  cause: e,
+                }),
+              ),
+        },
+        {
+          name: "async",
+          createSafeFn: () =>
+            SafeFnBuilder.new()
+              .handler(async () => {
+                throw new Error("error");
+              })
+              .error((e) =>
+                err({
+                  code: "TEST_ERROR",
+                  cause: e,
+                }),
+              ),
+        },
+        {
+          name: "generator",
+          createSafeFn: () =>
+            SafeFnBuilder.new()
+              .safeHandler(async function* () {
+                throw new Error("error");
+              })
+              .error((e) =>
+                err({
+                  code: "TEST_ERROR",
+                  cause: e,
+                }),
+              ),
+        },
+      ];
+
+      testCases.forEach(({ name, createSafeFn }) => {
+        test(`should run error handler for ${name} handler`, async () => {
+          const safeFn = createSafeFn();
+          const res = await safeFn.run(undefined as TODO);
+          expect(res).toBeErr();
+          assert(res.isErr());
+          expect(res.error.code).toBe("TEST_ERROR");
+          assert(res.error.code === "TEST_ERROR");
+          expect(res.error.cause).toBeInstanceOf(Error);
+          assert(res.error.cause instanceof Error);
+          expect(res.error.cause.message).toBe("error");
+        });
+      });
+    });
   });
 });
