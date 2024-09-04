@@ -1,6 +1,6 @@
 import { assert, describe, expect, test } from "vitest";
 import { z } from "zod";
-import { ok, type Result } from "./result";
+import { err, ok, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type { TODO } from "./types";
 
@@ -68,6 +68,21 @@ describe("safe-fn-builder", () => {
       const safeFn = builder.input(inputSchema);
       expect(safeFn._internals.inputSchema).toEqual(inputSchema);
     });
+
+    test("should be new instance", () => {
+      const builder = SafeFnBuilder.new();
+      const safeFn = builder.input(z.string());
+      const safeFn2 = builder.input(z.string());
+      expect(safeFn2).not.toBe(safeFn);
+    });
+  });
+
+  describe("unparsedInput", () => {
+    test("should return the same instance", () => {
+      const builder = SafeFnBuilder.new();
+      const builder2 = builder.unparsedInput<string>();
+      expect(builder2).toBe(builder);
+    });
   });
 
   describe("output", () => {
@@ -77,6 +92,13 @@ describe("safe-fn-builder", () => {
       const safeFn = builder.output(outputSchema);
       expect(safeFn._internals.outputSchema).toEqual(outputSchema);
     });
+
+    test("should be new instance", () => {
+      const builder = SafeFnBuilder.new();
+      const safeFn = builder.output(z.string());
+      const safeFn2 = builder.output(z.string());
+      expect(safeFn2).not.toBe(safeFn);
+    });
   });
 
   describe("handler", () => {
@@ -84,7 +106,40 @@ describe("safe-fn-builder", () => {
       const builder = SafeFnBuilder.new();
       const handlerFn = () => ok("data");
       const safeFn = builder.handler(handlerFn);
-      expect(safeFn._internals.handler).toEqual(handlerFn);
+      expect(safeFn._internals.handler).toBe(handlerFn);
+    });
+
+    test("should be new instance", () => {
+      const builder = SafeFnBuilder.new();
+      const safeFn = builder.handler(() => ok("data"));
+      const safeFn2 = builder.handler(() => ok("data"));
+      expect(safeFn2).not.toBe(safeFn);
+    });
+  });
+
+  describe("safeHandler", () => {
+    test("should set the safe handler function", async () => {
+      const builder = SafeFnBuilder.new();
+      const safeHandlerFn = async function* () {
+        return ok("data");
+      };
+      // Note: generator functions are wrapped, so we're comparing the result instead of the function here
+      const safeFn = builder.safeHandler(safeHandlerFn);
+      const handlerRes = await safeFn._internals.handler(undefined as TODO);
+      const expectedRes = (await safeHandlerFn().next()).value;
+      expect(handlerRes).toEqual(expectedRes);
+    });
+  });
+});
+
+describe("runnable-safe-fn", () => {
+  describe("error", () => {
+    test("should set the error handler", () => {
+      const errorHandler = () => err("error");
+      const safeFn = SafeFnBuilder.new()
+        .handler(() => ok(""))
+        .error(errorHandler);
+      expect(safeFn._internals.uncaughtErrorHandler).toEqual(errorHandler);
     });
   });
 });
