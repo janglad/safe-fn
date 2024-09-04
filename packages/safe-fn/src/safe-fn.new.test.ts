@@ -218,5 +218,67 @@ describe("runnable-safe-fn", () => {
         });
       });
     });
+
+    describe("output", () => {
+      const outputSchema = z
+        .object({ name: z.string(), lastName: z.string() })
+        .transform((input) => ({
+          fullName: `${input.name} ${input.lastName}`,
+        }));
+
+      const testCases = [
+        {
+          name: "regular",
+          createSafeFn: () =>
+            SafeFnBuilder.new()
+              .unparsedInput<{ name: string; lastName: string }>()
+              .output(outputSchema)
+              .handler((args) => ok(args.unparsedInput)),
+        },
+        {
+          name: "async",
+          createSafeFn: () =>
+            SafeFnBuilder.new()
+              .unparsedInput<{ name: string; lastName: string }>()
+              .output(outputSchema)
+              .handler(async (args) => ok(args.unparsedInput)),
+        },
+        {
+          name: "generator",
+          createSafeFn: () =>
+            SafeFnBuilder.new()
+              .unparsedInput<{ name: string; lastName: string }>()
+              .output(outputSchema)
+              .safeHandler(async function* (args) {
+                return ok(args.unparsedInput);
+              }),
+        },
+      ];
+
+      testCases.forEach(({ name, createSafeFn }) => {
+        test(`should return Ok with parsed output for ${name} handler`, async () => {
+          const safeFn = createSafeFn();
+          const res = await safeFn.run({ name: "John", lastName: "Doe" });
+          expect(res).toBeOk();
+          assert(res.isOk());
+          expect(res.value).toEqual({
+            fullName: "John Doe",
+          });
+        });
+      });
+
+      testCases.forEach(({ name, createSafeFn }) => {
+        test(`should return Err if output is not valid for ${name} handler`, async () => {
+          const safeFn = createSafeFn();
+          // @ts-expect-error
+          const res = await safeFn.run({});
+          expect(res).toBeErr();
+          assert(res.isErr());
+          expect(res.error).toMatchObject({
+            code: "OUTPUT_PARSING",
+          });
+        });
+      });
+    });
   });
 });
