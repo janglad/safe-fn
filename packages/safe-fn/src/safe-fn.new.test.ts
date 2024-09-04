@@ -4,6 +4,7 @@ import { err, ok, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type { TODO } from "./types";
 
+// TODO: this does not belong here
 expect.extend({
   toBeErr(received: Result<any, any>, expected?: any) {
     const isErr = received.isErr();
