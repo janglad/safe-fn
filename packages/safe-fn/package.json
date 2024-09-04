@@ -22,7 +22,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
-    "test": "vitest --coverage --run",
+    "test": "vitest",
     "test:watch": "vitest --watch",
     "check-types": "tsc --noEmit"
   },
