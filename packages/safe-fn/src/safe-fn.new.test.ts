@@ -169,7 +169,7 @@ describe("runnable-safe-fn", () => {
           fullName: `${input.name} ${input.lastName}`,
         }));
 
-      const testCases = [
+      const testCasesWithInputSchema = [
         {
           name: "regular",
           createSafeFn: () =>
@@ -195,8 +195,27 @@ describe("runnable-safe-fn", () => {
         },
       ];
 
-      testCases.forEach(({ name, createSafeFn }) => {
-        test(`should parse input and pass it to ${name} handler`, async () => {
+      const testCasesWithoutInputSchema = [
+        {
+          name: "regular",
+          createSafeFn: () => SafeFnBuilder.new().handler((args) => ok(args)),
+        },
+        {
+          name: "async",
+          createSafeFn: () =>
+            SafeFnBuilder.new().handler(async (args) => ok(args)),
+        },
+        {
+          name: "generator",
+          createSafeFn: () =>
+            SafeFnBuilder.new().safeHandler(async function* (args) {
+              return ok(args);
+            }),
+        },
+      ];
+
+      testCasesWithInputSchema.forEach(({ name, createSafeFn }) => {
+        test(`should parse input and pass it to ${name} handler when input schema is defined`, async () => {
           const safeFn = createSafeFn();
           const res = await safeFn.run({ name: "John", lastName: "Doe" });
           expect(res).toBeOk();
@@ -205,15 +224,22 @@ describe("runnable-safe-fn", () => {
             parsedInput: {
               fullName: "John Doe",
             },
+          });
+        });
+        test("should pass unparsed input to handler when input schema is defined", async () => {
+          const safeFn = createSafeFn();
+          const res = await safeFn.run({ name: "John", lastName: "Doe" });
+          expect(res).toBeOk();
+          assert(res.isOk());
+          console.log(res.value);
+          expect(res.value).toMatchObject({
             unparsedInput: {
               name: "John",
               lastName: "Doe",
             },
           });
         });
-      });
 
-      testCases.forEach(({ name, createSafeFn }) => {
         test(`should return Err if input is not valid for ${name} handler`, async () => {
           const safeFn = createSafeFn();
           // @ts-expect-error
@@ -225,6 +251,28 @@ describe("runnable-safe-fn", () => {
           expect(res.error.cause).toBeInstanceOf(ZodError);
           expect(res.error.cause.format().lastName).toBeDefined();
           expect(res.error.cause.format().name).toBeDefined();
+        });
+      });
+
+      testCasesWithoutInputSchema.forEach(({ name, createSafeFn }) => {
+        test(`should pass unparsed input to handler when input schema is not defined for ${name} handler`, async () => {
+          const safeFn = createSafeFn();
+          const res = await safeFn.run({ name: "John", lastName: "Doe" });
+          expect(res).toBeOk();
+          assert(res.isOk());
+          expect(res.value).toEqual({
+            unparsedInput: { name: "John", lastName: "Doe" },
+          });
+        });
+
+        test("should pass undefined as parsed input if input is undefined", async () => {
+          const safeFn = createSafeFn();
+          const res = await safeFn.run(undefined as TODO);
+          expect(res).toBeOk();
+          assert(res.isOk());
+          expect(res.value).toEqual({
+            parsedInput: undefined,
+          });
         });
       });
     });
