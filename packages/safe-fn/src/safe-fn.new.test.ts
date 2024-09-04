@@ -16,7 +16,8 @@ expect.extend({
 });
 
 interface CustomMatchers<R = unknown> {
-  toBeErr(expected?: any): R;
+  toBeErr(): R;
+  toBeOk(): R;
 }
 
 declare module "vitest" {
@@ -41,9 +42,12 @@ describe("safe-fn-builder", () => {
       expect(builder._internals.outputSchema).toBeUndefined();
     });
 
-    test("should set the correct default action", () => {
+    test.only("should set the correct default action", () => {
       const builder = SafeFnBuilder.new();
-      expect(builder._internals.handler(undefined as TODO)).toBeErr({
+      const res = builder._internals.handler(undefined as TODO);
+      expect(res).toBeErr();
+      // @ts-expect-error - Return not defined in builder type as .run can not be called anyway
+      expect(res.error).toMatchObject({
         code: "NO_HANDLER",
       });
     });
@@ -146,6 +150,25 @@ describe("runnable-safe-fn", () => {
         .handler(() => ok(""))
         .error(errorHandler);
       expect(safeFn._internals.uncaughtErrorHandler).toEqual(errorHandler);
+    });
+  });
+
+  describe("run", () => {
+    describe("input", () => {
+      test("should parse input and pass it to handler", async () => {
+        const inputSchema = z
+          .object({ name: z.string(), lastName: z.string() })
+          .transform((input) => ({
+            fullName: `${input.name} ${input.lastName}`,
+          }));
+        const safeFn = SafeFnBuilder.new()
+          .input(inputSchema)
+          .handler((args) => ok(args.parsedInput.fullName));
+        const res = await safeFn.run({ name: "John", lastName: "Doe" });
+        expect(res).toBeOk();
+        assert(res.isOk());
+        expect(res.value).toBe("John Doe");
+      });
     });
   });
 });
