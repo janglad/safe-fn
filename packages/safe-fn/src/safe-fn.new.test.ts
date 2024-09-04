@@ -204,6 +204,19 @@ describe("runnable-safe-fn", () => {
           expect(res.value).toBe("John Doe");
         });
       });
+
+      testCases.forEach(({ name, createSafeFn }) => {
+        test(`should return Err if input is not valid for ${name} handler`, async () => {
+          const safeFn = createSafeFn();
+          // @ts-expect-error
+          const res = await safeFn.run({});
+          expect(res).toBeErr();
+          assert(res.isErr());
+          expect(res.error).toMatchObject({
+            code: "INPUT_PARSING",
+          });
+        });
+      });
     });
   });
 });
