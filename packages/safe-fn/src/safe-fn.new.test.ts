@@ -59,6 +59,12 @@ describe("safe-fn-builder", () => {
         code: "UNCAUGHT_ERROR",
       });
     });
+
+    test("should set the parent safe-fn", () => {
+      const parent = SafeFnBuilder.new().handler(() => ok(""));
+      const child = SafeFnBuilder.new(parent);
+      expect(child._internals.parent).toBe(parent);
+    });
   });
 
   describe("input", () => {
