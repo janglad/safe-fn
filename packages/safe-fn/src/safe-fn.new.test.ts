@@ -1,5 +1,5 @@
 import { assert, describe, expect, test } from "vitest";
-import { z } from "zod";
+import { z, ZodError } from "zod";
 import { err, ok, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type { TODO } from "./types";
@@ -212,9 +212,11 @@ describe("runnable-safe-fn", () => {
           const res = await safeFn.run({});
           expect(res).toBeErr();
           assert(res.isErr());
-          expect(res.error).toMatchObject({
-            code: "INPUT_PARSING",
-          });
+          expect(res.error.code).toBe("INPUT_PARSING");
+          assert(res.error.code === "INPUT_PARSING");
+          expect(res.error.cause).toBeInstanceOf(ZodError);
+          expect(res.error.cause.format().lastName).toBeDefined();
+          expect(res.error.cause.format().name).toBeDefined();
         });
       });
     });
@@ -274,9 +276,11 @@ describe("runnable-safe-fn", () => {
           const res = await safeFn.run({});
           expect(res).toBeErr();
           assert(res.isErr());
-          expect(res.error).toMatchObject({
-            code: "OUTPUT_PARSING",
-          });
+          expect(res.error.code).toBe("OUTPUT_PARSING");
+          assert(res.error.code === "OUTPUT_PARSING");
+          expect(res.error.cause).toBeInstanceOf(ZodError);
+          expect(res.error.cause.format().lastName).toBeDefined();
+          expect(res.error.cause.format().name).toBeDefined();
         });
       });
     });
