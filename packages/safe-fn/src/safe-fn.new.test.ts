@@ -437,46 +437,45 @@ describe("runnable-safe-fn", () => {
         });
       });
     });
+  });
+  describe("createAction", () => {
+    describe("input", async () => {
+      test("should transform input error", async () => {
+        const action = SafeFnBuilder.new()
+          .input(z.object({ name: z.string() }))
+          .handler((args) => ok(args))
+          .createAction();
 
-    describe("createAction", () => {
-      describe("input", async () => {
-        test("should transform input error", async () => {
-          const action = SafeFnBuilder.new()
-            .input(z.object({ name: z.string() }))
-            .handler((args) => ok(args))
-            .createAction();
-
-          // @ts-expect-error
-          const res = await action({});
-          expect(res.ok).toBe(false);
-          assert(!res.ok);
-          expect(res.error.code).toBe("INPUT_PARSING");
-          assert(res.error.code === "INPUT_PARSING");
-          expect(res.error.cause).toHaveProperty(["formattedError"]);
-          expect(res.error.cause.formattedError).toHaveProperty(["name"]);
-          expect(res.error.cause).toHaveProperty(["flattenedError"]);
-        });
+        // @ts-expect-error
+        const res = await action({});
+        expect(res.ok).toBe(false);
+        assert(!res.ok);
+        expect(res.error.code).toBe("INPUT_PARSING");
+        assert(res.error.code === "INPUT_PARSING");
+        expect(res.error.cause).toHaveProperty(["formattedError"]);
+        expect(res.error.cause.formattedError).toHaveProperty(["name"]);
+        expect(res.error.cause).toHaveProperty(["flattenedError"]);
       });
+    });
 
-      describe("output", () => {
-        test("should transform output error", async () => {
-          const action = SafeFnBuilder.new()
-            .output(z.object({ name: z.string() }))
-            // @ts-expect-error
-            .handler((args) => {
-              return ok({});
-            })
-            .createAction();
+    describe("output", () => {
+      test("should transform output error", async () => {
+        const action = SafeFnBuilder.new()
+          .output(z.object({ name: z.string() }))
+          // @ts-expect-error
+          .handler((args) => {
+            return ok({});
+          })
+          .createAction();
 
-          const res = await action(undefined as TODO);
-          expect(res.ok).toBe(false);
-          assert(!res.ok);
-          expect(res.error.code).toBe("OUTPUT_PARSING");
-          assert(res.error.code === "OUTPUT_PARSING");
-          expect(res.error.cause).toHaveProperty(["formattedError"]);
-          expect(res.error.cause.formattedError).toHaveProperty(["name"]);
-          expect(res.error.cause).toHaveProperty(["flattenedError"]);
-        });
+        const res = await action(undefined as TODO);
+        expect(res.ok).toBe(false);
+        assert(!res.ok);
+        expect(res.error.code).toBe("OUTPUT_PARSING");
+        assert(res.error.code === "OUTPUT_PARSING");
+        expect(res.error.cause).toHaveProperty(["formattedError"]);
+        expect(res.error.cause.formattedError).toHaveProperty(["name"]);
+        expect(res.error.cause).toHaveProperty(["flattenedError"]);
       });
     });
   });
