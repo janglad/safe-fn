@@ -407,7 +407,7 @@ export type SafeFnReturn<
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
-  TAsAction extends boolean = false,
+  TAsAction extends boolean,
 > = ResultAsync<
   SafeFnReturnData<TOutputSchema, Awaited<THandlerRes>>,
   DistributeUnion<
@@ -453,7 +453,13 @@ export type SafeFnActionReturn<
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
 > = ResultAsyncToPromiseActionResult<
-  SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes>
+  SafeFnReturn<
+    TInputSchema,
+    TOutputSchema,
+    THandlerRes,
+    TThrownHandlerRes,
+    true
+  >
 >;
 export type SafeFnAction<
   TParent extends AnyRunnableSafeFn | undefined,

@@ -89,13 +89,25 @@ export class RunnableSafeFn<
   */
   run(
     args: SafeFnRunArgs<TUnparsedInput, TParent>,
-  ): SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes> {
+  ): SafeFnReturn<
+    TInputSchema,
+    TOutputSchema,
+    THandlerRes,
+    TThrownHandlerRes,
+    false
+  > {
     return this._run(args, false);
   }
   _run<TAsAction extends boolean>(
     args: SafeFnRunArgs<TUnparsedInput, TParent>,
     tAsAction: TAsAction,
-  ): SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes> {
+  ): SafeFnReturn<
+    TInputSchema,
+    TOutputSchema,
+    THandlerRes,
+    TThrownHandlerRes,
+    TAsAction
+  > {
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;
     const handler = this._internals.handler;
@@ -149,7 +161,6 @@ export class RunnableSafeFn<
     TThrownHandlerRes
   > {
     const res = await this._run(args, true);
-    console.log("res", res);
     if (res.isOk()) {
       return actionOk(res.value);
     }
