@@ -1,5 +1,6 @@
-import { assert, describe, expect, test, vi } from "vitest";
+import { assert, describe, expect, test, vi, type Mock } from "vitest";
 import { z, ZodError } from "zod";
+import type { AnyRunnableSafeFn } from "../dist";
 import { err, ok, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type { TODO } from "./types";
@@ -512,6 +513,136 @@ describe("runnable-safe-fn", () => {
       });
     });
   });
+
+  describe("parent", () => {
+    const parents = [
+      {
+        name: "regular",
+        createSafeFn: () => SafeFnBuilder.new().handler((args) => ok("Ok!")),
+      },
+      {
+        name: "async",
+        createSafeFn: () =>
+          SafeFnBuilder.new().handler(async (args) => ok("Ok!")),
+      },
+      {
+        name: "generator",
+        createSafeFn: () =>
+          SafeFnBuilder.new().safeHandler(async function* (args) {
+            return ok("Ok!");
+          }),
+      },
+    ];
+
+    const children = [
+      {
+        name: "regular",
+        createSafeFn: (parent: AnyRunnableSafeFn) =>
+          SafeFnBuilder.new(parent).handler((args) => ok(args.ctx)),
+      },
+      {
+        name: "async",
+        createSafeFn: (parent: AnyRunnableSafeFn) =>
+          SafeFnBuilder.new(parent).handler(async (args) => ok(args.ctx)),
+      },
+      {
+        name: "generator",
+        createSafeFn: (parent: AnyRunnableSafeFn) =>
+          SafeFnBuilder.new(parent).safeHandler(async function* (args) {
+            return ok(args.ctx);
+          }),
+      },
+    ];
+
+    parents.forEach(
+      ({ name: parentName, createSafeFn: createParentSafeFn }) => {
+        children.forEach(
+          ({ name: childName, createSafeFn: createChildSafeFn }) => {
+            test(`should pass parent result from ${parentName} to ${childName}`, async () => {
+              const parent = createParentSafeFn();
+              const child = createChildSafeFn(parent as AnyRunnableSafeFn);
+              const res = await child.run(undefined as TODO);
+              expect(res).toBeOk();
+              assert(res.isOk());
+              expect(res.value).toBe("Ok!");
+            });
+          },
+        );
+      },
+    );
+
+    const parentsWithError = [
+      {
+        name: "regular",
+        createSafeFn: () =>
+          SafeFnBuilder.new().handler((args) => err("Not ok!")),
+      },
+      {
+        name: "async",
+        createSafeFn: () =>
+          SafeFnBuilder.new().handler(async (args) => err("Not ok!")),
+      },
+      {
+        name: "generator - return error",
+        createSafeFn: () =>
+          SafeFnBuilder.new().safeHandler(async function* (args) {
+            return err("Not ok!");
+          }),
+      },
+      {
+        name: "generator - yield error",
+        createSafeFn: () =>
+          SafeFnBuilder.new().safeHandler(async function* (args) {
+            yield* err("Not ok!").safeUnwrap();
+            return ok("Ok!");
+          }),
+      },
+    ];
+
+    const childrenWithMocks = [
+      {
+        name: "regular",
+        createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
+          SafeFnBuilder.new(parent).handler(mockHandler),
+      },
+      {
+        name: "async",
+        createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
+          SafeFnBuilder.new(parent).handler(async () => mockHandler()),
+      },
+      {
+        name: "generator",
+        createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
+          SafeFnBuilder.new(parent).safeHandler(async function* () {
+            return mockHandler();
+          }),
+      },
+    ];
+    parentsWithError.forEach(
+      ({ name: parentName, createSafeFn: createParentSafeFn }) => {
+        childrenWithMocks.forEach(
+          async ({ name: childName, createSafeFn: createChildSafeFn }) => {
+            const mockHandler = vi.fn();
+            const parent = createParentSafeFn();
+            const child = createChildSafeFn(
+              parent as AnyRunnableSafeFn,
+              mockHandler,
+            );
+            const res = await child.run(undefined as TODO);
+            test(`should pass error from ${parentName} to ${childName}`, () => {
+              expect(res).toBeErr();
+              assert(res.isErr());
+              expect(res.error).toBe("Not ok!");
+            });
+            test(`should not call ${childName} handler for error in ${parentName}`, () => {
+              expect(mockHandler).not.toHaveBeenCalled();
+            });
+          },
+        );
+      },
+    );
+  });
+
   describe("createAction", () => {
     describe("input", async () => {
       test("should transform input error", async () => {
