@@ -24,12 +24,13 @@
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest --coverage --ui",
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
     "@vitest/coverage-v8": "^2.0.5",
+    "@vitest/ui": "^2.0.5",
     "neverthrow": "^7.1.0",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5",
