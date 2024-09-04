@@ -16,6 +16,7 @@
       "cache": false
     },
     "test": {},
+    "test:coverage": {},
     "test:watch": {
       "cache": false,
       "persistent": true

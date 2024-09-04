@@ -24,6 +24,7 @@
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "test": "vitest",
     "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
