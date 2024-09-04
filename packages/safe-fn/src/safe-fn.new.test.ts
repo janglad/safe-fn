@@ -175,14 +175,14 @@ describe("runnable-safe-fn", () => {
           createSafeFn: () =>
             SafeFnBuilder.new()
               .input(inputSchema)
-              .handler((args) => ok(args.parsedInput.fullName)),
+              .handler((args) => ok(args)),
         },
         {
           name: "async",
           createSafeFn: () =>
             SafeFnBuilder.new()
               .input(inputSchema)
-              .handler(async (args) => ok(args.parsedInput.fullName)),
+              .handler(async (args) => ok(args)),
         },
         {
           name: "generator",
@@ -190,7 +190,7 @@ describe("runnable-safe-fn", () => {
             SafeFnBuilder.new()
               .input(inputSchema)
               .safeHandler(async function* (args) {
-                return ok(args.parsedInput.fullName);
+                return ok(args);
               }),
         },
       ];
@@ -201,7 +201,15 @@ describe("runnable-safe-fn", () => {
           const res = await safeFn.run({ name: "John", lastName: "Doe" });
           expect(res).toBeOk();
           assert(res.isOk());
-          expect(res.value).toBe("John Doe");
+          expect(res.value).toMatchObject({
+            parsedInput: {
+              fullName: "John Doe",
+            },
+            unparsedInput: {
+              name: "John",
+              lastName: "Doe",
+            },
+          });
         });
       });
 
