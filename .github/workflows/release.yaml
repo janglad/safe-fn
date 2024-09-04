@@ -34,6 +34,8 @@ jobs:
         run: pnpm build
       - name: "Run type-check"
         run: pnpm check-types
+      - name: "Run lint"
+        run: pnpm lint
       - name: "Run tests"
         run: pnpm test
 

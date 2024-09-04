@@ -20,6 +20,7 @@
     "@repo/eslint-config": "workspace:^",
     "@repo/typescript-config": "workspace:^",
     "@types/react": "^18.3.3",
+    "@typescript-eslint/parser": "^8.4.0",
     "eslint": "^8.57.0",
     "neverthrow": "^7.1.0",
     "react": "^18.3.1",
