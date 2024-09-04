@@ -13,6 +13,14 @@ expect.extend({
       pass: isErr,
     };
   },
+  toBeOk(received: Result<any, any>, expected?: any) {
+    const isOk = received.isOk();
+    return {
+      message: () =>
+        `expected ${JSON.stringify(received)} to ${isOk ? "not " : ""}be an Ok \n`,
+      pass: isOk,
+    };
+  },
 });
 
 interface CustomMatchers<R = unknown> {
@@ -42,7 +50,7 @@ describe("safe-fn-builder", () => {
       expect(builder._internals.outputSchema).toBeUndefined();
     });
 
-    test.only("should set the correct default action", () => {
+    test("should set the correct default action", () => {
       const builder = SafeFnBuilder.new();
       const res = builder._internals.handler(undefined as TODO);
       expect(res).toBeErr();
@@ -155,19 +163,46 @@ describe("runnable-safe-fn", () => {
 
   describe("run", () => {
     describe("input", () => {
-      test("should parse input and pass it to handler", async () => {
-        const inputSchema = z
-          .object({ name: z.string(), lastName: z.string() })
-          .transform((input) => ({
-            fullName: `${input.name} ${input.lastName}`,
-          }));
-        const safeFn = SafeFnBuilder.new()
-          .input(inputSchema)
-          .handler((args) => ok(args.parsedInput.fullName));
-        const res = await safeFn.run({ name: "John", lastName: "Doe" });
-        expect(res).toBeOk();
-        assert(res.isOk());
-        expect(res.value).toBe("John Doe");
+      const inputSchema = z
+        .object({ name: z.string(), lastName: z.string() })
+        .transform((input) => ({
+          fullName: `${input.name} ${input.lastName}`,
+        }));
+
+      const testCases = [
+        {
+          name: "regular",
+          createSafeFn: () =>
+            SafeFnBuilder.new()
+              .input(inputSchema)
+              .handler((args) => ok(args.parsedInput.fullName)),
+        },
+        {
+          name: "async",
+          createSafeFn: () =>
+            SafeFnBuilder.new()
+              .input(inputSchema)
+              .handler(async (args) => ok(args.parsedInput.fullName)),
+        },
+        {
+          name: "generator",
+          createSafeFn: () =>
+            SafeFnBuilder.new()
+              .input(inputSchema)
+              .safeHandler(async function* (args) {
+                return ok(args.parsedInput.fullName);
+              }),
+        },
+      ];
+
+      testCases.forEach(({ name, createSafeFn }) => {
+        test(`should parse input and pass it to ${name} handler`, async () => {
+          const safeFn = createSafeFn();
+          const res = await safeFn.run({ name: "John", lastName: "Doe" });
+          expect(res).toBeOk();
+          assert(res.isOk());
+          expect(res.value).toBe("John Doe");
+        });
       });
     });
   });
