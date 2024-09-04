@@ -113,7 +113,7 @@ export class SafeFnBuilder<
 
   handler<TNewHandlerResult extends SafeFnHandlerReturn<TOutputSchema>>(
     handler: (
-      args: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
     ) => TNewHandlerResult,
   ): RunnableSafeFn<
     TParent,
