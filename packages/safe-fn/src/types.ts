@@ -221,22 +221,20 @@ type SafeFnHandlerArgsWParent<
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn,
 > = {
-  // TODO: look at if empty object is good fit here
-  // Used to be never, chosen as to not collapse types that join
   parsedInput: Prettify<
-    SchemaOutputOrFallback<TInputSchema, {}> &
-      SchemaOutputOrFallback<InferInputSchema<TParent>, {}>
+    SchemaOutputOrFallback<TInputSchema, undefined> &
+      SchemaOutputOrFallback<InferInputSchema<TParent>, undefined>
   >;
   unparsedInput: Prettify<TUnparsedInput & InferUnparsedInput<TParent>>;
-  // TODO: look at if empty object is good fit here
-  ctx: TOrFallback<InferOkData<Awaited<ReturnType<TParent["run"]>>>, {}>;
+
+  ctx: TOrFallback<InferOkData<Awaited<ReturnType<TParent["run"]>>>, undefined>;
 };
 
 type SafeFnHandlerArgsNoParent<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
 > = {
-  parsedInput: SchemaOutputOrFallback<TInputSchema, {}>;
+  parsedInput: SchemaOutputOrFallback<TInputSchema, undefined>;
   unparsedInput: TUnparsedInput;
   ctx: undefined;
 };
