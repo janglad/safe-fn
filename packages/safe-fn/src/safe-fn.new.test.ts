@@ -1,4 +1,4 @@
-import { assert, describe, expect, test } from "vitest";
+import { assert, describe, expect, test, vi } from "vitest";
 import { z, ZodError } from "zod";
 import { err, ok, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
@@ -377,7 +377,7 @@ describe("runnable-safe-fn", () => {
       });
     });
 
-    describe("error", () => {
+    describe("uncaught error", () => {
       const testCases = [
         {
           name: "regular",
@@ -435,6 +435,79 @@ describe("runnable-safe-fn", () => {
           assert(res.error.cause instanceof Error);
           expect(res.error.cause.message).toBe("error");
         });
+      });
+    });
+
+    describe("return error", async () => {
+      const outputParseMock = vi.fn();
+      const postYieldMock = vi.fn();
+
+      const testCases = [
+        {
+          name: "regular",
+          createSafeFn: () => {
+            const builder = SafeFnBuilder.new().handler(() => err("Ooh no!"));
+            builder._parseOutput = outputParseMock;
+            return builder;
+          },
+        },
+        {
+          name: "async",
+          createSafeFn: () => {
+            const builder = SafeFnBuilder.new().handler(async () =>
+              err("Ooh no!"),
+            );
+            builder._parseOutput = outputParseMock;
+            return builder;
+          },
+        },
+        {
+          name: "generator - return error",
+          createSafeFn: () => {
+            const builder = SafeFnBuilder.new().safeHandler(async function* () {
+              return err("Ooh no!");
+            });
+            builder._parseOutput = outputParseMock;
+            return builder;
+          },
+        },
+        {
+          name: "generator - yield error",
+          createSafeFn: () => {
+            const builder = SafeFnBuilder.new().safeHandler(async function* () {
+              yield* err("Ooh no!").safeUnwrap();
+              postYieldMock();
+              return ok("Ooh yes!");
+            });
+            builder._parseOutput = outputParseMock;
+            return builder;
+          },
+        },
+      ] as const;
+
+      testCases.forEach(({ name, createSafeFn }) => {
+        test(`should return error from ${name} handler`, async () => {
+          const safeFn = createSafeFn();
+          const res = await safeFn.run(undefined as TODO);
+          expect(res).toBeErr();
+          assert(res.isErr());
+          expect(res.error).toBe("Ooh no!");
+        });
+        test("should not run output parse if handler returned error", async () => {
+          const safeFn = createSafeFn();
+          const res = await safeFn.run(undefined as TODO);
+          expect(res).toBeErr();
+          assert(res.isErr());
+          expect(outputParseMock).not.toHaveBeenCalled();
+        });
+      });
+
+      test("should escape early out of generator if it yields an error", async () => {
+        const safeFn = testCases[3].createSafeFn();
+        const res = await safeFn.run(undefined as TODO);
+        expect(res).toBeErr();
+        assert(res.isErr());
+        expect(postYieldMock).not.toHaveBeenCalled();
       });
     });
   });
