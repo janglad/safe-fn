@@ -48,7 +48,7 @@ export class SafeFnBuilder<
 */
   static new<TNewParent extends AnyRunnableSafeFn | undefined = undefined>(
     parent?: TNewParent,
-  ): SafeFnBuilder<TNewParent, undefined, undefined, unknown> {
+  ): SafeFnBuilder<TNewParent, undefined, undefined, never> {
     return new SafeFnBuilder({
       parent,
       inputSchema: undefined,

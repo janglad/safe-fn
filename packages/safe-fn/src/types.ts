@@ -42,7 +42,9 @@ export type SafeFnInternals<
 ################################
 */
 
-export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
+export type AnyRunnableSafeFn =
+  | RunnableSafeFn<any, any, any, any, any, any>
+  | RunnableSafeFn<any, any, any, never, any, any>;
 
 /*
 ################################
@@ -246,8 +248,11 @@ type SafeFnHandlerArgsWParent<
     >
   >;
   // Prettify<unknown> results in {}
-  unparsedInput: TUnparsedInput &
-    InferUnparsedInput<TParent> extends infer Merged
+  unparsedInput: UnionIfNotT<
+    TUnparsedInput,
+    InferUnparsedInput<TParent>,
+    never
+  > extends infer Merged
     ? IsUnknown<Merged> extends true
       ? unknown
       : Prettify<Merged>
@@ -365,9 +370,15 @@ export type SafeFnReturnError<
 export type SafeFnRunArgs<
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn | undefined,
-> = TParent extends AnyRunnableSafeFn
-  ? Prettify<TUnparsedInput & InferRunArgs<TParent>>
-  : TUnparsedInput;
+> = (
+  TParent extends AnyRunnableSafeFn
+    ? Prettify<TUnparsedInput & InferRunArgs<TParent>>
+    : TUnparsedInput
+) extends infer TUnparsed
+  ? [TUnparsed] extends [never]
+    ? []
+    : [TUnparsed]
+  : never;
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
@@ -504,7 +515,7 @@ export type SafeFnAction<
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
 > = (
-  args: SafeFnActionArgs<TUnparsedInput, TParent>,
+  ...args: SafeFnActionArgs<TUnparsedInput, TParent>
 ) => SafeFnActionReturn<
   TInputSchema,
   TOutputSchema,

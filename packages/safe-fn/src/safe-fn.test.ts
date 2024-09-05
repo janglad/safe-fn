@@ -199,19 +199,26 @@ describe("runnable-safe-fn", () => {
       const testCasesWithoutInputSchema = [
         {
           name: "regular",
-          createSafeFn: () => SafeFnBuilder.new().handler((args) => ok(args)),
+          createSafeFn: () =>
+            SafeFnBuilder.new()
+              .unparsedInput<unknown>()
+              .handler((args) => ok(args)),
         },
         {
           name: "async",
           createSafeFn: () =>
-            SafeFnBuilder.new().handler(async (args) => ok(args)),
+            SafeFnBuilder.new()
+              .unparsedInput<unknown>()
+              .handler(async (args) => ok(args)),
         },
         {
           name: "generator",
           createSafeFn: () =>
-            SafeFnBuilder.new().safeHandler(async function* (args) {
-              return ok(args);
-            }),
+            SafeFnBuilder.new()
+              .unparsedInput<unknown>()
+              .safeHandler(async function* (args) {
+                return ok(args);
+              }),
         },
       ];
 
@@ -243,7 +250,8 @@ describe("runnable-safe-fn", () => {
 
         test(`should return Err if input is not valid for ${name} handler`, async () => {
           const safeFn = createSafeFn();
-          // @ts-expect-error
+
+          // @ts-expect-error - Wrong input type
           const res = await safeFn.run({});
           expect(res).toBeErr();
           assert(res.isErr());
@@ -427,7 +435,7 @@ describe("runnable-safe-fn", () => {
       testCases.forEach(({ name, createSafeFn }) => {
         test(`should run error handler for ${name} handler`, async () => {
           const safeFn = createSafeFn();
-          const res = await safeFn.run(undefined as TODO);
+          const res = await safeFn.run();
           expect(res).toBeErr();
           assert(res.isErr());
           expect(res.error.code).toBe("TEST_ERROR");
@@ -489,14 +497,14 @@ describe("runnable-safe-fn", () => {
       testCases.forEach(({ name, createSafeFn }) => {
         test(`should return error from ${name} handler`, async () => {
           const safeFn = createSafeFn();
-          const res = await safeFn.run(undefined as TODO);
+          const res = await safeFn.run();
           expect(res).toBeErr();
           assert(res.isErr());
           expect(res.error).toBe("Ooh no!");
         });
         test("should not run output parse if handler returned error", async () => {
           const safeFn = createSafeFn();
-          const res = await safeFn.run(undefined as TODO);
+          const res = await safeFn.run();
           expect(res).toBeErr();
           assert(res.isErr());
           expect(outputParseMock).not.toHaveBeenCalled();
@@ -505,7 +513,7 @@ describe("runnable-safe-fn", () => {
 
       test("should escape early out of generator if it yields an error", async () => {
         const safeFn = testCases[3].createSafeFn();
-        const res = await safeFn.run(undefined as TODO);
+        const res = await safeFn.run();
         expect(res).toBeErr();
         assert(res.isErr());
         expect(postYieldMock).not.toHaveBeenCalled();
@@ -560,7 +568,7 @@ describe("runnable-safe-fn", () => {
             test(`should pass parent result from ${parentName} to ${childName}`, async () => {
               const parent = createParentSafeFn();
               const child = createChildSafeFn(parent as AnyRunnableSafeFn);
-              const res = await child.run(undefined as TODO);
+              const res = await child.run();
               expect(res).toBeOk();
               assert(res.isOk());
               expect(res.value).toBe("Ok!");
@@ -627,7 +635,7 @@ describe("runnable-safe-fn", () => {
               parent as AnyRunnableSafeFn,
               mockHandler,
             );
-            const res = await child.run(undefined as TODO);
+            const res = await child.run();
             test(`should pass error from ${parentName} to ${childName}`, () => {
               expect(res).toBeErr();
               assert(res.isErr());
@@ -672,7 +680,7 @@ describe("runnable-safe-fn", () => {
           })
           .createAction();
 
-        const res = await action(undefined as TODO);
+        const res = await action();
         expect(res.ok).toBe(false);
         assert(!res.ok);
         expect(res.error.code).toBe("OUTPUT_PARSING");
