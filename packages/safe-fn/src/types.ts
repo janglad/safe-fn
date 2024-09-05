@@ -56,6 +56,8 @@ export type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
 
+type IsUnknown<T> = unknown extends T ? true : false;
+
 export type DistributeUnion<T> = T extends any ? T : never;
 
 type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
@@ -243,7 +245,13 @@ type SafeFnHandlerArgsWParent<
       undefined
     >
   >;
-  unparsedInput: Prettify<TUnparsedInput & InferUnparsedInput<TParent>>;
+  // Prettify<unknown> results in {}
+  unparsedInput: TUnparsedInput &
+    InferUnparsedInput<TParent> extends infer Merged
+    ? IsUnknown<Merged> extends true
+      ? unknown
+      : Prettify<Merged>
+    : never;
 
   ctx: TOrFallback<InferOkData<Awaited<ReturnType<TParent["run"]>>>, undefined>;
 };
