@@ -432,18 +432,32 @@ export type SafeFnReturn<
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
   TAsAction extends boolean,
-> = ResultAsync<
-  SafeFnReturnData<TOutputSchema, Awaited<THandlerRes>>,
-  DistributeUnion<
-    SafeFnReturnError<
-      TInputSchema,
-      TOutputSchema,
-      Awaited<THandlerRes>,
-      TThrownHandlerRes,
-      TAsAction
-    >
-  >
->;
+> =
+  Awaited<THandlerRes> extends Result<never, any>
+    ? ResultAsync<
+        never,
+        DistributeUnion<
+          SafeFnReturnError<
+            TInputSchema,
+            undefined,
+            Awaited<THandlerRes>,
+            TThrownHandlerRes,
+            TAsAction
+          >
+        >
+      >
+    : ResultAsync<
+        SafeFnReturnData<TOutputSchema, Awaited<THandlerRes>>,
+        DistributeUnion<
+          SafeFnReturnError<
+            TInputSchema,
+            TOutputSchema,
+            Awaited<THandlerRes>,
+            TThrownHandlerRes,
+            TAsAction
+          >
+        >
+      >;
 
 /* 
 ################################

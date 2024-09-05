@@ -5,13 +5,13 @@ export type ResultAsync<TData, TError> = NT.ResultAsync<TData, TError>;
 export type AnyResult = Result<any, any>;
 
 export type Ok<TData, TError = never> = NT.Ok<TData, TError>;
-export type InferOkData<T> = T extends Ok<infer TData, any> ? TData : never;
+export type InferOkData<T> = T extends Result<infer TData, any> ? TData : never;
 
 export const ok = <const TData>(data: TData): Ok<TData, never> => NT.ok(data);
 
 export type Err<TData = never, TError = unknown> = NT.Err<TData, TError>;
 export type InferErrError<T> =
-  T extends Err<any, infer TError> ? TError : never;
+  T extends Result<any, infer TError> ? TError : never;
 
 export type AnyErr = Err<never, any>;
 export const err = <const TError>(error: TError): Err<never, TError> =>
@@ -53,8 +53,9 @@ export const actionErr = <E>(error: E): ActionErr<E> => ({ ok: false, error });
 /**
  * Converts a `ResultAsync<T,E>` to a `Promise<Result<T,E>>`.
  */
-export type ResultAsyncToPromiseActionResult<T> =
-  T extends ResultAsync<infer D, infer E> ? Promise<ActionResult<D, E>> : never;
+export type ResultAsyncToPromiseActionResult<T> = Promise<
+  T extends ResultAsync<infer D, infer E> ? ActionResult<D, E> : never
+>;
 
 export type ActionResultToResult<T> =
   T extends ActionResult<infer D, infer E> ? Result<D, E> : never;

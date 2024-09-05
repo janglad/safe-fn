@@ -162,9 +162,23 @@ export class RunnableSafeFn<
   > {
     const res = await this._run(args, true);
     if (res.isOk()) {
-      return actionOk(res.value);
+      return actionOk(res.value) as Awaited<
+        SafeFnActionReturn<
+          TInputSchema,
+          TOutputSchema,
+          THandlerRes,
+          TThrownHandlerRes
+        >
+      >;
     }
-    return actionErr(res.error);
+    return actionErr(res.error) as Awaited<
+      SafeFnActionReturn<
+        TInputSchema,
+        TOutputSchema,
+        THandlerRes,
+        TThrownHandlerRes
+      >
+    >;
   }
 
   /*
