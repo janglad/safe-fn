@@ -1,0 +1,77 @@
+---
+title: Creating a SafeFn
+description: Components
+---
+
+## Instantiating
+
+{/* TODO: chaining page */}
+You can create a SafeFn by using the `.new()` method. Here you can optionally pass in a parent handler (see chaining)
+
+```ts
+import { parentFunction } from "./some-file";
+
+const myySafeFunction = SafeFn.new();
+const mySafeFunction2 = SafeFn.new(parentFunction);
+```
+
+## Input schema
+
+You can set an input schema for your SafeFn by using `input()`. This takes in a Zod schema, when provided this will type the arguments for your handler function as well as the required input to execute the SafeFn.
+
+```ts
+const myySafeFunction = SafeFn.new()
+  .input(z.object({ firstName: z.string(), lastName: z.string() }))
+  .handler((args) => {
+    /*        ^ ?
+      { parsedInput: { firstName: string; lastName: string };
+        unparsedInput: { firstName: string; lastName: string }};
+        ...
+     */
+    return ok({
+      fullName: `${args.parsedInput.firstName} ${args.parsedInputlastName}`,
+    });
+  });
+```
+
+This also affects the possible return errors when calling your function and thus adds the following types:
+
+when using `run()`
+
+```ts
+{
+  code: "INPUT_PARSING";
+  cause: z.ZodError<{
+    firstName: string;
+    lastName: string;
+  }>;
+}
+```
+
+when using `createAction()()` (full errors are stripped here both to hide stack traces and as classes can not be sent via a Server Action)
+
+```ts
+{
+  code: "INPUT_PARSING";
+  cause: {
+    formattedError: z.ZodFormattedError<{
+      firstName: string;
+      lastName: string;
+    }>;
+    flattenedError: z.typeToFlattenedError<
+      {
+        firstName: string;
+        lastName: string;
+      },
+      string
+    >;
+  }
+}
+```
+
+## Cards
+
+<Cards>
+  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
+  <Card title="Learn more about Fumadocs" href="https://fumadocs.vercel.app" />
+</Cards>
