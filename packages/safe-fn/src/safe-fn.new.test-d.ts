@@ -2,7 +2,7 @@ import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 import { err, ok } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
-import type { SafeFnDefaultThrownHandlerErr, TODO } from "./types";
+import type { Prettify, SafeFnDefaultThrownHandlerErr, TODO } from "./types";
 
 const schemaPrimitive = z.string();
 type SchemaPrimitiveInput = z.input<typeof schemaPrimitive>;
@@ -30,16 +30,15 @@ type SchemaTransformedOutput = z.output<typeof schemaTransformed>;
 
 describe("SafeFnBuilder", () => {
   describe("action", () => {
-    describe("(un)unparsedInput", () => {
-      const safeFnPrimitiveInput = SafeFnBuilder.new().input(schemaPrimitive);
-      const safeFnObjectInput = SafeFnBuilder.new().input(schemaObject);
-      const safeFnTransformedInput =
-        SafeFnBuilder.new().input(schemaTransformed);
-      const safeFnNoInput = SafeFnBuilder.new();
-      const safeFnUnparsedInput = SafeFnBuilder.new().unparsedInput<{
-        name: string;
-      }>();
+    const safeFnPrimitiveInput = SafeFnBuilder.new().input(schemaPrimitive);
+    const safeFnObjectInput = SafeFnBuilder.new().input(schemaObject);
+    const safeFnTransformedInput = SafeFnBuilder.new().input(schemaTransformed);
+    const safeFnNoInput = SafeFnBuilder.new();
+    const safeFnUnparsedInput = SafeFnBuilder.new().unparsedInput<{
+      name: string;
+    }>();
 
+    describe("(un)parsedInput", () => {
       test("should properly type parsed and unparsed input for primitives", () => {
         safeFnPrimitiveInput.handler((input) => {
           expectTypeOf(
@@ -157,6 +156,168 @@ describe("SafeFnBuilder", () => {
 
         safeFnUnparsedInput.safeHandler(async function* (input) {
           expectTypeOf(input.unparsedInput).toEqualTypeOf<{ name: string }>();
+          return ok(input);
+        });
+      });
+
+      test("should merge parsed and unparsed input when parent and child have input schema with transforms", () => {
+        const input2 = z.object({
+          new: z.string(),
+          properties: z.array(z.number()),
+        });
+        const parent = safeFnTransformedInput.handler(() => ok(""));
+
+        const child = SafeFnBuilder.new(parent).input(input2);
+
+        type ExpectedUnparsedInput = Prettify<
+          SchemaTransformedInput & z.input<typeof input2>
+        >;
+        type ExpectedParsedInput = Prettify<
+          SchemaTransformedOutput & z.output<typeof input2>
+        >;
+
+        child.handler((input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.handler(async (input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.safeHandler(async function* (input) {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+      });
+
+      test("should merge unparsedInput and type parsedInput from child when parent ha no input schema but defines unparsed", () => {
+        const parent = SafeFnBuilder.new()
+          .unparsedInput<{
+            new: string;
+            properties: number[];
+          }>()
+          .handler(() => ok(""));
+
+        const child = SafeFnBuilder.new(parent).input(schemaTransformed);
+
+        type ExpectedUnparsedInput = Prettify<
+          SchemaTransformedInput & {
+            new: string;
+            properties: number[];
+          }
+        >;
+        type ExpectedParsedInput = SchemaTransformedOutput;
+
+        child.handler((input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.handler(async (input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.safeHandler(async function* (input) {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+      });
+
+      test("should merge unparsedInput and type parsedInput as undefined when both manually define unparsedInput", () => {
+        const parent = SafeFnBuilder.new()
+          .unparsedInput<{
+            new: string;
+            properties: number[];
+          }>()
+          .handler(() => ok(""));
+
+        const child = SafeFnBuilder.new(parent).unparsedInput<{
+          superNew: string;
+          supertest: number[];
+        }>();
+
+        type ExpectedUnparsedInput = {
+          new: string;
+          properties: number[];
+          superNew: string;
+          supertest: number[];
+        };
+        type ExpectedParsedInput = undefined;
+
+        child.handler((input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.handler(async (input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.safeHandler(async function* (input) {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+      });
+
+      test("should type unparsedInput as unknown and parsedInput as undefined when no input schema is provided", () => {
+        const parent = SafeFnBuilder.new().handler(() => ok(""));
+        const child = SafeFnBuilder.new(parent);
+
+        type ExpectedUnparsedInput = unknown;
+        type ExpectedParsedInput = undefined;
+
+        child.handler((input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.handler(async (input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.safeHandler(async function* (input) {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
       });
