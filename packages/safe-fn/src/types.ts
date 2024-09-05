@@ -29,7 +29,7 @@ export type SafeFnInternals<
   inputSchema: TInputSchema;
   outputSchema: TOutputSchema;
   handler: (
-    input: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+    input: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
   ) => SafeFnHandlerReturn<TOutputSchema>;
   uncaughtErrorHandler: (error: unknown) => Result<never, unknown>;
 };
@@ -42,7 +42,9 @@ export type SafeFnInternals<
 ################################
 */
 
-export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
+export type AnyRunnableSafeFn =
+  | RunnableSafeFn<any, any, any, any, any, any>
+  | RunnableSafeFn<any, any, any, never, any, any>;
 
 /*
 ################################
@@ -51,10 +53,12 @@ export type AnyRunnableSafeFn = RunnableSafeFn<any, any, any, any, any, any>;
 ||                            ||
 ################################
 */
-type TODO = any;
+export type TODO = any;
 export type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
+
+type IsUnknown<T> = unknown extends T ? true : false;
 
 export type DistributeUnion<T> = T extends any ? T : never;
 
@@ -62,6 +66,14 @@ type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
   ? TFallback
   : T;
 type MaybePromise<T> = T | Promise<T>;
+
+type UnionIfNotT<A, B, T> = [A] extends [T]
+  ? [B] extends [T]
+    ? T
+    : B
+  : [B] extends [T]
+    ? A
+    : A & B;
 
 /*
 ################################
@@ -96,19 +108,26 @@ export type InferUnparsedInput<T> =
  * @param TFallback the fallback type if the schema is undefined
  * @returns the output type of the schema if it is defined, otherwise `TFallback`
  */
-export type SchemaInputOrFallback<
-  TSchema extends SafeFnInput,
-  TFallback,
-> = TSchema extends ZodTypeAny ? z.input<TSchema> : TFallback;
+export type SchemaInputOrFallback<TSchema extends SafeFnInput, TFallback> = [
+  TSchema,
+] extends [never]
+  ? TFallback
+  : TSchema extends ZodTypeAny
+    ? z.input<TSchema>
+    : TFallback;
+
 /**
  * @param TSchema a Zod schema or undefined
  * @param TFallback the fallback type if the schema is undefined
  * @returns the output type of the schema if it is defined, otherwise `TFallback`
  */
-export type SchemaOutputOrFallback<
-  TSchema extends SafeFnOutput,
-  TFallback,
-> = TSchema extends ZodTypeAny ? z.output<TSchema> : TFallback;
+export type SchemaOutputOrFallback<TSchema extends SafeFnOutput, TFallback> = [
+  TSchema,
+] extends [never]
+  ? TFallback
+  : TSchema extends ZodTypeAny
+    ? z.output<TSchema>
+    : TFallback;
 
 /*
 ################################
@@ -221,22 +240,32 @@ type SafeFnHandlerArgsWParent<
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn,
 > = {
-  // TODO: look at if empty object is good fit here
-  // Used to be never, chosen as to not collapse types that join
   parsedInput: Prettify<
-    SchemaOutputOrFallback<TInputSchema, {}> &
-      SchemaOutputOrFallback<InferInputSchema<TParent>, {}>
+    UnionIfNotT<
+      SchemaOutputOrFallback<TInputSchema, undefined>,
+      SchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
+      undefined
+    >
   >;
-  unparsedInput: Prettify<TUnparsedInput & InferUnparsedInput<TParent>>;
-  // TODO: look at if empty object is good fit here
-  ctx: TOrFallback<InferOkData<Awaited<ReturnType<TParent["run"]>>>, {}>;
+  // Prettify<unknown> results in {}
+  unparsedInput: UnionIfNotT<
+    TUnparsedInput,
+    InferUnparsedInput<TParent>,
+    never
+  > extends infer Merged
+    ? IsUnknown<Merged> extends true
+      ? unknown
+      : Prettify<Merged>
+    : never;
+
+  ctx: TOrFallback<InferOkData<Awaited<ReturnType<TParent["run"]>>>, undefined>;
 };
 
 type SafeFnHandlerArgsNoParent<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
 > = {
-  parsedInput: SchemaOutputOrFallback<TInputSchema, {}>;
+  parsedInput: SchemaOutputOrFallback<TInputSchema, undefined>;
   unparsedInput: TUnparsedInput;
   ctx: undefined;
 };
@@ -341,12 +370,15 @@ export type SafeFnReturnError<
 export type SafeFnRunArgs<
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn | undefined,
-> = TParent extends AnyRunnableSafeFn
-  ? Prettify<
-      TUnparsedInput & InferRunArgs<TParent>
-      // SchemaInputOrFallback<TParentInputSchema, TParentUnparsedInput>
-    >
-  : TUnparsedInput;
+> = (
+  TParent extends AnyRunnableSafeFn
+    ? Prettify<TUnparsedInput & InferRunArgs<TParent>>
+    : TUnparsedInput
+) extends infer TUnparsed
+  ? [TUnparsed] extends [never]
+    ? []
+    : [TUnparsed]
+  : never;
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
@@ -407,19 +439,33 @@ export type SafeFnReturn<
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
-  TAsAction extends boolean = false,
-> = ResultAsync<
-  SafeFnReturnData<TOutputSchema, Awaited<THandlerRes>>,
-  DistributeUnion<
-    SafeFnReturnError<
-      TInputSchema,
-      TOutputSchema,
-      Awaited<THandlerRes>,
-      TThrownHandlerRes,
-      TAsAction
-    >
-  >
->;
+  TAsAction extends boolean,
+> =
+  Awaited<THandlerRes> extends Result<never, any>
+    ? ResultAsync<
+        never,
+        DistributeUnion<
+          SafeFnReturnError<
+            TInputSchema,
+            undefined,
+            Awaited<THandlerRes>,
+            TThrownHandlerRes,
+            TAsAction
+          >
+        >
+      >
+    : ResultAsync<
+        SafeFnReturnData<TOutputSchema, Awaited<THandlerRes>>,
+        DistributeUnion<
+          SafeFnReturnError<
+            TInputSchema,
+            TOutputSchema,
+            Awaited<THandlerRes>,
+            TThrownHandlerRes,
+            TAsAction
+          >
+        >
+      >;
 
 /* 
 ################################
@@ -453,7 +499,13 @@ export type SafeFnActionReturn<
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
 > = ResultAsyncToPromiseActionResult<
-  SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes>
+  SafeFnReturn<
+    TInputSchema,
+    TOutputSchema,
+    THandlerRes,
+    TThrownHandlerRes,
+    true
+  >
 >;
 export type SafeFnAction<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -463,7 +515,7 @@ export type SafeFnAction<
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
 > = (
-  args: SafeFnActionArgs<TUnparsedInput, TParent>,
+  ...args: SafeFnActionArgs<TUnparsedInput, TParent>
 ) => SafeFnActionReturn<
   TInputSchema,
   TOutputSchema,

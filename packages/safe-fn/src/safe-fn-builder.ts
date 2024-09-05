@@ -48,7 +48,7 @@ export class SafeFnBuilder<
 */
   static new<TNewParent extends AnyRunnableSafeFn | undefined = undefined>(
     parent?: TNewParent,
-  ): SafeFnBuilder<TNewParent, undefined, undefined, unknown> {
+  ): SafeFnBuilder<TNewParent, undefined, undefined, never> {
     return new SafeFnBuilder({
       parent,
       inputSchema: undefined,
@@ -113,7 +113,7 @@ export class SafeFnBuilder<
 
   handler<TNewHandlerResult extends SafeFnHandlerReturn<TOutputSchema>>(
     handler: (
-      args: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
     ) => TNewHandlerResult,
   ): RunnableSafeFn<
     TParent,
@@ -144,11 +144,14 @@ export class SafeFnBuilder<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    MergeResults<GeneratorResult, YieldErr>,
+    // YieldErr can be never if the generator never yields an error, [] cause distribution
+    [YieldErr] extends [never]
+      ? GeneratorResult
+      : MergeResults<GeneratorResult, YieldErr>,
     SafeFnDefaultThrownHandlerErr
   > {
     const handler = async (
-      args: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
     ) => {
       return (await fn(args).next()).value;
     };

@@ -88,14 +88,26 @@ export class RunnableSafeFn<
 ################################
   */
   run(
-    args: SafeFnRunArgs<TUnparsedInput, TParent>,
-  ): SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes> {
-    return this._run(args, false);
+    ...args: SafeFnRunArgs<TUnparsedInput, TParent>
+  ): SafeFnReturn<
+    TInputSchema,
+    TOutputSchema,
+    THandlerRes,
+    TThrownHandlerRes,
+    false
+  > {
+    return this._run(args[0], false);
   }
   _run<TAsAction extends boolean>(
-    args: SafeFnRunArgs<TUnparsedInput, TParent>,
+    args: SafeFnRunArgs<TUnparsedInput, TParent>[0],
     tAsAction: TAsAction,
-  ): SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TThrownHandlerRes> {
+  ): SafeFnReturn<
+    TInputSchema,
+    TOutputSchema,
+    THandlerRes,
+    TThrownHandlerRes,
+    TAsAction
+  > {
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;
     const handler = this._internals.handler;
@@ -141,19 +153,32 @@ export class RunnableSafeFn<
   }
 
   async runAsAction(
-    args: SafeFnActionArgs<TUnparsedInput, TParent>,
+    ...args: SafeFnActionArgs<TUnparsedInput, TParent>
   ): SafeFnActionReturn<
     TInputSchema,
     TOutputSchema,
     THandlerRes,
     TThrownHandlerRes
   > {
-    const res = await this._run(args, true);
-    console.log("res", res);
+    const res = await this._run(args[0], true);
     if (res.isOk()) {
-      return actionOk(res.value);
+      return actionOk(res.value) as Awaited<
+        SafeFnActionReturn<
+          TInputSchema,
+          TOutputSchema,
+          THandlerRes,
+          TThrownHandlerRes
+        >
+      >;
     }
-    return actionErr(res.error);
+    return actionErr(res.error) as Awaited<
+      SafeFnActionReturn<
+        TInputSchema,
+        TOutputSchema,
+        THandlerRes,
+        TThrownHandlerRes
+      >
+    >;
   }
 
   /*
