@@ -1,766 +1,987 @@
-import assert from "assert";
-import { describe, expectTypeOf, test } from "vitest";
+import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
-import type { InferInputSchema } from "../dist";
-import { err, ok, type InferErrError, type Result } from "./result";
+import type { ActionResult } from "../dist";
+import { err, ok, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   Prettify,
-  SafeFnDefaultThrowHandler,
+  SafeFnDefaultThrownHandlerErr,
   SafeFnInputParseError,
   SafeFnOutputParseError,
 } from "./types";
 
-describe("input", () => {
-  test("should properly type the input schema for primitives", () => {
-    const inputSchema = z.string();
-    const safeFn = SafeFnBuilder.new().input(inputSchema);
-    expectTypeOf(safeFn._internals.inputSchema).toEqualTypeOf<
-      typeof inputSchema
-    >();
-  });
+const schemaPrimitive = z.string();
+type SchemaPrimitiveInput = z.input<typeof schemaPrimitive>;
+type SchemaPrimitiveOutput = z.output<typeof schemaPrimitive>;
 
-  test("should properly type the input schema for objects", () => {
-    const inputSchema = z.object({
-      test: z.string(),
-      nested: z.object({
-        value: z.number(),
-      }),
-    });
-    const safeFn = SafeFnBuilder.new().input(inputSchema);
-    expectTypeOf(safeFn._internals.inputSchema).toEqualTypeOf<
-      typeof inputSchema
-    >();
-  });
-
-  test("should properly type the input for transformed schemas", () => {
-    const inputSchema = z
-      .object({
-        test: z.string(),
-        nested: z.object({
-          value: z.number(),
-        }),
-      })
-      .transform(({ test }) => ({ test, newProperty: "test" }));
-    const safeFn = SafeFnBuilder.new().input(inputSchema);
-    expectTypeOf(safeFn._internals.inputSchema).toEqualTypeOf<
-      typeof inputSchema
-    >();
-  });
+const schemaObject = z.object({
+  test: z.string(),
+  nested: z.object({
+    value: z.number(),
+  }),
 });
+type SchemaObjectInput = z.input<typeof schemaObject>;
+type SchemaObjectOutput = z.output<typeof schemaObject>;
 
-describe("output", () => {
-  test("should properly type the output schema for primitives", () => {
-    const outputSchema = z.string();
-    const safeFn = SafeFnBuilder.new().output(outputSchema);
-    expectTypeOf(safeFn._internals.outputSchema).toEqualTypeOf<
-      typeof outputSchema
-    >();
-  });
+const schemaTransformed = z
+  .object({
+    test: z.string(),
+    nested: z.object({
+      value: z.number(),
+    }),
+  })
+  .transform(({ test }) => ({ test, newProperty: "test" }));
+type SchemaTransformedInput = z.input<typeof schemaTransformed>;
+type SchemaTransformedOutput = z.output<typeof schemaTransformed>;
 
-  test("should properly type the output schema for objects", () => {
-    const outputSchema = z.object({
-      test: z.string(),
-      nested: z.object({
-        value: z.number(),
-      }),
+describe("SafeFnBuilder", () => {
+  describe("action", () => {
+    const safeFnPrimitiveInput = SafeFnBuilder.new().input(schemaPrimitive);
+    const safeFnObjectInput = SafeFnBuilder.new().input(schemaObject);
+    const safeFnTransformedInput = SafeFnBuilder.new().input(schemaTransformed);
+    const safeFnNoInput = SafeFnBuilder.new();
+    const safeFnUnparsedInput = SafeFnBuilder.new().unparsedInput<{
+      name: string;
+    }>();
+
+    describe("(un)parsedInput", () => {
+      test("should properly type parsed and unparsed input for primitives", () => {
+        safeFnPrimitiveInput.handler((input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<SchemaPrimitiveInput>();
+          expectTypeOf(
+            input.parsedInput,
+          ).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
+
+        safeFnPrimitiveInput.handler(async (input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<SchemaPrimitiveInput>();
+          expectTypeOf(
+            input.parsedInput,
+          ).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
+
+        safeFnPrimitiveInput.safeHandler(async function* (input) {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<SchemaPrimitiveInput>();
+          expectTypeOf(
+            input.parsedInput,
+          ).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
+      });
+
+      test("should properly type parsed and unparsed input for objects", () => {
+        safeFnObjectInput.handler((input) => {
+          expectTypeOf(input.unparsedInput).toEqualTypeOf<SchemaObjectInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
+
+        safeFnObjectInput.handler(async (input) => {
+          expectTypeOf(input.unparsedInput).toEqualTypeOf<SchemaObjectInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
+
+        safeFnObjectInput.safeHandler(async function* (input) {
+          expectTypeOf(input.unparsedInput).toEqualTypeOf<SchemaObjectInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
+      });
+
+      test("should properly type parsed and unparsed input for transformed schemas", () => {
+        safeFnTransformedInput.handler((input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<SchemaTransformedInput>();
+          expectTypeOf(
+            input.parsedInput,
+          ).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
+
+        safeFnTransformedInput.handler(async (input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<SchemaTransformedInput>();
+          expectTypeOf(
+            input.parsedInput,
+          ).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
+
+        safeFnTransformedInput.safeHandler(async function* (input) {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<SchemaTransformedInput>();
+          expectTypeOf(
+            input.parsedInput,
+          ).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
+      });
+
+      test("should type parsedInput as undefined, unparsed input as never when no input schema is provided", () => {
+        safeFnNoInput.handler((input) => {
+          expectTypeOf(input.unparsedInput).toEqualTypeOf<never>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
+          return ok(input);
+        });
+
+        safeFnNoInput.handler(async (input) => {
+          expectTypeOf(input.unparsedInput).toEqualTypeOf<never>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
+          return ok(input);
+        });
+
+        safeFnNoInput.safeHandler(async function* (input) {
+          expectTypeOf(input.unparsedInput).toEqualTypeOf<never>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
+          return ok(input);
+        });
+      });
+
+      test("should properly type unparsed input when manually set", () => {
+        safeFnUnparsedInput.handler((input) => {
+          expectTypeOf(input.unparsedInput).toEqualTypeOf<{ name: string }>();
+          return ok(input);
+        });
+
+        safeFnUnparsedInput.handler(async (input) => {
+          expectTypeOf(input.unparsedInput).toEqualTypeOf<{ name: string }>();
+          return ok(input);
+        });
+
+        safeFnUnparsedInput.safeHandler(async function* (input) {
+          expectTypeOf(input.unparsedInput).toEqualTypeOf<{ name: string }>();
+          return ok(input);
+        });
+      });
+
+      test("should merge parsed and unparsed input when parent and child have input schema with transforms", () => {
+        const input2 = z.object({
+          new: z.string(),
+          properties: z.array(z.number()),
+        });
+        const parent = safeFnTransformedInput.handler(() => ok(""));
+
+        const child = SafeFnBuilder.new(parent).input(input2);
+
+        type ExpectedUnparsedInput = Prettify<
+          SchemaTransformedInput & z.input<typeof input2>
+        >;
+        type ExpectedParsedInput = Prettify<
+          SchemaTransformedOutput & z.output<typeof input2>
+        >;
+
+        child.handler((input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.handler(async (input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.safeHandler(async function* (input) {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+      });
+
+      test("should merge unparsedInput and type parsedInput from child when parent ha no input schema but defines unparsed", () => {
+        const parent = SafeFnBuilder.new()
+          .unparsedInput<{
+            new: string;
+            properties: number[];
+          }>()
+          .handler(() => ok(""));
+
+        const child = SafeFnBuilder.new(parent).input(schemaTransformed);
+
+        type ExpectedUnparsedInput = Prettify<
+          SchemaTransformedInput & {
+            new: string;
+            properties: number[];
+          }
+        >;
+        type ExpectedParsedInput = SchemaTransformedOutput;
+
+        child.handler((input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.handler(async (input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.safeHandler(async function* (input) {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+      });
+
+      test("should merge unparsedInput and type parsedInput as undefined when both manually define unparsedInput", () => {
+        const parent = SafeFnBuilder.new()
+          .unparsedInput<{
+            new: string;
+            properties: number[];
+          }>()
+          .handler(() => ok(""));
+
+        const child = SafeFnBuilder.new(parent).unparsedInput<{
+          superNew: string;
+          supertest: number[];
+        }>();
+
+        type ExpectedUnparsedInput = {
+          new: string;
+          properties: number[];
+          superNew: string;
+          supertest: number[];
+        };
+        type ExpectedParsedInput = undefined;
+
+        child.handler((input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.handler(async (input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.safeHandler(async function* (input) {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+      });
+
+      test("should type unparsedInput as never and parsedInput as undefined when no input schema is provided", () => {
+        const parent = SafeFnBuilder.new().handler(() => ok(""));
+        const child = SafeFnBuilder.new(parent);
+
+        type ExpectedUnparsedInput = never;
+        type ExpectedParsedInput = undefined;
+
+        child.handler((input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.handler(async (input) => {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+
+        child.safeHandler(async function* (input) {
+          expectTypeOf(
+            input.unparsedInput,
+          ).toEqualTypeOf<ExpectedUnparsedInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          return ok(input);
+        });
+      });
     });
-    const safeFn = SafeFnBuilder.new().output(outputSchema);
-    expectTypeOf(safeFn._internals.outputSchema).toEqualTypeOf<
-      typeof outputSchema
-    >();
-  });
 
-  test("should properly type the output for transformed schemas", () => {
-    const outputSchema = z
-      .object({
-        test: z.string(),
-        nested: z.object({
-          value: z.number(),
-        }),
-      })
-      .transform(({ test }) => ({ test, newProperty: "test" }));
-    const safeFn = SafeFnBuilder.new().output(outputSchema);
-    expectTypeOf(safeFn._internals.outputSchema).toEqualTypeOf<
-      typeof outputSchema
-    >();
-  });
-});
-
-describe("handler", () => {
-  describe("input", () => {
-    test("should type parsed input as empty object without input schema"),
-      () => {
+    describe("ctx", () => {
+      test("should type as undefined when no parent is provided", () => {
         const safeFn = SafeFnBuilder.new();
-        type HandlerFn = Parameters<typeof safeFn.handler>[0];
-        type HandlerFnArgs = Parameters<HandlerFn>[0];
 
-        expectTypeOf<HandlerFnArgs["parsedInput"]>().toEqualTypeOf<{}>();
-      };
-    test("should type parsed input as inputSchema for primitives ", () => {
-      const inputSchema = z.string();
-      const safeFn = SafeFnBuilder.new().input(inputSchema);
+        safeFn.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<undefined>();
+          return ok(input);
+        });
 
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnArgs = Parameters<HandlerFn>[0];
+        safeFn.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<undefined>();
+          return ok(input);
+        });
 
-      expectTypeOf<HandlerFnArgs["parsedInput"]>().toEqualTypeOf<
-        z.output<typeof inputSchema>
-      >();
-    });
-
-    test("should type parsed input as inputSchema for objects", () => {
-      const inputSchema = z.object({
-        test: z.string(),
-        nested: z.object({
-          value: z.number(),
-        }),
+        safeFn.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<undefined>();
+          return ok(input);
+        });
       });
-      const safeFn = SafeFnBuilder.new().input(inputSchema);
 
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnArgs = Parameters<HandlerFn>[0];
+      describe("should type when parent has primitive output schema", () => {
+        const syncParent = SafeFnBuilder.new()
+          .output(schemaPrimitive)
+          .handler(() => ok("hello"));
+        const asyncParent = SafeFnBuilder.new()
+          .output(schemaPrimitive)
+          .handler(async () => ok("hello"));
+        const safeParent = SafeFnBuilder.new()
+          .output(schemaPrimitive)
+          .safeHandler(async function* () {
+            return ok("hello");
+          });
 
-      expectTypeOf<HandlerFnArgs["parsedInput"]>().toEqualTypeOf<
-        z.output<typeof inputSchema>
-      >();
-    });
+        const safeFnSyncParent = SafeFnBuilder.new(syncParent);
+        safeFnSyncParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
 
-    test("should type parsed input as inputSchema for transformed schemas", () => {
-      const inputSchema = z
-        .object({
-          test: z.string(),
-          nested: z.object({
-            value: z.number(),
-          }),
-        })
-        .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new().input(inputSchema);
+        safeFnSyncParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
 
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnArgs = Parameters<HandlerFn>[0];
+        safeFnSyncParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
 
-      expectTypeOf<HandlerFnArgs["parsedInput"]>().toEqualTypeOf<
-        z.output<typeof inputSchema>
-      >();
-    });
+        const safeFnAsyncParent = SafeFnBuilder.new(asyncParent);
+        safeFnAsyncParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
 
-    test("should type unparsed input as unknown without input schema", () => {
-      const safeFn = SafeFnBuilder.new();
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnArgs = Parameters<HandlerFn>[0];
+        safeFnAsyncParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
 
-      expectTypeOf<HandlerFnArgs["unparsedInput"]>().toEqualTypeOf<unknown>();
-    });
+        const safeFnSafeParent = SafeFnBuilder.new(safeParent);
+        safeFnSafeParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
 
-    test("should type unparsed input as inputSchema for primitives", () => {
-      const inputSchema = z.string();
-      const safeFn = SafeFnBuilder.new().input(inputSchema);
+        safeFnSafeParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
 
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnArgs = Parameters<HandlerFn>[0];
-
-      expectTypeOf<HandlerFnArgs["unparsedInput"]>().toEqualTypeOf<
-        z.input<typeof inputSchema>
-      >();
-    });
-
-    test("should type unparsed input as inputSchema for objects", () => {
-      const inputSchema = z.object({
-        test: z.string(),
-        nested: z.object({
-          value: z.number(),
-        }),
+        safeFnSafeParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
+          return ok(input);
+        });
       });
-      const safeFn = SafeFnBuilder.new().input(inputSchema);
 
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnArgs = Parameters<HandlerFn>[0];
+      describe("should type when parent has object output schema", () => {
+        const syncParent = SafeFnBuilder.new()
+          .output(schemaObject)
+          .handler(() => ok({ test: "hello", nested: { value: 1 } }));
+        const asyncParent = SafeFnBuilder.new()
+          .output(schemaObject)
+          .handler(async () => ok({ test: "hello", nested: { value: 1 } }));
+        const safeParent = SafeFnBuilder.new()
+          .output(schemaObject)
+          .safeHandler(async function* () {
+            return ok({ test: "hello", nested: { value: 1 } });
+          });
 
-      expectTypeOf<HandlerFnArgs["unparsedInput"]>().toEqualTypeOf<
-        z.input<typeof inputSchema>
-      >();
-    });
+        const safeFnSyncParent = SafeFnBuilder.new(syncParent);
+        safeFnSyncParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
 
-    test("should type unparsed input as inputSchema for transformed schemas", () => {
-      const inputSchema = z
-        .object({
-          test: z.string(),
-          nested: z.object({
-            value: z.number(),
-          }),
-        })
-        .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new().input(inputSchema);
+        safeFnSyncParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
 
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnArgs = Parameters<HandlerFn>[0];
+        safeFnSyncParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
 
-      expectTypeOf<HandlerFnArgs["unparsedInput"]>().toEqualTypeOf<
-        z.input<typeof inputSchema>
-      >();
-    });
-  });
+        const safeFnAsyncParent = SafeFnBuilder.new(asyncParent);
+        safeFnAsyncParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
 
-  describe("unparsedInput", () => {
-    test("Should allow manually setting unparsedInput type", () => {
-      const safeFn = SafeFnBuilder.new().unparsedInput<{ test: string }>();
+        safeFnAsyncParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
+        safeFnAsyncParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
 
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnArgs = Parameters<HandlerFn>[0];
+        const safeFnSafeParent = SafeFnBuilder.new(safeParent);
+        safeFnSafeParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
 
-      expectTypeOf<HandlerFnArgs["unparsedInput"]>().toEqualTypeOf<{
-        test: string;
-      }>();
-    });
-  });
+        safeFnSafeParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
 
-  describe("output", () => {
-    test("should type output as any without output schema", () => {
-      const safeFn = SafeFnBuilder.new();
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnReturn = Awaited<ReturnType<HandlerFn>>;
-
-      expectTypeOf<HandlerFnReturn>().toEqualTypeOf<Result<any, any>>();
-    });
-
-    test("should type output as outputSchema for primitives", () => {
-      const outputSchema = z.string();
-      const safeFn = SafeFnBuilder.new().output(outputSchema);
-
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnReturn = Awaited<ReturnType<HandlerFn>>;
-
-      expectTypeOf<HandlerFnReturn>().toEqualTypeOf<
-        Result<z.input<typeof outputSchema>, any>
-      >();
-    });
-
-    test("should type output as outputSchema for objects", () => {
-      const outputSchema = z.object({
-        test: z.string(),
-        nested: z.object({
-          value: z.number(),
-        }),
+        safeFnSafeParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
+          return ok(input);
+        });
       });
-      const safeFn = SafeFnBuilder.new().output(outputSchema);
 
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnReturn = Awaited<ReturnType<HandlerFn>>;
+      describe("should properly type when parent has transformed output schema", () => {
+        const syncParent = SafeFnBuilder.new()
+          .output(schemaTransformed)
+          .handler(() => ok({ test: "hello", nested: { value: 1 } }));
+        const asyncParent = SafeFnBuilder.new()
+          .output(schemaTransformed)
+          .handler(async () => ok({ test: "hello", nested: { value: 1 } }));
+        const safeParent = SafeFnBuilder.new()
+          .output(schemaTransformed)
+          .safeHandler(async function* () {
+            return ok({ test: "hello", nested: { value: 1 } });
+          });
 
-      expectTypeOf<HandlerFnReturn>().toEqualTypeOf<
-        Result<z.infer<typeof outputSchema>, any>
-      >();
-    });
+        const safeFnSyncParent = SafeFnBuilder.new(syncParent);
+        safeFnSyncParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
 
-    test("should type output as outputSchema input for transformed schemas", () => {
-      const outputSchema = z
-        .object({
-          test: z.string(),
-          nested: z.object({
-            value: z.number(),
-          }),
-        })
-        .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new().output(outputSchema);
+        safeFnSyncParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
 
-      type HandlerFn = Parameters<typeof safeFn.handler>[0];
-      type HandlerFnReturn = Awaited<ReturnType<HandlerFn>>;
+        safeFnSyncParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
 
-      expectTypeOf<HandlerFnReturn>().toEqualTypeOf<
-        Result<z.input<typeof outputSchema>, any>
-      >();
+        const safeFnAsyncParent = SafeFnBuilder.new(asyncParent);
+        safeFnAsyncParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
+
+        safeFnAsyncParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
+        safeFnAsyncParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
+
+        const safeFnSafeParent = SafeFnBuilder.new(safeParent);
+        safeFnSafeParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
+
+        safeFnSafeParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
+
+        safeFnSafeParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
+          return ok(input);
+        });
+      });
+
+      describe("should properly type when parent output is inferred", () => {
+        const expectedOutput = ok("hello" as const);
+        type ExpectedCtx = "hello";
+
+        const syncParent = SafeFnBuilder.new().handler(() => expectedOutput);
+        const asyncParent = SafeFnBuilder.new().handler(
+          async () => expectedOutput,
+        );
+        const safeParent = SafeFnBuilder.new().safeHandler(async function* () {
+          return expectedOutput;
+        });
+
+        const safeFnSyncParent = SafeFnBuilder.new(syncParent);
+        safeFnSyncParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
+          return ok(input);
+        });
+        safeFnSyncParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
+          return ok(input);
+        });
+        safeFnSyncParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
+          return ok(input);
+        });
+
+        const safeFnAsyncParent = SafeFnBuilder.new(asyncParent);
+        safeFnAsyncParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
+          return ok(input);
+        });
+        safeFnAsyncParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
+          return ok(input);
+        });
+        safeFnAsyncParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
+          return ok(input);
+        });
+
+        const safeFnSafeParent = SafeFnBuilder.new(safeParent);
+        safeFnSafeParent.handler((input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
+          return ok(input);
+        });
+
+        safeFnSafeParent.handler(async (input) => {
+          expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
+          return ok(input);
+        });
+        safeFnSafeParent.safeHandler(async function* (input) {
+          expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
+          return ok(input);
+        });
+      });
     });
   });
 });
 
-describe("run", () => {
-  describe("input", () => {
-    test("should type input as inputSchema input for primitives", () => {
-      const inputSchema = z.string();
-      const safeFn = SafeFnBuilder.new()
-        .input(inputSchema)
-        .handler((args) => ok(args.parsedInput));
+describe("runnableSafeFn", () => {
+  describe("run", () => {
+    describe("input", () => {
+      test("should not require input when none is set", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const safeFnSync = safeFn.handler(() => ok("hello" as const));
+        const safeFnAsync = safeFn.handler(async () => ok("hello" as const));
+        const safeFnSafe = safeFn.safeHandler(async function* () {
+          return ok("hello" as const);
+        });
 
-      type RunInput = Parameters<typeof safeFn.run>[0];
-
-      expectTypeOf<RunInput>().toEqualTypeOf<z.input<typeof inputSchema>>();
-    });
-
-    test("should type input as inputSchema input for objects", () => {
-      const inputSchema = z.object({
-        test: z.string(),
-        nested: z.object({
-          value: z.number(),
-        }),
+        expectTypeOf(safeFnSync.run).parameters.toEqualTypeOf<[]>();
+        expectTypeOf(safeFnAsync.run).parameters.toEqualTypeOf<[]>();
+        expectTypeOf(safeFnSafe.run).parameters.toEqualTypeOf<[]>();
       });
-      const safeFn = SafeFnBuilder.new()
-        .input(inputSchema)
-        .handler((args) => ok(args.parsedInput));
-
-      type RunInput = Parameters<typeof safeFn.run>[0];
-
-      expectTypeOf<RunInput>().toEqualTypeOf<z.input<typeof inputSchema>>();
     });
 
-    test("should type input as inputSchema input for transformed schemas", () => {
-      const inputSchema = z
-        .object({
-          test: z.string(),
-          nested: z.object({
-            value: z.number(),
-          }),
-        })
-        .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new()
-        .input(inputSchema)
-        .handler((args) => ok(args.parsedInput));
+    describe("output", () => {
+      test("should type OK as output schema when output schema is provided", async () => {
+        const safeFn = SafeFnBuilder.new().output(schemaTransformed);
+        const safeFnSync = safeFn.handler(() =>
+          ok({ test: "hello", nested: { value: 1 } }),
+        );
+        const safeFnAsync = safeFn.handler(async () =>
+          ok({ test: "hello", nested: { value: 1 } }),
+        );
+        const safeFnSafe = safeFn.safeHandler(async function* () {
+          return ok({ test: "hello", nested: { value: 1 } });
+        });
 
-      type RunInput = Parameters<typeof safeFn.run>[0];
+        const resultSync = await safeFnSync.run();
+        const resultAsync = await safeFnAsync.run();
+        const resultSafe = await safeFnSafe.run();
 
-      expectTypeOf<RunInput>().toEqualTypeOf<z.input<typeof inputSchema>>();
+        assert(resultSync.isOk());
+        assert(resultAsync.isOk());
+        assert(resultSafe.isOk());
+
+        expectTypeOf(resultSync.value).toEqualTypeOf<SchemaTransformedOutput>();
+        expectTypeOf(
+          resultAsync.value,
+        ).toEqualTypeOf<SchemaTransformedOutput>();
+        expectTypeOf(resultSafe.value).toEqualTypeOf<SchemaTransformedOutput>();
+      });
+
+      test("should type Ok as inferred when no output schema is provided", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const safeFnSync = safeFn.handler(() => ok("hello" as const));
+        const safeFnAsync = safeFn.handler(async () => ok("hello" as const));
+        const safeFnSafe = safeFn.safeHandler(async function* () {
+          return ok("hello" as const);
+        });
+
+        const resultSync = await safeFnSync.run();
+        const resultAsync = await safeFnAsync.run();
+        const resultSafe = await safeFnSafe.run();
+
+        assert(resultSync.isOk());
+        assert(resultAsync.isOk());
+        assert(resultSafe.isOk());
+
+        expectTypeOf(resultSync.value).toEqualTypeOf<"hello">();
+        expectTypeOf(resultAsync.value).toEqualTypeOf<"hello">();
+        expectTypeOf(resultSafe.value).toEqualTypeOf<"hello">();
+      });
+
+      test("should type Err as default when no error handler is provided", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const safeFnSync = safeFn.handler(() => ok("hello" as const));
+        const safeFnAsync = safeFn.handler(async () => ok("hello" as const));
+        const safeFnSafe = safeFn.safeHandler(async function* () {
+          return ok("hello" as const);
+        });
+
+        const resultSync = await safeFnSync.run();
+        const resultAsync = await safeFnAsync.run();
+        const resultSafe = await safeFnSafe.run();
+
+        assert(resultSync.isErr());
+        assert(resultAsync.isErr());
+        assert(resultSafe.isErr());
+
+        expectTypeOf(resultSync.error).toEqualTypeOf<
+          SafeFnDefaultThrownHandlerErr["error"]
+        >();
+        expectTypeOf(resultAsync.error).toEqualTypeOf<
+          SafeFnDefaultThrownHandlerErr["error"]
+        >();
+        expectTypeOf(resultSafe.error).toEqualTypeOf<
+          SafeFnDefaultThrownHandlerErr["error"]
+        >();
+      });
+
+      test("should type Err as custom when error handler is provided", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const safeFnSync = safeFn
+          .handler(() => ok("hello" as const))
+          .error(() => err("world" as const));
+        const safeFnAsync = safeFn
+          .handler(async () => ok("hello" as const))
+          .error(() => err("world" as const));
+        const safeFnSafe = safeFn
+          .safeHandler(async function* () {
+            return ok("hello" as const);
+          })
+          .error(() => err("world" as const));
+
+        const resultSync = await safeFnSync.run();
+        const resultAsync = await safeFnAsync.run();
+        const resultSafe = await safeFnSafe.run();
+
+        assert(resultSync.isErr());
+        assert(resultAsync.isErr());
+        assert(resultSafe.isErr());
+
+        expectTypeOf(resultSync.error).toEqualTypeOf<"world">();
+        expectTypeOf(resultAsync.error).toEqualTypeOf<"world">();
+        expectTypeOf(resultSafe.error).toEqualTypeOf<"world">();
+      });
+
+      test("should type Err as inferred when returned from handler", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const safeFnSync = safeFn.handler(() => err("hello" as const));
+        const safeFnAsync = safeFn.handler(async () => err("hello" as const));
+        const safeFnSafe = safeFn.safeHandler(async function* () {
+          return err("hello" as const);
+        });
+
+        const resultSync = await safeFnSync.run();
+        const resultAsync = await safeFnAsync.run();
+        const resultSafe = await safeFnSafe.run();
+
+        assert(resultSync.isErr());
+        assert(resultAsync.isErr());
+        assert(resultSafe.isErr());
+
+        expectTypeOf(resultSync.error).toEqualTypeOf<
+          "hello" | SafeFnDefaultThrownHandlerErr["error"]
+        >();
+        expectTypeOf(resultAsync.error).toEqualTypeOf<
+          "hello" | SafeFnDefaultThrownHandlerErr["error"]
+        >();
+        expectTypeOf(resultSafe.error).toEqualTypeOf<
+          "hello" | SafeFnDefaultThrownHandlerErr["error"]
+        >();
+      });
+
+      test("should merge errors when both returned and has custom handler", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const safeFnSync = safeFn
+          .handler(() => err("hello" as const))
+          .error(() => err("world" as const));
+        const safeFnAsync = safeFn
+          .handler(async () => err("hello" as const))
+          .error(() => err("world" as const));
+        const safeFnSafe = safeFn
+          .safeHandler(async function* () {
+            return err("hello" as const);
+          })
+          .error(() => err("world" as const));
+
+        const resultSync = await safeFnSync.run();
+        const resultAsync = await safeFnAsync.run();
+        const resultSafe = await safeFnSafe.run();
+
+        assert(resultSync.isErr());
+        assert(resultAsync.isErr());
+        assert(resultSafe.isErr());
+
+        expectTypeOf(resultSync.error).toEqualTypeOf<"hello" | "world">();
+        expectTypeOf(resultAsync.error).toEqualTypeOf<"hello" | "world">();
+        expectTypeOf(resultSafe.error).toEqualTypeOf<"hello" | "world">();
+      });
+
+      test("should correctly type full result when output schema is provided and handler can return only error", async () => {
+        const safeFn = SafeFnBuilder.new().output(schemaTransformed);
+        const safeFnSync = safeFn.handler(() => err("hello" as const));
+        const safeFnAsync = safeFn.handler(async () => err("hello" as const));
+        const safeFnSafe = safeFn.safeHandler(async function* () {
+          return err("hello" as const);
+        });
+
+        const resultSync = await safeFnSync.run();
+        const resultAsync = await safeFnAsync.run();
+        const resultSafe = await safeFnSafe.run();
+
+        expectTypeOf(resultSync).toEqualTypeOf<
+          Result<never, "hello" | SafeFnDefaultThrownHandlerErr["error"]>
+        >();
+        expectTypeOf(resultAsync).toEqualTypeOf<
+          Result<never, "hello" | SafeFnDefaultThrownHandlerErr["error"]>
+        >();
+        expectTypeOf(resultSafe).toEqualTypeOf<
+          Result<never, "hello" | SafeFnDefaultThrownHandlerErr["error"]>
+        >();
+      });
+
+      test("should correctly type when handler can return either Err or Ok", async () => {
+        const safeFn = SafeFnBuilder.new();
+
+        const safeFnSync = safeFn.handler(() => {
+          let bool = true;
+          if (bool) {
+            return ok("hello" as const);
+          }
+          return err("world" as const);
+        });
+        const safeFnAsync = safeFn.handler(async () => {
+          let bool = true;
+          if (bool) {
+            return ok("hello" as const);
+          }
+          return err("world" as const);
+        });
+        const safeFnSafe = safeFn.safeHandler(async function* () {
+          let bool = true;
+          if (bool) {
+            return ok("hello" as const);
+          }
+          return err("world" as const);
+        });
+
+        const safeFnSafeYield = safeFn.safeHandler(async function* () {
+          let bool = true;
+          if (!bool) {
+            yield* err("world" as const).safeUnwrap();
+          }
+          return ok("hello" as const);
+        });
+
+        const resultSync = await safeFnSync.run();
+        const resultAsync = await safeFnAsync.run();
+        const resultSafe = await safeFnSafe.run();
+        const resultSafeYield = await safeFnSafeYield.run();
+
+        type ExpectedResult = Result<
+          "hello",
+          "world" | SafeFnDefaultThrownHandlerErr["error"]
+        >;
+
+        expectTypeOf(resultSync).toEqualTypeOf<ExpectedResult>();
+        expectTypeOf(resultAsync).toEqualTypeOf<ExpectedResult>();
+        expectTypeOf(resultSafe).toEqualTypeOf<ExpectedResult>();
+        expectTypeOf(resultSafeYield).toEqualTypeOf<ExpectedResult>();
+      });
     });
   });
 
-  describe("output", () => {
-    // test("should infer return type as Res<never,default error> when no action is set", async () => {
-    //   const safeFn = SafeFn.new().error(() => {
-    //     throw new Error();
-    //   });
-    //   type Res = Awaited<ReturnType<typeof safeFn.run>>;
-    //   type inferred = InferErrError<Res>;
+  describe("createAction", () => {
+    describe("input", () => {
+      test("should not require input when none is set", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const safeFnSync = safeFn
+          .handler(() => ok("hello" as const))
+          .createAction();
+        const safeFnAsync = safeFn
+          .handler(async () => ok("hello" as const))
+          .createAction();
+        const safeFnSafe = safeFn
+          .safeHandler(async function* () {
+            return ok("hello" as const);
+          })
+          .createAction();
 
-    //   expectTypeOf<Res>().toEqualTypeOf<
-    //     Result<never, ReturnType<SafeFnDefaultActionFn>["error"]>
-    //   >();
-    // });
-    test("should infer success return type from handler when no output schema is provided", async () => {
-      const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
-      const safeFnAsync = SafeFnBuilder.new().handler(async () =>
-        ok("data" as const),
-      );
-      const res = await safeFn.run({});
-      const resAsync = await safeFnAsync.run({});
-      assert(res.isOk());
-      assert(resAsync.isOk());
-
-      expectTypeOf(res.value).toEqualTypeOf<"data">();
-      expectTypeOf(resAsync.value).toEqualTypeOf<"data">();
-    });
-
-    test("should type output as Ok<outputSchema> for transformed values", async () => {
-      const outputSchema = z.string().transform((data) => ({
-        name: `${data}!`,
-      }));
-      const safeFn = SafeFnBuilder.new()
-        .output(outputSchema)
-        .handler(() => ok(""));
-      const safeFnAsync = SafeFnBuilder.new()
-        .output(outputSchema)
-        .handler(async () => ok(""));
-
-      const res = await safeFn.run({});
-      assert(res.isOk());
-      const resAsync = await safeFnAsync.run({});
-      assert(resAsync.isOk());
-      expectTypeOf(res.value).toEqualTypeOf<z.output<typeof outputSchema>>();
-      expectTypeOf(resAsync.value).toEqualTypeOf<
-        z.output<typeof outputSchema>
-      >();
-    });
-  });
-
-  describe("error", () => {
-    test("should infer Err return as default when no error function is set", async () => {
-      const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
-      const safeFnAsync = SafeFnBuilder.new().handler(async () =>
-        ok("data" as const),
-      );
-
-      type Res = Awaited<ReturnType<typeof safeFn.run>>;
-      type ResAsync = Awaited<ReturnType<typeof safeFnAsync.run>>;
-      type InferredErrError = InferErrError<Res>;
-      type InferredErrErrorAsync = InferErrError<ResAsync>;
-      expectTypeOf<InferredErrError>().toEqualTypeOf<
-        InferErrError<ReturnType<SafeFnDefaultThrowHandler>>
-      >();
-      expectTypeOf<InferredErrErrorAsync>().toEqualTypeOf<
-        InferErrError<ReturnType<SafeFnDefaultThrowHandler>>
-      >();
-    });
-
-    test("should infer Err return type from handler when no error function is set", async () => {
-      const safeFn = SafeFnBuilder.new().handler(() =>
-        err("my error" as const),
-      );
-      const safeFnAsync = SafeFnBuilder.new().handler(async () =>
-        err("my error" as const),
-      );
-      const res = await safeFn.run({});
-      const resAsync = await safeFnAsync.run({});
-      type Res = Awaited<ReturnType<typeof safeFn.run>>;
-      type ResAsync = Awaited<ReturnType<typeof safeFnAsync.run>>;
-      type InferredErrError = InferErrError<Res>;
-      type InferredErrErrorAsync = InferErrError<ResAsync>;
-      expectTypeOf<InferredErrError>().toEqualTypeOf<
-        "my error" | InferErrError<ReturnType<SafeFnDefaultThrowHandler>>
-      >();
-      expectTypeOf<InferredErrErrorAsync>().toEqualTypeOf<
-        "my error" | InferErrError<ReturnType<SafeFnDefaultThrowHandler>>
-      >();
-    });
-
-    test("should infer Err return type from handler when error function is set", async () => {
-      const safeFn = SafeFnBuilder.new()
-        .handler(() => {
-          return err("error" as const);
-        })
-        .error(() => err("thrown" as const));
-
-      type Res = Awaited<ReturnType<typeof safeFn.run>>;
-      type InferredErrError = InferErrError<Res>;
-
-      expectTypeOf<InferredErrError>().toEqualTypeOf<"error" | "thrown">();
-    });
-  });
-});
-
-describe("internals", () => {
-  describe("_parseInput", () => {
-    test("should return Result Ok as never when no input schema is defined", async () => {
-      const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
-      const res = await safeFn._parseInput("data", false);
-      assert(res.isOk());
-      expectTypeOf(res.value).toEqualTypeOf<never>();
-    });
-
-    test("should type Result Ok as inputSchema for transformed schemas", async () => {
-      const inputSchema = z
-        .object({
-          test: z.string(),
-          nested: z.object({
-            value: z.number(),
-          }),
-        })
-        .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new()
-        .input(inputSchema)
-        .handler(() => ok(""));
-      const res = await safeFn._parseInput("data", false);
-      assert(res.isOk());
-      expectTypeOf(res.value).toEqualTypeOf<z.output<typeof inputSchema>>();
-    });
-
-    test("should type Result Err as never without input schema", async () => {
-      const safeFn = SafeFnBuilder.new().handler(() => ok(""));
-      const res = await safeFn._parseInput(123, false);
-      assert(res.isOk());
-      expectTypeOf(res.value).toEqualTypeOf<never>();
-    });
-
-    test("should type Result Err as typed ZodError for transformed schemas", async () => {
-      const inputSchema = z
-        .object({
-          test: z.string(),
-          nested: z.object({
-            value: z.number(),
-          }),
-        })
-        .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new()
-        .input(inputSchema)
-        .handler(() => ok(""));
-      const res = await safeFn._parseInput(123, false);
-      assert(res.isErr());
-      expectTypeOf(res.error).toEqualTypeOf<
-        SafeFnInputParseError<typeof inputSchema, false>
-      >();
-    });
-  });
-
-  describe("_parseOutput", () => {
-    test("should return Result Ok as never when no output schema is defined", async () => {
-      const safeFn = SafeFnBuilder.new().handler(() => ok("data" as const));
-      const res = await safeFn._parseOutput("data", false);
-      assert(res.isOk());
-      expectTypeOf(res.value).toEqualTypeOf<never>();
-    });
-
-    test("should type Result Ok as outputSchema for transformed schemas", async () => {
-      const outputSchema = z
-        .object({
-          test: z.string(),
-          nested: z.object({
-            value: z.number(),
-          }),
-        })
-        .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new()
-        .output(outputSchema)
-        .handler(() => ok("" as any));
-      const res = await safeFn._parseOutput("data", false);
-      assert(res.isOk());
-      expectTypeOf(res.value).toEqualTypeOf<z.output<typeof outputSchema>>();
-    });
-
-    test("should type Result Err as never without output schema", async () => {
-      const safeFn = SafeFnBuilder.new().handler(() => ok("" as any));
-      const res = await safeFn._parseOutput(123, false);
-      assert(res.isOk());
-      expectTypeOf(res.value).toEqualTypeOf<never>();
-    });
-
-    test("should type Result Err as typed ZodError for transformed schemas", async () => {
-      const outputSchema = z
-        .object({
-          test: z.string(),
-          nested: z.object({
-            value: z.number(),
-          }),
-        })
-        .transform(({ test }) => ({ test, newProperty: "test" }));
-      const safeFn = SafeFnBuilder.new()
-        .output(outputSchema)
-        .handler(() => ok("" as any));
-      const res = await safeFn._parseOutput(123, false);
-      assert(res.isErr());
-      expectTypeOf(res.error).toEqualTypeOf<
-        SafeFnOutputParseError<typeof outputSchema, false>
-      >();
-    });
-  });
-});
-
-describe("error", () => {
-  test("should properly type the _uncaughtErrorHandler function", async () => {
-    const safeFn = SafeFnBuilder.new()
-      .handler(() => ok(""))
-      .error((error) => err("hello" as const));
-
-    const res = await safeFn.run({});
-    assert(res.isErr());
-    expectTypeOf(res.error).toEqualTypeOf<"hello">();
-  });
-});
-
-describe("parent", () => {
-  test("should properly type the _parent function", () => {
-    const safeFn1 = SafeFnBuilder.new()
-      .input(z.object({ name: z.string() }))
-      .handler(() => ok(""));
-    const safeFn2 = SafeFnBuilder.new(safeFn1).input(
-      z.object({ age: z.number() }),
-    );
-    expectTypeOf(safeFn2._internals.parent).toEqualTypeOf(safeFn1);
-  });
-
-  describe("handler", () => {
-    describe("args", () => {
-      // TODO: test unparsed input
-      test.todo("should merge unparsedInput");
-
-      describe("unparsedInput", () => {
-        test("should merge inferred unparsedInput when parent and child have input schema with transforms", () => {
-          const input1 = z
-            .object({ firstName: z.string(), lastName: z.string() })
-            .transform(({ firstName, lastName }) => `${firstName} ${lastName}`);
-          const input2 = z
-            .object({ birthDay: z.number() })
-            .transform(() => ({ age: 1 }));
-          const safeFn1 = SafeFnBuilder.new()
-            .input(input1)
-            .handler(() => ok(""));
-          const safeFn2 = SafeFnBuilder.new(safeFn1).input(input2);
-
-          type S2UnparsedInput = Parameters<
-            Parameters<typeof safeFn2.handler>[0]
-          >[0]["unparsedInput"];
-
-          expectTypeOf<S2UnparsedInput>().toEqualTypeOf<
-            Prettify<z.input<typeof input1> & z.input<typeof input2>>
-          >();
-        });
+        expectTypeOf(safeFnSync).parameters.toEqualTypeOf<[]>();
+        expectTypeOf(safeFnAsync).parameters.toEqualTypeOf<[]>();
+        expectTypeOf(safeFnSafe).parameters.toEqualTypeOf<[]>();
       });
 
-      test("should merge unparsedInput when parent and child manually define it", () => {
-        const safeFn1 = SafeFnBuilder.new()
-          .unparsedInput<{ name: string }>()
-          .handler(() => ok(""));
-        const safeFn2 = SafeFnBuilder.new(safeFn1).unparsedInput<{
-          age: number;
-        }>();
+      test("should type input when manually set", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const safeFnSync = safeFn
+          .unparsedInput<{ test: string }>()
+          .handler((input) => ok(input))
+          .createAction();
+        const safeFnAsync = safeFn
+          .unparsedInput<{ test: string }>()
+          .handler(async (input) => ok(input))
+          .createAction();
+        const safeFnSafe = safeFn
+          .unparsedInput<{ test: string }>()
+          .safeHandler(async function* (input) {
+            return ok(input);
+          })
+          .createAction();
 
-        type S2UnparsedInput = Parameters<
-          Parameters<typeof safeFn2.handler>[0]
-        >[0]["unparsedInput"];
-
-        expectTypeOf<S2UnparsedInput>().toEqualTypeOf<{
-          name: string;
-          age: number;
-        }>();
+        expectTypeOf(safeFnSync).parameters.toEqualTypeOf<[{ test: string }]>();
+        expectTypeOf(safeFnAsync).parameters.toEqualTypeOf<
+          [{ test: string }]
+        >();
+        expectTypeOf(safeFnSafe).parameters.toEqualTypeOf<[{ test: string }]>();
       });
 
-      test("should merge unparsedInput when child has input schema and parent manually defines it", () => {
-        const input = z.object({ name: z.string() });
-        const safeFn1 = SafeFnBuilder.new()
-          .unparsedInput<{ age: number }>()
-          .handler(() => ok(""));
-        const safeFn2 = SafeFnBuilder.new(safeFn1).input(input);
-
-        type S2UnparsedInput = Parameters<
-          Parameters<typeof safeFn2.handler>[0]
-        >[0]["unparsedInput"];
-
-        expectTypeOf<S2UnparsedInput>().toEqualTypeOf<{
-          name: string;
-          age: number;
-        }>();
+      test("should type unparsed input as inputSchema for transformed schemas", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const safeFnSync = safeFn
+          .unparsedInput<{ test: string }>()
+          .handler((input) => ok(input))
+          .createAction();
       });
 
-      test("should merge unparsedInput when parent has input schema and child manually defines it", () => {
-        const input = z.object({ name: z.string() });
-        const safeFn1 = SafeFnBuilder.new()
-          .input(input)
-          .handler(() => ok(""));
-        const safeFn2 = SafeFnBuilder.new(safeFn1).unparsedInput<{
-          age: number;
-        }>();
+      test("should type unparsed input as inputSchema for transformed schemas", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const safeFnSync = safeFn
+          .unparsedInput<{ test: string }>()
+          .handler((input) => ok(input))
+          .createAction();
+        const safeFnAsync = safeFn
+          .unparsedInput<{ test: string }>()
+          .handler(async (input) => ok(input))
+          .createAction();
+        const safeFnSafe = safeFn
+          .unparsedInput<{ test: string }>()
+          .safeHandler(async function* (input) {
+            return ok(input);
+          })
+          .createAction();
 
-        type S2UnparsedInput = Parameters<
-          Parameters<typeof safeFn2.handler>[0]
-        >[0]["unparsedInput"];
-
-        expectTypeOf<S2UnparsedInput>().toEqualTypeOf<{
-          name: string;
-          age: number;
-        }>();
+        expectTypeOf(safeFnSync).parameters.toEqualTypeOf<[{ test: string }]>();
+        expectTypeOf(safeFnAsync).parameters.toEqualTypeOf<
+          [{ test: string }]
+        >();
+        expectTypeOf(safeFnSafe).parameters.toEqualTypeOf<[{ test: string }]>();
       });
+    });
 
-      test("should type unparsedInput as child when parent has none", () => {
-        const input = z.object({ name: z.string() });
-        const safeFn1 = SafeFnBuilder.new().handler(() => ok(""));
-        const safeFn2 = SafeFnBuilder.new(safeFn1).input(input);
+    describe("output", () => {
+      // Just throwing the kitchen sink here to not make this file any longer
+      test("should type proper result", async () => {
+        const safeFn = SafeFnBuilder.new()
+          .input(schemaTransformed)
+          .output(schemaPrimitive);
 
-        type S2UnparsedInput = Parameters<
-          Parameters<typeof safeFn2.handler>[0]
-        >[0]["unparsedInput"];
+        const safeActionSync = safeFn
+          .handler(() => ok("hello"))
+          .error(() => err("world" as const))
+          .createAction();
+        const safeActionAsync = safeFn
+          .handler(async () => ok("hello"))
+          .error(() => err("world" as const))
+          .createAction();
+        const safeActionSafe = safeFn
+          .safeHandler(async function* () {
+            return ok("hello" as const);
+          })
+          .error(() => err("world" as const))
+          .createAction();
+        const safeActionSafeYield = safeFn
+          .safeHandler(async function* () {
+            yield* err("world2" as const).safeUnwrap();
+            return ok("hello");
+          })
+          .error(() => err("world" as const))
+          .createAction();
 
-        expectTypeOf<S2UnparsedInput>().toEqualTypeOf<z.input<typeof input>>();
-      });
+        type ExpectedInputParseError = SafeFnInputParseError<
+          typeof schemaTransformed,
+          true
+        >;
+        type ExpectedOutputParseError = SafeFnOutputParseError<
+          typeof schemaPrimitive,
+          true
+        >;
+        // Type comes from Zod, so const is lost
+        type ExpectedOk = string;
+        type ExpectedErr = "world";
+        type ExpectedErr2 = "world2";
 
-      test("should type unparsedInput as parent when child has none", () => {
-        const input = z.object({ name: z.string() });
-        const safeFn1 = SafeFnBuilder.new()
-          .input(input)
-          .handler(() => ok(""));
-        const safeFn2 = SafeFnBuilder.new(safeFn1);
-
-        type S2UnparsedInput = Parameters<
-          Parameters<typeof safeFn2.handler>[0]
-        >[0]["unparsedInput"];
-
-        expectTypeOf<S2UnparsedInput>().toEqualTypeOf<z.input<typeof input>>();
-      });
-
-      describe("parsedInput", () => {
-        test("should merge parsedInput when parent and child have input schema", () => {
-          const input1 = z.object({ name: z.string() });
-          const input2 = z.object({ age: z.number() });
-          const safeFn1 = SafeFnBuilder.new()
-            .input(input1)
-            .handler(() => ok(""));
-          const safeFn2 = SafeFnBuilder.new(safeFn1).input(input2);
-
-          type S2ParsedInput = Parameters<
-            Parameters<typeof safeFn2.handler>[0]
-          >[0]["parsedInput"];
-
-          type test = InferInputSchema<typeof safeFn1>;
-
-          expectTypeOf<S2ParsedInput>().toEqualTypeOf<
-            Prettify<z.output<typeof input1> & z.output<typeof input2>>
-          >();
-        });
-
-        test("should merge parsedInput when parent and child have input schema with transforms", () => {
-          const input1 = z
-            .object({ name: z.string() })
-            .transform(({ name }) => ({
-              name,
-              newProperty: "test",
-            }));
-          const input2 = z.object({ age: z.number() }).transform(({ age }) => ({
-            age,
-            newProperty2: "test",
-          }));
-
-          const safeFn1 = SafeFnBuilder.new()
-            .input(input1)
-            .handler(() => ok(""));
-          const safeFn2 = SafeFnBuilder.new(safeFn1).input(input2);
-
-          type S2ParsedInput = Parameters<
-            Parameters<typeof safeFn2.handler>[0]
-          >[0]["parsedInput"];
-
-          expectTypeOf<S2ParsedInput>().toEqualTypeOf<
-            Prettify<z.output<typeof input1> & z.output<typeof input2>>
-          >();
-        });
-
-        test("should take parsedInput from child when parent has no input schema", () => {
-          const input = z.object({ name: z.string() });
-          const safeFn1 = SafeFnBuilder.new().handler((args) =>
-            ok(args.parsedInput),
-          );
-          const safeFn2 = SafeFnBuilder.new(safeFn1).input(input);
-
-          type S2ParsedInput = Parameters<
-            Parameters<typeof safeFn2.handler>[0]
-          >[0]["parsedInput"];
-
-          expectTypeOf<S2ParsedInput>().toEqualTypeOf<z.output<typeof input>>();
-        });
-
-        test("should take parsedInput from parent when child has no input schema", () => {
-          const input = z.object({ name: z.string() });
-          const safeFn1 = SafeFnBuilder.new()
-            .input(input)
-            .handler(() => ok(""));
-          const safeFn2 = SafeFnBuilder.new(safeFn1);
-
-          type S2ParsedInput = Parameters<
-            Parameters<typeof safeFn2.handler>[0]
-          >[0]["parsedInput"];
-
-          expectTypeOf<S2ParsedInput>().toEqualTypeOf<z.output<typeof input>>();
-        });
-      });
-
-      describe("ctx", () => {
-        test("should type ctx as unwrapped OK value from parent", () => {
-          const safeFn1 = SafeFnBuilder.new().handler(() =>
-            ok("ctx return" as const),
-          );
-          const safeFn2 = SafeFnBuilder.new(safeFn1);
-
-          type S2Ctx = Parameters<
-            Parameters<typeof safeFn2.handler>[0]
-          >[0]["ctx"];
-          expectTypeOf<S2Ctx>().toEqualTypeOf<"ctx return">();
-        });
-
-        test("should type ctx as empty object if parent never returns", () => {
-          const safeFn1 = SafeFnBuilder.new().handler(() =>
-            err("ctx return" as const),
-          );
-          const safeFn2 = SafeFnBuilder.new(safeFn1);
-
-          type S2Ctx = Parameters<
-            Parameters<typeof safeFn2.handler>[0]
-          >[0]["ctx"];
-          expectTypeOf<S2Ctx>().toEqualTypeOf<{}>();
-        });
+        expectTypeOf(safeActionSync).returns.resolves.toEqualTypeOf<
+          ActionResult<
+            ExpectedOk,
+            ExpectedErr | ExpectedInputParseError | ExpectedOutputParseError
+          >
+        >();
+        expectTypeOf(safeActionAsync).returns.resolves.toEqualTypeOf<
+          ActionResult<
+            ExpectedOk,
+            ExpectedErr | ExpectedInputParseError | ExpectedOutputParseError
+          >
+        >();
+        expectTypeOf(safeActionSafe).returns.resolves.toEqualTypeOf<
+          ActionResult<
+            ExpectedOk,
+            ExpectedErr | ExpectedInputParseError | ExpectedOutputParseError
+          >
+        >();
+        expectTypeOf(safeActionSafeYield).returns.resolves.toEqualTypeOf<
+          ActionResult<
+            ExpectedOk,
+            | ExpectedErr
+            | ExpectedErr2
+            | ExpectedInputParseError
+            | ExpectedOutputParseError
+          >
+        >();
       });
     });
   });
