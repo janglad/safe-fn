@@ -366,10 +366,7 @@ export type SafeFnRunArgs<
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn | undefined,
 > = TParent extends AnyRunnableSafeFn
-  ? Prettify<
-      TUnparsedInput & InferRunArgs<TParent>
-      // SchemaInputOrFallback<TParentInputSchema, TParentUnparsedInput>
-    >
+  ? Prettify<TUnparsedInput & InferRunArgs<TParent>>
   : TUnparsedInput;
 /**
  * @param TInputSchema a Zod schema or undefined
