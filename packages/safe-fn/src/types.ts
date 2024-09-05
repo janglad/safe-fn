@@ -63,6 +63,14 @@ type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
   : T;
 type MaybePromise<T> = T | Promise<T>;
 
+type UnionIfNotT<A, B, T> = [A] extends [T]
+  ? [B] extends [T]
+    ? T
+    : B
+  : [B] extends [T]
+    ? A
+    : A & B;
+
 /*
 ################################
 ||                            ||
@@ -96,19 +104,26 @@ export type InferUnparsedInput<T> =
  * @param TFallback the fallback type if the schema is undefined
  * @returns the output type of the schema if it is defined, otherwise `TFallback`
  */
-export type SchemaInputOrFallback<
-  TSchema extends SafeFnInput,
-  TFallback,
-> = TSchema extends ZodTypeAny ? z.input<TSchema> : TFallback;
+export type SchemaInputOrFallback<TSchema extends SafeFnInput, TFallback> = [
+  TSchema,
+] extends [never]
+  ? TFallback
+  : TSchema extends ZodTypeAny
+    ? z.input<TSchema>
+    : TFallback;
+
 /**
  * @param TSchema a Zod schema or undefined
  * @param TFallback the fallback type if the schema is undefined
  * @returns the output type of the schema if it is defined, otherwise `TFallback`
  */
-export type SchemaOutputOrFallback<
-  TSchema extends SafeFnOutput,
-  TFallback,
-> = TSchema extends ZodTypeAny ? z.output<TSchema> : TFallback;
+export type SchemaOutputOrFallback<TSchema extends SafeFnOutput, TFallback> = [
+  TSchema,
+] extends [never]
+  ? TFallback
+  : TSchema extends ZodTypeAny
+    ? z.output<TSchema>
+    : TFallback;
 
 /*
 ################################
@@ -222,8 +237,11 @@ type SafeFnHandlerArgsWParent<
   TParent extends AnyRunnableSafeFn,
 > = {
   parsedInput: Prettify<
-    SchemaOutputOrFallback<TInputSchema, undefined> &
-      SchemaOutputOrFallback<InferInputSchema<TParent>, undefined>
+    UnionIfNotT<
+      SchemaOutputOrFallback<TInputSchema, undefined>,
+      SchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
+      undefined
+    >
   >;
   unparsedInput: Prettify<TUnparsedInput & InferUnparsedInput<TParent>>;
 
