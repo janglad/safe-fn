@@ -29,7 +29,7 @@ export type SafeFnInternals<
   inputSchema: TInputSchema;
   outputSchema: TOutputSchema;
   handler: (
-    input: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+    input: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
   ) => SafeFnHandlerReturn<TOutputSchema>;
   uncaughtErrorHandler: (error: unknown) => Result<never, unknown>;
 };

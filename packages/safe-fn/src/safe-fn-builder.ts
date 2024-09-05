@@ -151,7 +151,7 @@ export class SafeFnBuilder<
     SafeFnDefaultThrownHandlerErr
   > {
     const handler = async (
-      args: SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>,
+      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
     ) => {
       return (await fn(args).next()).value;
     };
