@@ -9,7 +9,6 @@ sandbox.ts
 dist/
 .env
 
-
 #From Fumadocs
 # generated content
 .contentlayer

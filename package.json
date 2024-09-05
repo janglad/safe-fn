@@ -26,6 +26,7 @@
     "test": "turbo test",
     "build": "turbo build",
     "release": "pnpm run build && changeset publish",
-    "knip": "knip"
+    "knip": "knip",
+    "dev": "turbo run dev"
   }
 }
