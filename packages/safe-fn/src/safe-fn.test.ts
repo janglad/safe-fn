@@ -1,9 +1,8 @@
 import { assert, describe, expect, test, vi, type Mock } from "vitest";
 import { z, ZodError } from "zod";
-import type { AnyRunnableSafeFn } from "../dist";
 import { err, ok, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
-import type { TODO } from "./types";
+import type { AnyRunnableSafeFn, TODO } from "./types";
 
 // TODO: this does not belong here
 expect.extend({
