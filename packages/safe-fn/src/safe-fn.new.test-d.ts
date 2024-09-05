@@ -31,7 +31,7 @@ type SchemaTransformedOutput = z.output<typeof schemaTransformed>;
 describe("SafeFnBuilder", () => {
   describe("action", () => {
     describe("parsedInput", () => {
-      test("should properly type for primitives", () => {
+      test("should properly type parsed and unparsed input for primitives", () => {
         const safeFn = SafeFnBuilder.new().input(schemaPrimitive);
         safeFn.handler((input) => {
           expectTypeOf(
@@ -55,117 +55,36 @@ describe("SafeFnBuilder", () => {
         });
       });
 
-      test("should properly type for objects", () => {
-        const safeFn = SafeFnBuilder.new().input(schemaObject);
-        safeFn.handler((input) => {
-          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
-          return ok(input);
-        });
-
-        safeFn.handler(async (input) => {
-          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
-          return ok(input);
-        });
-
-        safeFn.safeHandler(async function* (input) {
-          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
-          return ok(input);
-        });
-      });
-
-      test("should properly type for transformed schemas", () => {
-        const safeFn = SafeFnBuilder.new().input(schemaTransformed);
-        safeFn.handler((input) => {
-          expectTypeOf(
-            input.parsedInput,
-          ).toEqualTypeOf<SchemaTransformedOutput>();
-          return ok(input);
-        });
-
-        safeFn.handler(async (input) => {
-          expectTypeOf(
-            input.parsedInput,
-          ).toEqualTypeOf<SchemaTransformedOutput>();
-          return ok(input);
-        });
-
-        safeFn.safeHandler(async function* (input) {
-          expectTypeOf(
-            input.parsedInput,
-          ).toEqualTypeOf<SchemaTransformedOutput>();
-          return ok(input);
-        });
-      });
-
-      test("should type as undefined when no input schema is provided", () => {
-        const safeFn = SafeFnBuilder.new();
-        safeFn.handler((input) => {
-          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
-          return ok(input);
-        });
-
-        safeFn.handler(async (input) => {
-          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
-          return ok(input);
-        });
-
-        safeFn.safeHandler(async function* (input) {
-          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
-          return ok(input);
-        });
-      });
-      test.todo("with parent");
-    });
-
-    describe("unparsedInput", () => {
-      test("should properly type for primitives", () => {
-        const safeFn = SafeFnBuilder.new().input(schemaPrimitive);
-        safeFn.handler((input) => {
-          expectTypeOf(
-            input.unparsedInput,
-          ).toEqualTypeOf<SchemaPrimitiveInput>();
-          return ok(input);
-        });
-
-        safeFn.handler(async (input) => {
-          expectTypeOf(
-            input.unparsedInput,
-          ).toEqualTypeOf<SchemaPrimitiveInput>();
-          return ok(input);
-        });
-
-        safeFn.safeHandler(async function* (input) {
-          expectTypeOf(
-            input.unparsedInput,
-          ).toEqualTypeOf<SchemaPrimitiveInput>();
-          return ok(input);
-        });
-      });
-
-      test("should properly type for objects", () => {
+      test("should properly type parsed and unparsed input for objects", () => {
         const safeFn = SafeFnBuilder.new().input(schemaObject);
         safeFn.handler((input) => {
           expectTypeOf(input.unparsedInput).toEqualTypeOf<SchemaObjectInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
           return ok(input);
         });
 
         safeFn.handler(async (input) => {
           expectTypeOf(input.unparsedInput).toEqualTypeOf<SchemaObjectInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
           return ok(input);
         });
 
         safeFn.safeHandler(async function* (input) {
           expectTypeOf(input.unparsedInput).toEqualTypeOf<SchemaObjectInput>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
           return ok(input);
         });
       });
 
-      test("should properly type for transformed schemas", () => {
+      test("should properly type parsed and unparsed input for transformed schemas", () => {
         const safeFn = SafeFnBuilder.new().input(schemaTransformed);
         safeFn.handler((input) => {
           expectTypeOf(
             input.unparsedInput,
           ).toEqualTypeOf<SchemaTransformedInput>();
+          expectTypeOf(
+            input.parsedInput,
+          ).toEqualTypeOf<SchemaTransformedOutput>();
           return ok(input);
         });
 
@@ -173,6 +92,9 @@ describe("SafeFnBuilder", () => {
           expectTypeOf(
             input.unparsedInput,
           ).toEqualTypeOf<SchemaTransformedInput>();
+          expectTypeOf(
+            input.parsedInput,
+          ).toEqualTypeOf<SchemaTransformedOutput>();
           return ok(input);
         });
 
@@ -180,30 +102,35 @@ describe("SafeFnBuilder", () => {
           expectTypeOf(
             input.unparsedInput,
           ).toEqualTypeOf<SchemaTransformedInput>();
+          expectTypeOf(
+            input.parsedInput,
+          ).toEqualTypeOf<SchemaTransformedOutput>();
           return ok(input);
         });
       });
 
-      test("should type as unknown when no input schema is provided and not manually set", () => {
+      test("should type parsedInput as undefined, unparsed input as unknown when no input schema is provided", () => {
         const safeFn = SafeFnBuilder.new();
-
         safeFn.handler((input) => {
           expectTypeOf(input.unparsedInput).toEqualTypeOf<unknown>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
           return ok(input);
         });
 
         safeFn.handler(async (input) => {
           expectTypeOf(input.unparsedInput).toEqualTypeOf<unknown>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
           return ok(input);
         });
 
         safeFn.safeHandler(async function* (input) {
           expectTypeOf(input.unparsedInput).toEqualTypeOf<unknown>();
+          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
           return ok(input);
         });
       });
 
-      test("should properly type when manually set", () => {
+      test("should properly type unparsed input when manually set", () => {
         const safeFn = SafeFnBuilder.new().unparsedInput<{ name: string }>();
 
         safeFn.handler((input) => {
