@@ -11,6 +11,7 @@ import type {
   SafeFnInput,
   SafeFnInputParseError,
   SafeFnInternals,
+  SafeFnOutput,
   SafeFnOutputParseError,
   SafeFnReturn,
   SafeFnRunArgs,
@@ -21,7 +22,7 @@ import { isFrameworkError, mapZodError, safeZodAsyncParse } from "./util";
 export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
-  TOutputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnThrownHandlerRes,

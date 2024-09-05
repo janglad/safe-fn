@@ -12,13 +12,14 @@ import type {
   SafeFnHandlerReturn,
   SafeFnInput,
   SafeFnInternals,
+  SafeFnOutput,
   SchemaInputOrFallback,
 } from "./types";
 
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
-  TOutputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
 > {
   readonly _internals: SafeFnInternals<
