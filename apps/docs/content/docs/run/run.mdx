@@ -1,0 +1,33 @@
+---
+title: Directly
+---
+
+You can run a SafeFn directly by using the `run()` method. This will execute the SafeFn, returning a `ResultAsync` and is intended to be used on the server.
+
+```ts
+const mySafeFn = SafeFn.new().handler(() => {
+  return ok("Success");
+});
+
+const res = mySafeFn.run();
+//   ^? ResultAsync<"Success", { code: "UNCAUGHT_ERROR", ... }>
+```
+
+The arguments required is the `unparsedInput` of the SafeFn. This is either inferred from the input schema, or passed via `unparsedInput<T>()`.
+
+```ts
+const mySafeFn = SafeFn.new()
+  .input(z.object({ name: z.string() }))
+  .handler((args) => {
+    return ok(`Hello, ${args.unparsedInput.name}!`);
+  });
+
+const res = mySafeFn.run({ firstName: "World" });
+// Error:'firstName' does not exist in type '{ name: string; }' [!code highlight]
+```
+
+<Callout type="info">
+  If you're intending to call the function from the client, such as via a server
+  action or through an API route, it's reccomended to use the
+  [`createAction()`](/docs/run/action) method.
+</Callout>
