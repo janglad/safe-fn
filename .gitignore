@@ -8,3 +8,30 @@ sandbox.ts
 .turbo
 dist/
 .env
+
+
+#From Fumadocs
+# generated content
+.contentlayer
+.content-collections
+.source
+
+# test & build
+.next
+.next
+/out/
+/build
+*.tsbuildinfo
+
+# misc
+*.pem
+/.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# others
+.env*.local
+.vercel
+next-env.d.ts

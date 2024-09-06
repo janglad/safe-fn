@@ -25,7 +25,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
 ): UseServerActionReturn<TAction> => {
   type ActionArgs = InferSafeFnActionArgs<TAction>;
   /** Original `ActionResult<T,E>` */
-  type ActionActionResult = InferSafeFnActionReturn<TAction>;
+  type ActionActionResult = Awaited<InferSafeFnActionReturn<TAction>>;
   /** Converted `ActionResult<T,E>` -\> `Result<T,E>` to be returned to the user  */
   type ActionResult = ActionResultToResult<ActionActionResult>;
 
