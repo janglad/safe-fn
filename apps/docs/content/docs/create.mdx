@@ -245,15 +245,15 @@ declare function getTodoById(
   { code: "DB_ERROR" }
 >;
 
-const getLastUserTodoTitle2 = SafeFn.new().handler(async function* () {
-  const todoList = yield* (await getUserTodoList()).safeUnwrap();
+const getLastUserTodoTitle = SafeFn.new().handler(async function* () {
+  const todoList = yield* getUserTodoList().safeUnwrap();
   if (!todoList.length) {
     return err({
       code: "NO_TODOS",
     });
   }
   const lastTodoId = todoList[todoList.length - 1];
-  const todo = yield* (await getTodoById(lastTodoId)).safeUnwrap();
+  const todo = yield* getTodoById(lastTodoId).safeUnwrap();
   return ok(todo.title);
 });
 ```
