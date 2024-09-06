@@ -1,0 +1,4 @@
+{
+  "title": "Creating a SafeFn",
+  "pages": ["instantiate", "input-output", "handler"]
+}

@@ -1,0 +1,15 @@
+---
+title: Instantiate
+---
+
+## Instantiating
+
+{/* TODO: chaining page */}
+You can create a SafeFn by using the `.new()` method. Here you can optionally pass in a parent handler (see chaining)
+
+```ts
+import { parentFunction } from "./some-file";
+
+const myySafeFunction = SafeFn.new();
+const mySafeFunction2 = SafeFn.new(parentFunction);
+```
