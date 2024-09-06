@@ -61,7 +61,7 @@ describe("safe-fn-builder", () => {
       });
     });
 
-    test("should set the correct default error handler", () => {
+    test("should set the correct default catch handler", () => {
       const builder = SafeFnBuilder.new();
       const returnedError = builder._internals.uncaughtErrorHandler(
         undefined as TODO,
@@ -152,12 +152,12 @@ describe("safe-fn-builder", () => {
 });
 
 describe("runnable-safe-fn", () => {
-  describe("error", () => {
-    test("should set the error handler", () => {
+  describe("catch", () => {
+    test("should set the catch handler", () => {
       const errorHandler = () => err("error");
       const safeFn = SafeFnBuilder.new()
         .handler(() => ok(""))
-        .error(errorHandler);
+        .catch(errorHandler);
       expect(safeFn._internals.uncaughtErrorHandler).toEqual(errorHandler);
     });
   });
@@ -395,7 +395,7 @@ describe("runnable-safe-fn", () => {
               .handler(() => {
                 throw new Error("error");
               })
-              .error((e) =>
+              .catch((e) =>
                 err({
                   code: "TEST_ERROR",
                   cause: e,
@@ -409,7 +409,7 @@ describe("runnable-safe-fn", () => {
               .handler(async () => {
                 throw new Error("error");
               })
-              .error((e) =>
+              .catch((e) =>
                 err({
                   code: "TEST_ERROR",
                   cause: e,
@@ -423,7 +423,7 @@ describe("runnable-safe-fn", () => {
               .safeHandler(async function* () {
                 throw new Error("error");
               })
-              .error((e) =>
+              .catch((e) =>
                 err({
                   code: "TEST_ERROR",
                   cause: e,
@@ -433,7 +433,7 @@ describe("runnable-safe-fn", () => {
       ];
 
       testCases.forEach(({ name, createSafeFn }) => {
-        test(`should run error handler for ${name} handler`, async () => {
+        test(`should run catch handler for ${name} handler`, async () => {
           const safeFn = createSafeFn();
           const res = await safeFn.run();
           expect(res).toBeErr();
