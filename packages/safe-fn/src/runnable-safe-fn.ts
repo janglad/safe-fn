@@ -3,8 +3,8 @@ import { ResultAsync, safeTry } from "neverthrow";
 import { actionErr, actionOk, ok } from "./result";
 import type {
   AnyRunnableSafeFn,
+  AnySafeFnCatchHandlerRes,
   AnySafeFnHandlerRes,
-  AnySafeFnThrownHandlerRes,
   SafeFnAction,
   SafeFnActionArgs,
   SafeFnActionReturn,
@@ -25,7 +25,7 @@ export class RunnableSafeFn<
   TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
   THandlerRes extends AnySafeFnHandlerRes,
-  TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
+  TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
 > {
   readonly _internals: SafeFnInternals<
     TParent,
@@ -65,7 +65,7 @@ export class RunnableSafeFn<
 ################################
 */
 
-  error<TNewThrownHandlerRes extends AnySafeFnThrownHandlerRes>(
+  catch<TNewThrownHandlerRes extends AnySafeFnCatchHandlerRes>(
     handler: (error: unknown) => TNewThrownHandlerRes,
   ): RunnableSafeFn<
     TParent,
