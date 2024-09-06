@@ -159,29 +159,29 @@ export type SchemaOutputOrFallback<TSchema extends SafeFnOutput, TFallback> = [
 */
 
 /**
- * Convenience type for any thrown handler result.
+ * Convenience type for any catch handler result.
  */
-export type AnySafeFnThrownHandlerRes = Result<never, any>;
+export type AnySafeFnCatchHandlerRes = Result<never, any>;
 
 /**
- * Convenience type for any thrown handler function.
+ * Convenience type for any catch handler function.
  */
-export type AnySafeFnThrownHandler = (
+export type AnySafeFnCatchHandler = (
   error: unknown,
-) => AnySafeFnThrownHandlerRes;
+) => AnySafeFnCatchHandlerRes;
 
 /**
- * Default throw handler function. Overridden by `error()`
+ * Default catch handler function. Overridden by `catch()`
  */
-export type SafeFnDefaultThrowHandler = (
+export type SafeFnDefaultCatchHandler = (
   error: unknown,
-) => SafeFnDefaultThrownHandlerErr;
+) => SafeFnDefaultCatchHandlerErr;
 
-export type SafeFnDefaultThrownHandlerErr = Err<
+export type SafeFnDefaultCatchHandlerErr = Err<
   never,
   {
     code: "UNCAUGHT_ERROR";
-    cause: "An uncaught error occurred. You can implement a custom error handler by using `error()`";
+    cause: "An uncaught error occurred. You can implement a custom error handler by using `catch()`";
   }
 >;
 
@@ -391,9 +391,9 @@ export type SafeFnReturnData<
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
  * @param THandlerRes the return of the handler function
- * @param TThrownHandler the return of the thrown handler
+ * @param TCatchHandlerRes the return of the catch handler
  * @param TAsAction indicates weather the function is run as an action (full error is not typed if true as it's not sent over the wire)
- * @returns the error type of the return value of the safe function after unsuccessful execution. This is a union of all possible error types that can be thrown by the safe function consisting off:
+ * @returns the error type of the return value of the safe function after unsuccessful execution. This is a union of all possible error types that can be catch by the safe function consisting off:
  * - A union of all `Err` returns of the handler function
  * - A union of all `Err` returns of the uncaught error handler
  * - A `SafeFnInputParseError` if the input schema is defined and the input could not be parsed
@@ -403,11 +403,11 @@ export type SafeFnReturnError<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
-  TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   TAsAction extends boolean = false,
 > =
   | InferErrError<THandlerRes>
-  | InferErrError<TThrownHandlerRes>
+  | InferErrError<TCatchHandlerRes>
   | SafeFnInputParseError<TInputSchema, TAsAction>
   | SafeFnOutputParseError<TOutputSchema, TAsAction>;
 
@@ -434,7 +434,7 @@ export type SafeFnRunArgs<
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
  * @param THandlerRes the return of the handler function
- * @param TThrownHandlerRes the return of the thrown handler
+ * @param TCatchHandlerRes the return of the catch handler
  * @param TAsAction indicates weather the function is run as an action (full error is not typed if true as it's not sent over the wire)
  * @returns the returned value of the safe function after execution without throwing. This is a `ResultAsync` type that can either be an `Ok` or an `Err`.
  *
@@ -443,7 +443,7 @@ export type SafeFnReturn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
-  TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
 > =
   Awaited<THandlerRes> extends Result<never, any>
@@ -454,7 +454,7 @@ export type SafeFnReturn<
             TInputSchema,
             undefined,
             Awaited<THandlerRes>,
-            TThrownHandlerRes,
+            TCatchHandlerRes,
             TAsAction
           >
         >
@@ -466,7 +466,7 @@ export type SafeFnReturn<
             TInputSchema,
             TOutputSchema,
             Awaited<THandlerRes>,
-            TThrownHandlerRes,
+            TCatchHandlerRes,
             TAsAction
           >
         >
@@ -523,15 +523,9 @@ export type SafeFnActionReturn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
-  TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = ResultAsyncToPromiseActionResult<
-  SafeFnReturn<
-    TInputSchema,
-    TOutputSchema,
-    THandlerRes,
-    TThrownHandlerRes,
-    true
-  >
+  SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TCatchHandlerRes, true>
 >;
 export type SafeFnAction<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -539,12 +533,12 @@ export type SafeFnAction<
   TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
   THandlerRes extends AnySafeFnHandlerRes,
-  TThrownHandlerRes extends AnySafeFnThrownHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = (
   ...args: SafeFnActionArgs<TUnparsedInput, TParent>
 ) => SafeFnActionReturn<
   TInputSchema,
   TOutputSchema,
   THandlerRes,
-  TThrownHandlerRes
+  TCatchHandlerRes
 >;

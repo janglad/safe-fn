@@ -5,9 +5,9 @@ import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
   Prettify,
+  SafeFnDefaultCatchHandler,
+  SafeFnDefaultCatchHandlerErr,
   SafeFnDefaultHandlerFn,
-  SafeFnDefaultThrowHandler,
-  SafeFnDefaultThrownHandlerErr,
   SafeFnHandlerArgs,
   SafeFnHandlerReturn,
   SafeFnInput,
@@ -63,9 +63,9 @@ export class SafeFnBuilder<
         return err({
           code: "UNCAUGHT_ERROR",
           cause:
-            "An uncaught error occurred. You can implement a custom error handler by using `error()`",
+            "An uncaught error occurred. You can implement a custom error handler by using `catch()`",
         } as const);
-      }) satisfies SafeFnDefaultThrowHandler,
+      }) satisfies SafeFnDefaultCatchHandler,
     }) as any;
   }
 
@@ -121,7 +121,7 @@ export class SafeFnBuilder<
     TOutputSchema,
     TUnparsedInput,
     TNewHandlerResult,
-    SafeFnDefaultThrownHandlerErr
+    SafeFnDefaultCatchHandlerErr
   > {
     return new RunnableSafeFn({
       ...this._internals,
@@ -148,7 +148,7 @@ export class SafeFnBuilder<
     [YieldErr] extends [never]
       ? GeneratorResult
       : MergeResults<GeneratorResult, YieldErr>,
-    SafeFnDefaultThrownHandlerErr
+    SafeFnDefaultCatchHandlerErr
   > {
     const handler = async (
       args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,

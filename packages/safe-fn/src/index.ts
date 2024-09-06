@@ -15,7 +15,7 @@ import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnAction,
-  AnySafeFnThrownHandler,
+  AnySafeFnCatchHandler,
   InferInputSchema,
   InferOutputSchema,
   InferSafeFnActionArgs,
@@ -46,7 +46,7 @@ export type {
   ActionResultToResult,
   AnyRunnableSafeFn,
   AnySafeFnAction,
-  AnySafeFnThrownHandler,
+  AnySafeFnCatchHandler,
   Err,
   InferActionErrError,
   InferActionOkData,

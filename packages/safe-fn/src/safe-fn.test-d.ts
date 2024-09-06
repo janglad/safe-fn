@@ -5,7 +5,7 @@ import { err, ok, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   Prettify,
-  SafeFnDefaultThrownHandlerErr,
+  SafeFnDefaultCatchHandlerErr,
   SafeFnInputParseError,
   SafeFnOutputParseError,
 } from "./types";
@@ -653,7 +653,7 @@ describe("runnableSafeFn", () => {
         expectTypeOf(resultSafe.value).toEqualTypeOf<"hello">();
       });
 
-      test("should type Err as default when no error handler is provided", async () => {
+      test("should type Err as default when no catch handler is provided", async () => {
         const safeFn = SafeFnBuilder.new();
         const safeFnSync = safeFn.handler(() => ok("hello" as const));
         const safeFnAsync = safeFn.handler(async () => ok("hello" as const));
@@ -670,29 +670,29 @@ describe("runnableSafeFn", () => {
         assert(resultSafe.isErr());
 
         expectTypeOf(resultSync.error).toEqualTypeOf<
-          SafeFnDefaultThrownHandlerErr["error"]
+          SafeFnDefaultCatchHandlerErr["error"]
         >();
         expectTypeOf(resultAsync.error).toEqualTypeOf<
-          SafeFnDefaultThrownHandlerErr["error"]
+          SafeFnDefaultCatchHandlerErr["error"]
         >();
         expectTypeOf(resultSafe.error).toEqualTypeOf<
-          SafeFnDefaultThrownHandlerErr["error"]
+          SafeFnDefaultCatchHandlerErr["error"]
         >();
       });
 
-      test("should type Err as custom when error handler is provided", async () => {
+      test("should type Err as custom when catch handler is provided", async () => {
         const safeFn = SafeFnBuilder.new();
         const safeFnSync = safeFn
           .handler(() => ok("hello" as const))
-          .error(() => err("world" as const));
+          .catch(() => err("world" as const));
         const safeFnAsync = safeFn
           .handler(async () => ok("hello" as const))
-          .error(() => err("world" as const));
+          .catch(() => err("world" as const));
         const safeFnSafe = safeFn
           .safeHandler(async function* () {
             return ok("hello" as const);
           })
-          .error(() => err("world" as const));
+          .catch(() => err("world" as const));
 
         const resultSync = await safeFnSync.run();
         const resultAsync = await safeFnAsync.run();
@@ -724,13 +724,13 @@ describe("runnableSafeFn", () => {
         assert(resultSafe.isErr());
 
         expectTypeOf(resultSync.error).toEqualTypeOf<
-          "hello" | SafeFnDefaultThrownHandlerErr["error"]
+          "hello" | SafeFnDefaultCatchHandlerErr["error"]
         >();
         expectTypeOf(resultAsync.error).toEqualTypeOf<
-          "hello" | SafeFnDefaultThrownHandlerErr["error"]
+          "hello" | SafeFnDefaultCatchHandlerErr["error"]
         >();
         expectTypeOf(resultSafe.error).toEqualTypeOf<
-          "hello" | SafeFnDefaultThrownHandlerErr["error"]
+          "hello" | SafeFnDefaultCatchHandlerErr["error"]
         >();
       });
 
@@ -738,15 +738,15 @@ describe("runnableSafeFn", () => {
         const safeFn = SafeFnBuilder.new();
         const safeFnSync = safeFn
           .handler(() => err("hello" as const))
-          .error(() => err("world" as const));
+          .catch(() => err("world" as const));
         const safeFnAsync = safeFn
           .handler(async () => err("hello" as const))
-          .error(() => err("world" as const));
+          .catch(() => err("world" as const));
         const safeFnSafe = safeFn
           .safeHandler(async function* () {
             return err("hello" as const);
           })
-          .error(() => err("world" as const));
+          .catch(() => err("world" as const));
 
         const resultSync = await safeFnSync.run();
         const resultAsync = await safeFnAsync.run();
@@ -774,13 +774,13 @@ describe("runnableSafeFn", () => {
         const resultSafe = await safeFnSafe.run();
 
         expectTypeOf(resultSync).toEqualTypeOf<
-          Result<never, "hello" | SafeFnDefaultThrownHandlerErr["error"]>
+          Result<never, "hello" | SafeFnDefaultCatchHandlerErr["error"]>
         >();
         expectTypeOf(resultAsync).toEqualTypeOf<
-          Result<never, "hello" | SafeFnDefaultThrownHandlerErr["error"]>
+          Result<never, "hello" | SafeFnDefaultCatchHandlerErr["error"]>
         >();
         expectTypeOf(resultSafe).toEqualTypeOf<
-          Result<never, "hello" | SafeFnDefaultThrownHandlerErr["error"]>
+          Result<never, "hello" | SafeFnDefaultCatchHandlerErr["error"]>
         >();
       });
 
@@ -824,7 +824,7 @@ describe("runnableSafeFn", () => {
 
         type ExpectedResult = Result<
           "hello",
-          "world" | SafeFnDefaultThrownHandlerErr["error"]
+          "world" | SafeFnDefaultCatchHandlerErr["error"]
         >;
 
         expectTypeOf(resultSync).toEqualTypeOf<ExpectedResult>();
@@ -922,24 +922,24 @@ describe("runnableSafeFn", () => {
 
         const safeActionSync = safeFn
           .handler(() => ok("hello"))
-          .error(() => err("world" as const))
+          .catch(() => err("world" as const))
           .createAction();
         const safeActionAsync = safeFn
           .handler(async () => ok("hello"))
-          .error(() => err("world" as const))
+          .catch(() => err("world" as const))
           .createAction();
         const safeActionSafe = safeFn
           .safeHandler(async function* () {
             return ok("hello" as const);
           })
-          .error(() => err("world" as const))
+          .catch(() => err("world" as const))
           .createAction();
         const safeActionSafeYield = safeFn
           .safeHandler(async function* () {
             yield* err("world2" as const).safeUnwrap();
             return ok("hello");
           })
-          .error(() => err("world" as const))
+          .catch(() => err("world" as const))
           .createAction();
 
         type ExpectedInputParseError = SafeFnInputParseError<
