@@ -179,6 +179,85 @@ If you set an output schema, the `TData` type is constrained to the parsed outpu
 
 The returned types from `run()` and `createAction()()` are updated with the inferred return type of your handler function.
 
+```ts
+const mySafeFunction = SafeFn.new()
+  .unparsedInput<{ firstName: string; lastName: string }>()
+  .output(z.object({ fullName: z.string() }))
+  .handler((args) => {
+    // Error: Type Ok<{ name: string; }> is not assignable to type Ok<{ fullName: string; }> // [!code highlight]
+    return ok({
+      fullName: `${args.unparsedInput.firstName} ${args.unparsedInput.lastName}`,
+    });
+  });
+```
+
+the following arguments are passed to the handler function:
+
+- `args.parsedInput`: The result of parsing the input schema.
+- `args.unparsedInput`: The unparsed input of your function.
+- `args.ctx`: The `Ok` return value of the parent handler function or undefined if no parent handler function is set.
+
+### Safe Handler
+
+Instead of using `handler()`, you can also use `safeHandler()`. This offers the same functionality as NeverThrow's `safeTry()` and requires an async generation function.
+This is probably the route you want to take if the rest of your codebase is built with NeverThrow, as it allows ergonomic "return if error" handling.
+
+Consider the following example:
+
+```ts
+// Fake function declarations
+declare function getUserTodoList(): ResultAsync<string[], { code: "DB_ERROR" }>;
+declare function getTodoById(
+  id: string,
+): ResultAsync<
+  { id: string; title: string; description: string },
+  { code: "DB_ERROR" }
+>;
+
+const getLastUserTodoTitle = SafeFn.new().handler(async () => {
+  const todoList = await getUserTodoList();
+  if (todoList.isErr()) {
+    return todoList;
+  }
+  if (!todoList.value.length) {
+    return err({
+      code: "NO_TODOS",
+    });
+  }
+  const lastTodoId = todoList.value[todoList.value.length - 1];
+  const todo = await getTodoById(lastTodoId);
+  if (todo.isErr()) {
+    return todo;
+  }
+  return ok(todo.value.title);
+});
+```
+
+This can be rewritten using `safeHandler()` as follows:
+
+```ts
+// Fake function declarations
+declare function getUserTodoList(): ResultAsync<string[], { code: "DB_ERROR" }>;
+declare function getTodoById(
+  id: string,
+): ResultAsync<
+  { id: string; title: string; description: string },
+  { code: "DB_ERROR" }
+>;
+
+const getLastUserTodoTitle2 = SafeFn.new().handler(async function* () {
+  const todoList = yield* (await getUserTodoList()).safeUnwrap();
+  if (!todoList.length) {
+    return err({
+      code: "NO_TODOS",
+    });
+  }
+  const lastTodoId = todoList[todoList.length - 1];
+  const todo = yield* (await getTodoById(lastTodoId)).safeUnwrap();
+  return ok(todo.title);
+});
+```
+
 ## Cards
 
 <Cards>
