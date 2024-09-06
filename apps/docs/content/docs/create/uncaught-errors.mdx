@@ -1,0 +1,43 @@
+---
+title: Handling errors
+---
+
+As this library is built arround NeverThrow, ideally you should handle errors in your function and return them as values. However, sometimes you just want to throw a value or an unexpected, uncaught throw happens.
+To handle this you can provide you can provide an uncaught error handler via `catch()`, which receives the error as an argument and should return an `Err` value.
+
+```ts
+const mySafeFn = SafeFn.new()
+  .handler(() => {
+    if (Math.random() > 0.5) {
+      throw new Error();
+    }
+    return ok("Success");
+  })
+  .catch((e) => {
+    //    ^? (parameter) e: unknown
+    return err("Ooh no!");
+  });
+
+const res = await mySafeFn.run();
+//   ^? Result<"Success", "Ooh no!">
+```
+
+<Callout type="info">
+  Some frameworks like Next.js rely on throwing errors to trigger actions like
+  redirects. These are still thrown. A custom filter function for this is on the
+  roadmap. If you'd like to add an error to the default filter, please open an
+  issue.
+</Callout>
+
+If you don't provide an uncaught error handler, the default error handler will be used:
+
+```ts
+(error: unknown) => {
+  console.error(error);
+  return err({
+    code: "UNCAUGHT_ERROR",
+    cause:
+      "An uncaught error occurred. You can implement a custom error handler by using `catch()`",
+  } as const);
+};
+```

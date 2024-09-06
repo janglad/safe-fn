@@ -67,7 +67,7 @@ ActionResul<
 <Callout type="warn">
   Other than the expected parse errors, Zod can also throw when using features
   like `coerce` or passing functions to `transform()`. These will be caught and
-  passed to your error handler.
+  passed to your uncaught error handler using `catch()`.
 </Callout>
 
 ### Unparsed input
@@ -152,5 +152,5 @@ ActionResult<
 <Callout type="warn">
   Other than the expected parse errors, Zod can also throw when using features
   like `coerce` or passing functions to `transform()`. These will be caught and
-  passed to your error handler.
+  passed to your uncaught error handler using `catch()`.
 </Callout>

@@ -1,4 +1,4 @@
 {
   "title": "Creating a SafeFn",
-  "pages": ["instantiate", "input-output", "handler"]
+  "pages": ["instantiate", "input-output", "handler", "uncaught-errors"]
 }
