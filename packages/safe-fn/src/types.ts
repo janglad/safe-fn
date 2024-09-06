@@ -1,6 +1,10 @@
 import type { z, ZodFormattedError, ZodTypeAny } from "zod";
 import type {
   Err,
+  InferActionErrError,
+  InferActionOkData,
+  InferAsyncErrError,
+  InferAsyncOkData,
   InferErrError,
   InferOkData,
   Result,
@@ -9,8 +13,6 @@ import type {
 } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
 
-//TODO: organize and update JSDoc
-
 /*
 ################################
 ||                            ||
@@ -18,7 +20,6 @@ import type { RunnableSafeFn } from "./runnable-safe-fn";
 ||                            ||
 ################################
 */
-
 export type SafeFnInternals<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
@@ -42,6 +43,7 @@ export type SafeFnInternals<
 ################################
 */
 
+// Never union is kinda dirty but needed for now.
 export type AnyRunnableSafeFn =
   | RunnableSafeFn<any, any, any, any, any, any>
   | RunnableSafeFn<any, any, any, never, any, any>;
@@ -59,14 +61,16 @@ export type Prettify<T> = {
 } & {};
 
 type IsUnknown<T> = unknown extends T ? true : false;
-
-export type DistributeUnion<T> = T extends any ? T : never;
+type DistributeUnion<T> = T extends any ? T : never;
 
 type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
   ? TFallback
   : T;
 type MaybePromise<T> = T | Promise<T>;
 
+/**
+ * Return `A` & `B` if `A` is not `T` and `B` is not `T`, otherwise return `A` or `B` depending on if they are `T`.
+ */
 type UnionIfNotT<A, B, T> = [A] extends [T]
   ? [B] extends [T]
     ? T
@@ -92,12 +96,29 @@ export type SafeFnInput = z.ZodTypeAny | undefined;
  */
 export type SafeFnOutput = z.ZodTypeAny | undefined;
 
+/**
+ * Infer the input schema of a runnable safe function.
+ * @param T the runnable safe function
+ * @returns the input schema of the safe function
+ */
 export type InferInputSchema<T> = T extends AnyRunnableSafeFn
   ? T["_internals"]["inputSchema"]
   : never;
+
+/**
+ * Infer the output schema of a runnable safe function.
+ * @param T the runnable safe function
+ * @returns the output schema of the safe function
+ */
 export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
   ? T["_internals"]["outputSchema"]
   : never;
+
+/**
+ * Infer the unparsed input of a runnable safe function.
+ * @param T the runnable safe function
+ * @returns the unparsed input of the safe function
+ */
 export type InferUnparsedInput<T> =
   T extends RunnableSafeFn<any, any, any, infer TUnparsed, any, any>
     ? TUnparsed
@@ -143,21 +164,6 @@ export type SchemaOutputOrFallback<TSchema extends SafeFnOutput, TFallback> = [
 export type AnySafeFnThrownHandlerRes = Result<never, any>;
 
 /**
- * @param TSchema a Zod schema or undefined
- * @param TAsAction indicates weather the error will be returned in an error.
- * These types need to be differentiated as `Error` classes can not be sent over the wire in server actions.
- */
-export type ParseError<
-  TSchema extends z.ZodTypeAny,
-  TAsAction extends boolean,
-> = TAsAction extends true
-  ? {
-      formattedError: ZodFormattedError<z.input<TSchema>>;
-      flattenedError: z.typeToFlattenedError<z.input<TSchema>>;
-    }
-  : z.ZodError<z.input<TSchema>>;
-
-/**
  * Convenience type for any thrown handler function.
  */
 export type AnySafeFnThrownHandler = (
@@ -179,13 +185,28 @@ export type SafeFnDefaultThrownHandlerErr = Err<
   }
 >;
 
+/**
+ * @param TSchema a Zod schema or undefined
+ * @param TAsAction indicates weather the error will be returned in an error.
+ * These types need to be differentiated by `TAsAction` as `Error` classes can not be sent over the wire in server actions.
+ */
+export type SafeFnParseError<
+  TSchema extends z.ZodTypeAny,
+  TAsAction extends boolean,
+> = TAsAction extends true
+  ? {
+      formattedError: ZodFormattedError<z.input<TSchema>>;
+      flattenedError: z.typeToFlattenedError<z.input<TSchema>>;
+    }
+  : z.ZodError<z.input<TSchema>>;
+
 export type SafeFnInputParseError<
   TInputSchema extends SafeFnInput,
   TAsAction extends boolean,
 > = TInputSchema extends z.ZodTypeAny
   ? {
       code: "INPUT_PARSING";
-      cause: ParseError<TInputSchema, TAsAction>;
+      cause: SafeFnParseError<TInputSchema, TAsAction>;
     }
   : never;
 
@@ -195,7 +216,7 @@ export type SafeFnOutputParseError<
 > = TOutputSchema extends z.ZodTypeAny
   ? {
       code: "OUTPUT_PARSING";
-      cause: ParseError<TOutputSchema, TAsAction>;
+      cause: SafeFnParseError<TOutputSchema, TAsAction>;
     }
   : never;
 
@@ -226,6 +247,7 @@ export type SafeFnDefaultHandlerFn = () => Result<
  * @param TInputSchema a Zod schema or undefined
  * @param TUnparsedInput the unparsed input type. This is inferred from TInputSchema. When none is provided, this is `never` by default or overridden by using `unparsedInput<>()`
  * @param TParent the parent safe function or undefined
+ * @returns the type of the arguments available in the passed handler function.
  */
 export type SafeFnHandlerArgs<
   TInputSchema extends SafeFnInput,
@@ -258,7 +280,7 @@ type SafeFnHandlerArgsWParent<
       : Prettify<Merged>
     : never;
 
-  ctx: TOrFallback<InferOkData<Awaited<ReturnType<TParent["run"]>>>, undefined>;
+  ctx: TOrFallback<InferSafeFnOkData<TParent>, undefined>;
 };
 
 type SafeFnHandlerArgsNoParent<
@@ -273,7 +295,7 @@ type SafeFnHandlerArgsNoParent<
 /**
  * Type used to constrain the return type of the handler function.
  * @param TOutputSchema a Zod schema or undefined
- * @returns the output type of the handler function. If the schema is undefined, this is `any`. Otherwise this needs to be the input (`z.infer<typeof outputSchema`) of the output schema.
+ * @returns the output type expected for the handler function. If the schema is undefined, this is `any`. Otherwise this is the input (`z.infer<typeof outputSchema`) of the output schema.
  */
 export type SafeFnHandlerReturn<TOutputSchema extends SafeFnOutput> =
   MaybePromise<Result<SchemaInputOrFallback<TOutputSchema, any>, any>>;
@@ -281,10 +303,10 @@ export type SafeFnHandlerReturn<TOutputSchema extends SafeFnOutput> =
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
- * @param TUnparsedInput the unparsed input type. This is inferred from TInputSchema. When none is provided, this is `never` by default or overridden by using `unparsedInput<>()`
+ * @param TUnparsedInput the unparsed input type. Either inferred from TInputSchema or provided by `unparsedInput<>()`
  * @param TParent the parent safe function or undefined
  *
- * @returns the type of a handler function for a safe function. See `SafeFnHandlerArgs` and `SafeFnHandlerReturn` for more information.
+ * @returns the type of a handler function for a safe function passed to `handler()`. See `SafeFnHandlerArgs` and `SafeFnHandlerReturn` for more information.
  */
 export type SafeFnRegularHandlerFn<
   TInputSchema extends SafeFnInput,
@@ -295,6 +317,14 @@ export type SafeFnRegularHandlerFn<
   args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
 ) => SafeFnHandlerReturn<TOutputSchema>;
 
+/**
+ * @param TInputSchema a Zod schema or undefined
+ * @param TOutputSchema a Zod schema or undefined
+ * @param TUnparsedInput the unparsed input type. This is inferred from TInputSchema. When none is provided, this is `never` by default or overridden by using `unparsedInput<>()`
+ * @param TParent the parent safe function or undefined
+ *
+ * @returns the type of a safe handler function for a safe function passed to `safeHandler()`. See `SafeFnHandlerArgs` and `SafeFnHandlerReturn` for more information.
+ */
 export type SafeFnAsyncGeneratorHandlerFn<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
@@ -315,20 +345,40 @@ export type SafeFnAsyncGeneratorHandlerFn<
 ################################
 */
 
-export type InferRunArgs<T extends AnyRunnableSafeFn> = Parameters<T["run"]>[0];
-export type InferReturn<T extends AnyRunnableSafeFn> = Prettify<
-  Awaited<ReturnType<T["run"]>>
->;
-export type InferReturnData<T extends AnyRunnableSafeFn> = InferOkData<
-  InferReturn<T>
->;
-export type InferReturnError<T extends AnyRunnableSafeFn> = InferErrError<
-  InferReturn<T>
+/**
+ * @param T the runnable safe function
+ * @returns the type of the arguments of the safe function passed to `run()`
+ */
+export type InferSafeFnArgs<T extends AnyRunnableSafeFn> = Parameters<
+  T["run"]
+>[0];
+
+/**
+ * @param T the runnable safe function
+ * @returns the type of the return `AsyncResult` value of the safe function after calling run();
+ */
+export type InferSafeFnReturn<T extends AnyRunnableSafeFn> = ReturnType<
+  T["run"]
 >;
 
 /**
+ * @param T the runnable safe function
+ * @returns the `.value` type of the returned `AsyncResult` assuming it's an `AsyncOk`.
+ */
+export type InferSafeFnOkData<T extends AnyRunnableSafeFn> = InferAsyncOkData<
+  InferSafeFnReturn<T>
+>;
+
+/**
+ * @param T the runnable safe function
+ * @returns the `.error` type of the returned `AsyncResult` assuming it's an `AsyncErr`.
+ */
+export type InferSafeFnErrError<T extends AnyRunnableSafeFn> =
+  InferAsyncErrError<InferSafeFnReturn<T>>;
+
+/**
  * @param TOutputSchema a Zod schema or undefined
- * @param THandlerFn the handler function of the safe function
+ * @param THandlerRes the return of the handler function
  * @returns the data type of the return value of the safe function after successful execution. If the output schema is undefined, this is inferred from the return type of the handler function. Otherwise, this is the output (`z.output<typeof outputSchema`) of the outputSchema.
  * Note that this is wrapped in a `Result` type.
  */
@@ -340,14 +390,14 @@ export type SafeFnReturnData<
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
- * @param THandlerFn the handler function of the safe function
- * @param TThrownHandler the thrown handler of the safe function
+ * @param THandlerRes the return of the handler function
+ * @param TThrownHandler the return of the thrown handler
+ * @param TAsAction indicates weather the function is run as an action (full error is not typed if true as it's not sent over the wire)
  * @returns the error type of the return value of the safe function after unsuccessful execution. This is a union of all possible error types that can be thrown by the safe function consisting off:
  * - A union of all `Err` returns of the handler function
  * - A union of all `Err` returns of the uncaught error handler
  * - A `SafeFnInputParseError` if the input schema is defined and the input could not be parsed
  * - A `SafeFnOutputParseError` if the output schema is defined and the output could not be parsed
- * Note that this is wrapped in a `Result` type.
  */
 export type SafeFnReturnError<
   TInputSchema extends SafeFnInput,
@@ -366,13 +416,14 @@ export type SafeFnReturnError<
  * @param THandlerFn the handler function of the safe function
  * @returns the input necessary to `run()` the safe function. If an input schema is provided, this is the parsed input (`z.output<typeof inputSchema>`).
  * Otherwise, this is the unparsed input of the handler function (can be typed through `unparsedInput<>()`).
+ * Note this is an array and can be spread into the args.
  */
 export type SafeFnRunArgs<
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn | undefined,
 > = (
   TParent extends AnyRunnableSafeFn
-    ? Prettify<TUnparsedInput & InferRunArgs<TParent>>
+    ? Prettify<TUnparsedInput & InferSafeFnArgs<TParent>>
     : TUnparsedInput
 ) extends infer TUnparsed
   ? [TUnparsed] extends [never]
@@ -382,57 +433,11 @@ export type SafeFnRunArgs<
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
- * @param THandlerFn the handler function of the safe function
- * @param TThrownHandler the thrown handler of the safe function
- * @returns the return value of the safe function after execution. This is a `Result` type that can either be an `Ok` or an `Err`.
- * 
- * @example
- * ```ts
-  const safeFn = SafeFn.new()
-  .input(
-    z.object({
-      firstName: z.string(),
-      lastName: z.string(),
-    }),
-  )
-  .output(
-    z.object({
-      fullName: z.string(),
-    }),
-  )
-  .error((error) => {
-    return err({
-      code: "CAUGHT_ERROR",
-      error,
-    });
-  })
-  .handler(async ({ parsedInput }) => {
-    const isProfane = await isProfaneName(parsedInput.firstName);
-    if (isProfane) {
-      return err({
-        code: "PROFANE_NAME",
-        message: "Name is profane",
-      });
-    }
-
-    const fullName = `${parsedInput.firstName} ${parsedInput.lastName}`;
-    return ok({ fullName });
-  });
- * ```
-
-  can either return 
-
-  ```ts
-  {
-    success: true,
-    data: {
-      fullName: "John Doe"
-    }
-  }
-  ```
-
-  or return an error (with success: false). This error is typed as a union of `SafeFnInputParseError`, `SafeFnOutputParseError`, and the error types returned by the handler function and the thrown handler.
-  In this case this results in `error.code` being one of `"CAUGHT_ERROR"`, `"PROFANE_NAME"`, `"INPUT_PARSING"`, `"OUTPUT_PARSING"`.
+ * @param THandlerRes the return of the handler function
+ * @param TThrownHandlerRes the return of the thrown handler
+ * @param TAsAction indicates weather the function is run as an action (full error is not typed if true as it's not sent over the wire)
+ * @returns the returned value of the safe function after execution without throwing. This is a `ResultAsync` type that can either be an `Ok` or an `Err`.
+ *
  */
 export type SafeFnReturn<
   TInputSchema extends SafeFnInput,
@@ -474,20 +479,41 @@ export type SafeFnReturn<
 ||                            ||
 ################################
 */
+
 export type AnySafeFnAction = SafeFnAction<any, any, any, any, any, any>;
 
-export type InferSafeFnActionReturn<T extends AnySafeFnAction> = Awaited<
-  ReturnType<T>
->;
+/**
+ * @param T the action created through `createAction()`
+ * @returns the return value of the action after execution without throwing. This is a `Promise<ActionResult<T,E>>`.
+ */
+export type InferSafeFnActionReturn<T extends AnySafeFnAction> = ReturnType<T>;
+/**
+ * @param T the action created through `createAction()`
+ * @returns the input necessary to run the action.
+ */
 export type InferSafeFnActionArgs<T extends AnySafeFnAction> = Parameters<T>[0];
-export type InferSafeFnActionOkData<T extends AnySafeFnAction> = InferOkData<
-  InferSafeFnActionReturn<T>
->;
-export type InferSafeFnActionError<T extends AnySafeFnAction> = InferErrError<
-  InferSafeFnActionReturn<T>
+
+/**
+ * @param T the action created through `createAction()`
+ * @returns the `.value` type of the returned `ActionResult` assuming it's ok, wrapped in a `Promise`
+ */
+export type InferSafeFnActionOkData<T extends AnySafeFnAction> = Promise<
+  InferActionOkData<Awaited<InferSafeFnActionReturn<T>>>
 >;
 
-// Note: these are identical to run right now but will change in the future
+/**
+ * @param T the action created through `createAction()`
+ * @returns the `.error` type of the returned `ActionResult` assuming it's not ok, wrapped in a `Promise`
+ */
+export type InferSafeFnActionError<T extends AnySafeFnAction> = Promise<
+  InferActionErrError<Awaited<InferSafeFnActionReturn<T>>>
+>;
+
+/**
+ * @param TUnparsedInput the unparsed input type. Either inferred from TInputSchema or provided by `unparsedInput<>()`
+ * @param TParent the parent safe function or undefined
+ * @returns the input necessary to run the action created through `createAction()`.
+ */
 export type SafeFnActionArgs<
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn | undefined,

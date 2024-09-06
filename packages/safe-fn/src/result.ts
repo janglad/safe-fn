@@ -6,12 +6,16 @@ export type AnyResult = Result<any, any>;
 
 export type Ok<TData, TError = never> = NT.Ok<TData, TError>;
 export type InferOkData<T> = T extends Result<infer TData, any> ? TData : never;
+export type InferAsyncOkData<T> =
+  T extends ResultAsync<infer TData, any> ? TData : never;
 
 export const ok = <const TData>(data: TData): Ok<TData, never> => NT.ok(data);
 
 export type Err<TData = never, TError = unknown> = NT.Err<TData, TError>;
 export type InferErrError<T> =
   T extends Result<any, infer TError> ? TError : never;
+export type InferAsyncErrError<T> =
+  T extends ResultAsync<any, infer TError> ? TError : never;
 
 export type AnyErr = Err<never, any>;
 export const err = <const TError>(error: TError): Err<never, TError> =>
@@ -43,13 +47,16 @@ export type ActionOk<T> = {
   value: T;
 };
 export const actionOk = <T>(value: T): ActionOk<T> => ({ ok: true, value });
+export type InferActionOkData<T> =
+  T extends ActionOk<infer TData> ? TData : never;
 
 export type ActionErr<E> = {
   ok: false;
   error: E;
 };
 export const actionErr = <E>(error: E): ActionErr<E> => ({ ok: false, error });
-
+export type InferActionErrError<T> =
+  T extends ActionErr<infer TError> ? TError : never;
 /**
  * Converts a `ResultAsync<T,E>` to a `Promise<Result<T,E>>`.
  */
