@@ -1,13 +1,14 @@
-import { source } from '@/app/source';
-import type { Metadata } from 'next';
+import { source } from "@/app/source";
+import { CodeBlock, Pre } from "fumadocs-ui/components/codeblock";
+import defaultMdxComponents from "fumadocs-ui/mdx";
 import {
-  DocsPage,
   DocsBody,
   DocsDescription,
+  DocsPage,
   DocsTitle,
-} from 'fumadocs-ui/page';
-import { notFound } from 'next/navigation';
-import defaultMdxComponents from 'fumadocs-ui/mdx';
+} from "fumadocs-ui/page";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 export default async function Page({
   params,
@@ -24,7 +25,16 @@ export default async function Page({
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
-        <MDX components={{ ...defaultMdxComponents }} />
+        <MDX
+          components={{
+            ...defaultMdxComponents,
+            pre: ({ ref: _ref, ...props }) => (
+              <CodeBlock {...props}>
+                <Pre className="max-h-none">{props.children}</Pre>
+              </CodeBlock>
+            ),
+          }}
+        />
       </DocsBody>
     </DocsPage>
   );
