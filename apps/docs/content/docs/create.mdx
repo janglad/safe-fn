@@ -15,7 +15,9 @@ const myySafeFunction = SafeFn.new();
 const mySafeFunction2 = SafeFn.new(parentFunction);
 ```
 
-## Input schema
+## Input and output
+
+### Input schema
 
 You can set an input schema for your SafeFn by using `input()`. This takes in a Zod schema and will type the arguments for your handler function as well as the required input to execute the SafeFn.
 
@@ -83,7 +85,34 @@ ActionResul<
   passed to your error handler.
 </Callout>
 
-## Output schema
+### Unparsed input
+
+Unparsed input is the type of the input that is needed to execute your SafeFn and is passed as an argument to your handler function. When using an input schema, this type is inferred.
+If you're not doing that you can manually set it by passing it as a generic to `unparsedInput<T>()`;
+
+<Callout type="warn">
+  While this adds type safety, it's highly recommended to use an input schema if
+  your function will be exposed as a Server Action or regular API endpoint as
+  types aren't checked at runtime.
+</Callout>
+
+```ts
+const mySafeFunction = SafeFn.new()
+  .unparsedInput<{ firstName: string; lastName: string }>()
+  .output(z.object({ fullName: z.string() }))
+  .handler((args) => {
+    /*        ^ ?
+      { parsedInput: undefined;
+        unparsedInput: { firstName: string; lastName: string }};
+        ...
+     */
+    return ok({
+      fullName: `${args.unparsedInput.firstName} ${args.unparsedInput.lastName}`,
+    });
+  });
+```
+
+### Output schema
 
 You can set an output schema for your SafeFn by using `output()`. This takes in a Zod schema and will type the return type of your handler function as well as the output of the SafeFn.
 
@@ -125,9 +154,10 @@ ActionResult<
   never,
   {
     code: "OUTPUT_PARSING";
-    cause: z.ZodError<{
-      fullName: string;
-    }>;
+    cause: {
+      formattedError: z.ZodFormattedError<{ fullName: string }>;
+      flattenedError: z.typeToFlattenedError<{ fullName: string }, string>;
+    };
   }
 >;
 ```
@@ -140,32 +170,14 @@ ActionResult<
   passed to your error handler.
 </Callout>
 
-## Unparsed input
+## Handler functions
 
-Unparsed input is the type of the input that is needed to execute your SafeFn and is passed as an argument to your handler function. When using an input schema, this type is inferred.
-If you're not doing that you can manually set it by passing it as a generic to `unparsedInput<T>()`;
+### Handler
 
-<Callout type="warn">
-  While this adds type safety, it's highly recommended to use an input schema if
-  your function will be exposed as a Server Action or regular API endpoint as
-  types aren't checked at runtime.
-</Callout>
+`handler()` takes in a function that will be called when your SafeFn is executed. This function should return a `Result<TData,TError>` or `Promise<Result<TData,TError>>`.
+If you set an output schema, the `TData` type is constrained to the parsed output type of your schema. Otherwise, you can return any `Result` type.
 
-```ts
-const mySafeFunction = SafeFn.new()
-  .unparsedInput<{ firstName: string; lastName: string }>()
-  .output(z.object({ fullName: z.string() }))
-  .handler((args) => {
-    /*        ^ ?
-      { parsedInput: undefined;
-        unparsedInput: { firstName: string; lastName: string }};
-        ...
-     */
-    return ok({
-      fullName: `${args.unparsedInput.firstName} ${args.unparsedInput.lastName}`,
-    });
-  });
-```
+The returned types from `run()` and `createAction()()` are updated with the inferred return type of your handler function.
 
 ## Cards
 
