@@ -3,11 +3,87 @@ title: Hello World!
 description: Your first document
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 
-## What is Next?
+## Why SafeFn?
+
+SafeFn is a library to easily build **fully** typed functions with validated input and output, procedure chaining, callbacks and more. Ideal for functions that are at the edge of your applications, like Server Actions!
+
+It's heavily inspired by ZSA, Next-Safe-Action and TRPC in its API deisgn but integrates NeverThrow to handle errors in a typesafe manner.
+While Neverthrow can be deeply integrated with this library, it's also possible to use it without any knowledge of it. The only requirement is that your handler returns either an `Ok` or `Err`.
+
+Take the simple example of a function that creates a todo for a user (original I know).
+We first need to make sure the user is signed in, then validate the input of the todo, store it in the database if it's valid and then return it. We also need to handle errors that might occur in any of these steps.
+
+This can be written as follows
+
+```ts
+const authedAction = SafeFn.new()
+  .handler(async () => {
+    const user = await auth.getSignedInUser();
+    if (!user) {
+      return err({
+        code: "NOT_AUTHORIZED",
+      });
+    }
+    return ok(user);
+  })
+  .catch((e) => {
+    return err({
+      code: "AUTH_ERROR",
+    });
+  });
+
+const createTodoAction = SafeFn.new(authedAction)
+  .input(
+    z.object({
+      title: z.string().min(2),
+      description: z.string().min(2),
+    }),
+  )
+  .handler(async (args) => {
+    const user = args.ctx;
+    const todo = await db.todo.create({
+      title: args.parsedInput.title,
+      description: args.parsedInput.description,
+      userId: user.id,
+    });
+    return ok(todo);
+  })
+  .catch((e) => {
+    return err({
+      code: "DB_ERROR",
+    });
+  });
+```
+
+## Installation
+
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+{/* <!-- prettier-ignore --> */}
+  <Tab value="npm">
+  ```bash 
+  npm i safe-fn zod neverthrow
+  ```
+  </Tab>
+  
+  <Tab value="pnpm">
+  ```bash 
+  pnpm add safe-fn zod neverthrow
+  ```
+  </Tab>
+  <Tab value="yarn">
+  ```bash 
+  yarn add safe-fn zod neverthrow
+  ```
+  </Tab>
+  <Tab value="bun">
+  ```bash 
+  bun add safe-fn zod neverthrow
+  ```
+  </Tab>
+</Tabs>
 
 <Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.vercel.app" />
+  <Card title="Creating a SafeFn" href="/docs/create/instantiate" />
 </Cards>
