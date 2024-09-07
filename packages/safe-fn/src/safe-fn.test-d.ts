@@ -927,7 +927,43 @@ describe("runnableSafeFn", () => {
         assert(!resAsync.isOk());
         assert(!resSafe.isOk());
 
-        // TODO:
+        expectTypeOf(resSync.error).toEqualTypeOf<
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: z.ZodError<SchemaTransformedInput>;
+            }
+        >();
+        expectTypeOf(resAsync.error).toEqualTypeOf<
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: z.ZodError<SchemaTransformedInput>;
+            }
+        >();
+        expectTypeOf(resSafe.error).toEqualTypeOf<
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: z.ZodError<SchemaTransformedInput>;
+            }
+        >();
+
+        const nestedChild = SafeFnBuilder.new(safeFnSafeParent).handler(() =>
+          ok("ok" as const),
+        );
+        // @ts-expect-error
+        const resNestedChildSync = await nestedChild.run();
+
+        assert(resNestedChildSync.isErr());
+
+        expectTypeOf(resNestedChildSync.error).toEqualTypeOf<
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: z.ZodError<SchemaTransformedInput>;
+            }
+        >();
       });
     });
   });
@@ -1078,6 +1114,100 @@ describe("runnableSafeFn", () => {
             | ExpectedInputParseError
             | ExpectedOutputParseError
           >
+        >();
+      });
+
+      test("should merge Err types from parent schemas", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const parentSync = safeFn
+          .input(schemaTransformed)
+          .handler(() => ok("hi" as const));
+        const parentAsync = safeFn
+          .input(schemaTransformed)
+          .handler(async () => ok("hi" as const));
+        const parentSafe = safeFn
+          .input(schemaTransformed)
+          .safeHandler(async function* () {
+            return ok("hi" as const);
+          });
+
+        const safeFnSyncParent = SafeFnBuilder.new(parentSync).handler(() =>
+          ok("ok" as const),
+        );
+        const safeFnAsyncParent = SafeFnBuilder.new(parentAsync).handler(
+          async () => ok("ok" as const),
+        );
+        const safeFnSafeParent = SafeFnBuilder.new(parentSafe).safeHandler(
+          async function* () {
+            return ok("ok" as const);
+          },
+        );
+
+        // @ts-expect-error - input is not compatible
+        const resSync = await safeFnSyncParent.createAction()();
+        // @ts-expect-error - input is not compatible
+        const resAsync = await safeFnAsyncParent.createAction()();
+        // @ts-expect-error - input is not compatible
+        const resSafe = await safeFnSafeParent.createAction()();
+
+        assert(!resSync.ok);
+        assert(!resAsync.ok);
+        assert(!resSafe.ok);
+
+        expectTypeOf(resSync.error).toEqualTypeOf<
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: {
+                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
+                flattenedError: z.typeToFlattenedError<
+                  SchemaObjectInput,
+                  string
+                >;
+              };
+            }
+        >();
+        expectTypeOf(resAsync.error).toEqualTypeOf<
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: {
+                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
+                flattenedError: z.typeToFlattenedError<
+                  SchemaObjectInput,
+                  string
+                >;
+              };
+            }
+        >();
+        expectTypeOf(resSafe.error).toEqualTypeOf<
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: {
+                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
+                flattenedError: z.typeToFlattenedError<
+                  SchemaObjectInput,
+                  string
+                >;
+              };
+            }
+        >();
+
+        const nestedChild = SafeFnBuilder.new(safeFnSafeParent).handler(() =>
+          ok("ok" as const),
+        );
+        // @ts-expect-error
+        const resNestedChildSync = await nestedChild.run();
+
+        assert(resNestedChildSync.isErr());
+
+        expectTypeOf(resNestedChildSync.error).toEqualTypeOf<
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: z.ZodError<SchemaTransformedInput>;
+            }
         >();
       });
     });
