@@ -651,16 +651,50 @@ describe("runnable-safe-fn", () => {
         );
       },
     );
-  });
 
-  const testChild = SafeFnBuilder.new()
-    .input(
-      z.object({
-        hello: z.string(),
-      }),
-    )
-    .handler(() => ok(""));
-  const testParent = SafeFnBuilder.new(testChild).handler(() => ok(""));
+    test("should pass parsed and unparsed input from parent to child", async () => {
+      // TODO: also do for other types of handlers
+      const fn1 = SafeFnBuilder.new()
+        .input(
+          z.object({
+            parsed1: z.string(),
+          }),
+        )
+        .handler(() => ok(""));
+
+      const fn2 = SafeFnBuilder.new(fn1)
+        .unparsedInput<{ unparsed2: string }>()
+        .handler(() => ok("ctx"));
+      const fn3 = SafeFnBuilder.new(fn2)
+        .input(
+          z.object({
+            parsed3: z.string(),
+          }),
+        )
+        .handler((args) => ok(args));
+
+      const res = await fn3.run({
+        parsed1: "parsed1",
+        unparsed2: "unparsed2",
+        parsed3: "parsed3",
+      });
+
+      expect(res).toBeOk();
+      assert(res.isOk());
+      expect(res.value).toEqual({
+        ctx: "ctx",
+        parsedInput: {
+          parsed1: "parsed1",
+          parsed3: "parsed3",
+        },
+        unparsedInput: {
+          parsed1: "parsed1",
+          unparsed2: "unparsed2",
+          parsed3: "parsed3",
+        },
+      });
+    });
+  });
 
   describe("createAction", () => {
     describe("input", async () => {
