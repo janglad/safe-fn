@@ -734,7 +734,6 @@ describe("runnable-safe-fn", () => {
           .createAction();
 
         const res = await child();
-        console.log(res);
 
         expect(res.ok).toBe(false);
         assert(!res.ok);
@@ -744,6 +743,26 @@ describe("runnable-safe-fn", () => {
         expect(res.error.cause).toHaveProperty(["formattedError"]);
         expect(res.error.cause.formattedError).toHaveProperty(["name"]);
         expect(res.error.cause).toHaveProperty(["flattenedError"]);
+
+        const child2 = SafeFnBuilder.new(parent)
+          .output(z.object({ age: z.number() }))
+          .handler(() => {
+            return ok({ age: 100 });
+          });
+
+        const child3 = SafeFnBuilder.new(child2)
+          .handler(() => ok({}))
+          .createAction();
+
+        const res2 = await child3();
+        console.log(res2);
+        expect(res2.ok).toBe(false);
+        assert(!res2.ok);
+        expect(res2.error.code).toBe("OUTPUT_PARSING");
+        assert(res2.error.code === "OUTPUT_PARSING");
+        expect(res2.error.cause).toHaveProperty(["formattedError"]);
+        expect(res2.error.cause.formattedError).toHaveProperty(["name"]);
+        expect(res2.error.cause).toHaveProperty(["flattenedError"]);
       });
     });
   });
