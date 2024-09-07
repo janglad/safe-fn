@@ -725,14 +725,17 @@ describe("runnable-safe-fn", () => {
       test("should transform output error from parent", async () => {
         const parent = SafeFnBuilder.new()
           .output(z.object({ name: z.string() }))
-          // @ts-expect-error - wrong input
+          //@ts-expect-error - passing wrong input on purpose
           .handler((args) => {
             return ok({});
           });
         const child = SafeFnBuilder.new(parent)
           .handler((args) => ok(args))
           .createAction();
+
         const res = await child();
+        console.log(res);
+
         expect(res.ok).toBe(false);
         assert(!res.ok);
 

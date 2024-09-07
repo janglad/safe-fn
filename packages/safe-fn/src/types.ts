@@ -287,7 +287,7 @@ type SafeFnHandlerArgsWParent<
       : Prettify<Merged>
     : never;
 
-  ctx: TOrFallback<InferSafeFnOkData<TParent>, undefined>;
+  ctx: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
 };
 
 type SafeFnHandlerArgsNoParent<
@@ -362,26 +362,37 @@ export type InferSafeFnArgs<T extends AnyRunnableSafeFn> = Parameters<
 
 /**
  * @param T the runnable safe function
- * @returns the type of the return `AsyncResult` value of the safe function after calling run();
+ * @param TAsAction true === `createAction()()`, false -> `run()`
+ * @returns the type of the return `AsyncResult` or `Promise<ActionResult>` value of the safe function after calling run();
  */
-export type InferSafeFnReturn<T extends AnyRunnableSafeFn> = ReturnType<
-  T["run"]
->;
+export type InferSafeFnReturn<
+  T extends AnyRunnableSafeFn,
+  TAsAction extends boolean,
+> = TAsAction extends true
+  ? ReturnType<T["runAsAction"]>
+  : ReturnType<T["run"]>;
 
 /**
  * @param T the runnable safe function
  * @returns the `.value` type of the returned `AsyncResult` assuming it's an `AsyncOk`.
  */
-export type InferSafeFnOkData<T extends AnyRunnableSafeFn> = InferAsyncOkData<
-  InferSafeFnReturn<T>
->;
+export type InferSafeFnOkData<
+  T extends AnyRunnableSafeFn,
+  TAsAction extends boolean,
+> = TAsAction extends true
+  ? InferActionOkData<Awaited<InferSafeFnReturn<T, TAsAction>>>
+  : InferAsyncOkData<InferSafeFnReturn<T, TAsAction>>;
 
 /**
  * @param T the runnable safe function
  * @returns the `.error` type of the returned `AsyncResult` assuming it's an `AsyncErr`.
  */
-export type InferSafeFnErrError<T extends AnyRunnableSafeFn> =
-  InferAsyncErrError<InferSafeFnReturn<T>>;
+export type InferSafeFnErrError<
+  T extends AnyRunnableSafeFn,
+  TAsAction extends boolean,
+> = TAsAction extends true
+  ? InferActionErrError<Awaited<InferSafeFnReturn<T, TAsAction>>>
+  : InferAsyncErrError<InferSafeFnReturn<T, TAsAction>>;
 
 /**
  * @param TOutputSchema a Zod schema or undefined
@@ -413,19 +424,14 @@ export type SafeFnReturnError<
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
-  TAsAction extends boolean = false,
+  TAsAction extends boolean,
 > =
   | InferErrError<THandlerRes>
   | InferErrError<TCatchHandlerRes>
   | SafeFnInputParseError<TInputSchema, TAsAction>
   | SafeFnOutputParseError<TOutputSchema, TAsAction>
   | (TParent extends AnyRunnableSafeFn
-      ? TAsAction extends true
-        ? // TODO: this is dirty lol
-          InferActionErrError<
-            Awaited<ReturnType<ReturnType<TParent["createAction"]>>>
-          >
-        : InferSafeFnErrError<TParent>
+      ? InferSafeFnErrError<TParent, TAsAction>
       : never);
 
 /**

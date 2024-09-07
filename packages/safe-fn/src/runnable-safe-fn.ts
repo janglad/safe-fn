@@ -88,7 +88,7 @@ export class RunnableSafeFn<
 ################################
   */
   run(
-    ...args: SafeFnRunArgs<TUnparsedInput, TParent>
+    ...args: SafeFnRunArgs<TUnparsedInput>
   ): SafeFnReturn<
     TParent,
     TInputSchema,
@@ -100,7 +100,7 @@ export class RunnableSafeFn<
     return this._run(args[0], false);
   }
   _run<TAsAction extends boolean>(
-    args: SafeFnRunArgs<TUnparsedInput, TParent>[0],
+    args: SafeFnRunArgs<TUnparsedInput>[0],
     tAsAction: TAsAction,
   ): SafeFnReturn<
     TParent,
