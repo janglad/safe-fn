@@ -10,7 +10,7 @@ import {
 type UseServerActionReturn<
   TAction extends AnySafeFnAction,
   // Original `ActionResult<T,E>`
-  TActionActionResult = InferSafeFnActionReturn<TAction>,
+  TActionActionResult = Awaited<InferSafeFnActionReturn<TAction>>,
   // Converted `ActionResult<T,E>` -> `Result<T,E>` to be returned to the user
   TActionResult = ActionResultToResult<TActionActionResult>,
 > = {
