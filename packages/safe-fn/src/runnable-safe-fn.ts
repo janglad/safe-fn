@@ -1,7 +1,12 @@
 import { ResultAsync, safeTry } from "neverthrow";
 
-import type { SafeFnRunArgs } from "../dist";
-import { actionErr, actionOk, ok } from "./result";
+import {
+  actionErr,
+  actionOk,
+  ok,
+  type InferAsyncErrError,
+  type InferAsyncOkData,
+} from "./result";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnCatchHandlerRes,
@@ -14,6 +19,7 @@ import type {
   SafeFnInternals,
   SafeFnOutputParseError,
   SafeFnReturn,
+  SafeFnRunArgs,
   SchemaOutputOrFallback,
 } from "./types";
 import { isFrameworkError, mapZodError, safeZodAsyncParse } from "./util";
@@ -97,11 +103,19 @@ export class RunnableSafeFn<
     TThrownHandlerRes,
     false
   > {
-    return this._run(args[0], false);
+    return this._run(args[0], false, false) as SafeFnReturn<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      THandlerRes,
+      TThrownHandlerRes,
+      false
+    >;
   }
-  _run<TAsAction extends boolean>(
+  _run<TAsAction extends boolean, TAsProcedure extends boolean>(
     args: SafeFnRunArgs<TUnparsedInput>[0],
     tAsAction: TAsAction,
+    tAsProcedure: TAsProcedure,
   ): SafeFnReturn<
     TParent,
     TInputSchema,
@@ -109,7 +123,17 @@ export class RunnableSafeFn<
     THandlerRes,
     TThrownHandlerRes,
     TAsAction
-  > {
+  > extends infer HandlerRes
+    ? TAsProcedure extends true
+      ? ResultAsync<
+          {
+            handlerRes: InferAsyncOkData<HandlerRes>;
+            parsedInput: SchemaOutputOrFallback<TInputSchema, undefined>;
+          },
+          InferAsyncErrError<HandlerRes>
+        >
+      : HandlerRes
+    : never {
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;
     const handler = this._internals.handler;
@@ -119,21 +143,26 @@ export class RunnableSafeFn<
     const _parseInput = this._parseInput.bind(this);
 
     const res = safeTry(async function* () {
-      const ctx =
+      const { handlerRes: parentHandlerRes, parsedInput: parentParsedInput } =
         parent === undefined
-          ? undefined
-          : yield* parent._run(args, tAsAction).safeUnwrap();
+          ? { handlerRes: undefined, parsedInput: undefined }
+          : yield* parent._run(args, tAsAction, true).safeUnwrap();
 
       const parsedInput =
         inputSchema === undefined
-          ? undefined
-          : yield* _parseInput(args, tAsAction).safeUnwrap();
+          ? parentParsedInput
+          : yield* _parseInput(args, tAsAction)
+              .map((res) => ({
+                ...parentParsedInput,
+                ...res,
+              }))
+              .safeUnwrap();
 
       const handlerRes = yield* (
         await handler({
           parsedInput,
           unparsedInput: args,
-          ctx,
+          ctx: parentHandlerRes,
         } as any)
       ).safeUnwrap();
 
@@ -142,7 +171,13 @@ export class RunnableSafeFn<
           ? undefined
           : yield* _parseOutput(handlerRes, tAsAction).safeUnwrap();
 
-      return parsedOutput === undefined ? ok(handlerRes) : ok(parsedOutput);
+      const res = parsedOutput === undefined ? handlerRes : parsedOutput;
+      return tAsProcedure
+        ? ok({
+            handlerRes: res,
+            parsedInput,
+          })
+        : ok(res);
     });
 
     return ResultAsync.fromPromise(res, (error) => {
@@ -165,7 +200,15 @@ export class RunnableSafeFn<
     THandlerRes,
     TThrownHandlerRes
   > {
-    const res = await this._run(args[0], true);
+    const res = await (this._run(args[0], true, false) as SafeFnReturn<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      THandlerRes,
+      TThrownHandlerRes,
+      true
+    >);
+
     if (res.isOk()) {
       return actionOk(res.value) as Awaited<
         SafeFnActionReturn<
