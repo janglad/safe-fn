@@ -1,6 +1,5 @@
 import { ResultAsync, safeTry } from "neverthrow";
 
-import type { SafeFnRunArgs } from "../dist";
 import {
   actionErr,
   actionOk,
@@ -20,6 +19,7 @@ import type {
   SafeFnInternals,
   SafeFnOutputParseError,
   SafeFnReturn,
+  SafeFnRunArgs,
   SchemaOutputOrFallback,
 } from "./types";
 import { isFrameworkError, mapZodError, safeZodAsyncParse } from "./util";
