@@ -1,7 +1,6 @@
 import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
-import type { ActionResult } from "../dist";
-import { err, ok, type Result } from "./result";
+import { err, ok, type ActionResult, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   Prettify,
@@ -602,6 +601,19 @@ describe("runnableSafeFn", () => {
         expectTypeOf(safeFnAsync.run).parameters.toEqualTypeOf<[]>();
         expectTypeOf(safeFnSafe.run).parameters.toEqualTypeOf<[]>();
       });
+
+      test("should merge input type from parent", () => {
+        const parent = SafeFnBuilder.new()
+          .input(schemaTransformed)
+          .handler(() => ok("hello" as const));
+        const child = SafeFnBuilder.new(parent).handler(() =>
+          ok("hello" as const),
+        );
+
+        expectTypeOf(child.run).parameters.toEqualTypeOf<
+          [SchemaTransformedInput]
+        >();
+      });
     });
 
     describe("output", () => {
@@ -831,6 +843,91 @@ describe("runnableSafeFn", () => {
         expectTypeOf(resultAsync).toEqualTypeOf<ExpectedResult>();
         expectTypeOf(resultSafe).toEqualTypeOf<ExpectedResult>();
         expectTypeOf(resultSafeYield).toEqualTypeOf<ExpectedResult>();
+      });
+
+      test("should merge Err types from parent handler and catch handler", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const parentSync = safeFn
+          .handler(() => err("hello" as const))
+          .catch(() => err("world" as const));
+        const parentAsync = safeFn
+          .handler(async () => err("hello" as const))
+          .catch(() => err("world" as const));
+        const parentSafe = safeFn
+          .safeHandler(async function* () {
+            return err("hello" as const);
+          })
+          .catch(() => err("world" as const));
+
+        const safeFnSyncParentSync = SafeFnBuilder.new(parentSync).handler(() =>
+          ok("ok" as const),
+        );
+        const safeFnAsyncParentSync = SafeFnBuilder.new(parentAsync).handler(
+          async () => ok("ok" as const),
+        );
+        const safeFnSafeParentSync = SafeFnBuilder.new(parentSafe).safeHandler(
+          async function* () {
+            return ok("ok" as const);
+          },
+        );
+
+        const resSync = await safeFnSyncParentSync.run();
+        const resAsync = await safeFnAsyncParentSync.run();
+        const resSafe = await safeFnSafeParentSync.run();
+
+        assert(resSync.isErr());
+        assert(resAsync.isErr());
+        assert(resSafe.isErr());
+
+        expectTypeOf(resSync.error).toEqualTypeOf<
+          "hello" | "world" | SafeFnDefaultCatchHandlerErr["error"]
+        >();
+        expectTypeOf(resAsync.error).toEqualTypeOf<
+          "hello" | "world" | SafeFnDefaultCatchHandlerErr["error"]
+        >();
+        expectTypeOf(resSafe.error).toEqualTypeOf<
+          "hello" | "world" | SafeFnDefaultCatchHandlerErr["error"]
+        >();
+      });
+
+      test("should merge Err types from parent schemas", async () => {
+        const safeFn = SafeFnBuilder.new();
+        const parentSync = safeFn
+          .input(schemaTransformed)
+          .handler(() => ok("hi" as const));
+        const parentAsync = safeFn
+          .input(schemaTransformed)
+          .handler(async () => ok("hi" as const));
+        const parentSafe = safeFn
+          .input(schemaTransformed)
+          .safeHandler(async function* () {
+            return ok("hi" as const);
+          });
+
+        const safeFnSyncParent = SafeFnBuilder.new(parentSync).handler(() =>
+          ok("ok" as const),
+        );
+        const safeFnAsyncParent = SafeFnBuilder.new(parentAsync).handler(
+          async () => ok("ok" as const),
+        );
+        const safeFnSafeParent = SafeFnBuilder.new(parentSafe).safeHandler(
+          async function* () {
+            return ok("ok" as const);
+          },
+        );
+
+        // @ts-expect-error - input is not compatible
+        const resSync = await safeFnSyncParent.run();
+        // @ts-expect-error - input is not compatible
+        const resAsync = await safeFnAsyncParent.run();
+        // @ts-expect-error - input is not compatible
+        const resSafe = await safeFnSafeParent.run();
+
+        assert(!resSync.isOk());
+        assert(!resAsync.isOk());
+        assert(!resSafe.isOk());
+
+        // TODO:
       });
     });
   });

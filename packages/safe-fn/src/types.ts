@@ -71,7 +71,7 @@ type MaybePromise<T> = T | Promise<T>;
 /**
  * Return `A` & `B` if `A` is not `T` and `B` is not `T`, otherwise return `A` or `B` depending on if they are `T`.
  */
-type UnionIfNotT<A, B, T> = [A] extends [T]
+export type UnionIfNotT<A, B, T> = [A] extends [T]
   ? [B] extends [T]
     ? T
     : B
@@ -388,6 +388,7 @@ export type SafeFnReturnData<
 > = SchemaOutputOrFallback<TOutputSchema, InferOkData<THandlerRes>>;
 
 /**
+ * @param TParent the parent safe function or undefined
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
  * @param THandlerRes the return of the handler function
@@ -400,6 +401,7 @@ export type SafeFnReturnData<
  * - A `SafeFnOutputParseError` if the output schema is defined and the output could not be parsed
  */
 export type SafeFnReturnError<
+  TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
@@ -409,7 +411,15 @@ export type SafeFnReturnError<
   | InferErrError<THandlerRes>
   | InferErrError<TCatchHandlerRes>
   | SafeFnInputParseError<TInputSchema, TAsAction>
-  | SafeFnOutputParseError<TOutputSchema, TAsAction>;
+  | SafeFnOutputParseError<TOutputSchema, TAsAction>
+  | (TParent extends AnyRunnableSafeFn
+      ? TAsAction extends true
+        ? // TODO: this is dirty lol
+          InferActionErrError<
+            Awaited<ReturnType<ReturnType<TParent["createAction"]>>>
+          >
+        : InferSafeFnErrError<TParent>
+      : never);
 
 /**
  * @param TInputSchema a Zod schema or undefined
@@ -418,19 +428,34 @@ export type SafeFnReturnError<
  * Otherwise, this is the unparsed input of the handler function (can be typed through `unparsedInput<>()`).
  * Note this is an array and can be spread into the args.
  */
-export type SafeFnRunArgs<
-  TUnparsedInput,
-  TParent extends AnyRunnableSafeFn | undefined,
-> = (
-  TParent extends AnyRunnableSafeFn
-    ? Prettify<TUnparsedInput & InferSafeFnArgs<TParent>>
-    : TUnparsedInput
-) extends infer TUnparsed
-  ? [TUnparsed] extends [never]
-    ? []
-    : [TUnparsed]
-  : never;
+
+// export type SafeFnRunArgsTuple<
+//   TUnparsedInput,
+//   TParent extends AnyRunnableSafeFn | undefined,
+// > = NeverToEmptyTuple<Prettify<SafeFnRunArgs<TUnparsedInput, TParent>>>;
+type NeverToEmptyTuple<T> = [T] extends [never] ? [] : [T];
+
+// type InferSafeFnParent<T> =
+//   T extends RunnableSafeFn<infer TParent, any, any, any, any, any>
+//     ? TParent
+//     : never;
+
+export type SafeFnRunArgs<TUnparsedInput> = NeverToEmptyTuple<TUnparsedInput>;
+
+// export type SafeFnRunArgs<
+//   TUnparsedInput,
+//   TParent extends AnyRunnableSafeFn | undefined,
+// > = [TUnparsedInput] extends [never]
+//   ? TParent extends AnyRunnableSafeFn
+//     ? SafeFnRunArgs<InferUnparsedInput<TParent>, InferSafeFnParent<TParent>>
+//     : never
+//   : TParent extends AnyRunnableSafeFn
+//     ? TUnparsedInput &
+//         SafeFnRunArgs<InferUnparsedInput<TParent>, InferSafeFnParent<TParent>>
+//     : TUnparsedInput;
+
 /**
+ * @param TParent the parent safe function or undefined
  * @param TInputSchema a Zod schema or undefined
  * @param TOutputSchema a Zod schema or undefined
  * @param THandlerRes the return of the handler function
@@ -440,6 +465,7 @@ export type SafeFnRunArgs<
  *
  */
 export type SafeFnReturn<
+  TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
@@ -451,6 +477,7 @@ export type SafeFnReturn<
         never,
         DistributeUnion<
           SafeFnReturnError<
+            TParent,
             TInputSchema,
             undefined,
             Awaited<THandlerRes>,
@@ -463,6 +490,7 @@ export type SafeFnReturn<
         SafeFnReturnData<TOutputSchema, Awaited<THandlerRes>>,
         DistributeUnion<
           SafeFnReturnError<
+            TParent,
             TInputSchema,
             TOutputSchema,
             Awaited<THandlerRes>,
@@ -514,18 +542,23 @@ export type InferSafeFnActionError<T extends AnySafeFnAction> = Promise<
  * @param TParent the parent safe function or undefined
  * @returns the input necessary to run the action created through `createAction()`.
  */
-export type SafeFnActionArgs<
-  TUnparsedInput,
-  TParent extends AnyRunnableSafeFn | undefined,
-> = SafeFnRunArgs<TUnparsedInput, TParent>;
+export type SafeFnActionArgs<TUnparsedInput> = SafeFnRunArgs<TUnparsedInput>;
 
 export type SafeFnActionReturn<
+  TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = ResultAsyncToPromiseActionResult<
-  SafeFnReturn<TInputSchema, TOutputSchema, THandlerRes, TCatchHandlerRes, true>
+  SafeFnReturn<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    THandlerRes,
+    TCatchHandlerRes,
+    true
+  >
 >;
 export type SafeFnAction<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -535,8 +568,9 @@ export type SafeFnAction<
   THandlerRes extends AnySafeFnHandlerRes,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = (
-  ...args: SafeFnActionArgs<TUnparsedInput, TParent>
+  ...args: SafeFnActionArgs<TUnparsedInput>
 ) => SafeFnActionReturn<
+  TParent,
   TInputSchema,
   TOutputSchema,
   THandlerRes,
