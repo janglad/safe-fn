@@ -150,6 +150,13 @@ export type SchemaOutputOrFallback<TSchema extends SafeFnOutput, TFallback> = [
     ? z.output<TSchema>
     : TFallback;
 
+/**
+ * Convert a type to a tuple.
+ * @param T the type to convert
+ * @returns an empty tuple if the type is `never`, otherwise the type itself
+ */
+type TToTuple<T> = [T] extends [never] ? [] : [T];
+
 /*
 ################################
 ||                            ||
@@ -422,37 +429,14 @@ export type SafeFnReturnError<
       : never);
 
 /**
- * @param TInputSchema a Zod schema or undefined
- * @param THandlerFn the handler function of the safe function
+ * @param TUnparsedInput the unparsed input of the safe function
+ * @param THandlerFn
  * @returns the input necessary to `run()` the safe function. If an input schema is provided, this is the parsed input (`z.output<typeof inputSchema>`).
  * Otherwise, this is the unparsed input of the handler function (can be typed through `unparsedInput<>()`).
  * Note this is an array and can be spread into the args.
  */
 
-// export type SafeFnRunArgsTuple<
-//   TUnparsedInput,
-//   TParent extends AnyRunnableSafeFn | undefined,
-// > = NeverToEmptyTuple<Prettify<SafeFnRunArgs<TUnparsedInput, TParent>>>;
-type NeverToEmptyTuple<T> = [T] extends [never] ? [] : [T];
-
-// type InferSafeFnParent<T> =
-//   T extends RunnableSafeFn<infer TParent, any, any, any, any, any>
-//     ? TParent
-//     : never;
-
-export type SafeFnRunArgs<TUnparsedInput> = NeverToEmptyTuple<TUnparsedInput>;
-
-// export type SafeFnRunArgs<
-//   TUnparsedInput,
-//   TParent extends AnyRunnableSafeFn | undefined,
-// > = [TUnparsedInput] extends [never]
-//   ? TParent extends AnyRunnableSafeFn
-//     ? SafeFnRunArgs<InferUnparsedInput<TParent>, InferSafeFnParent<TParent>>
-//     : never
-//   : TParent extends AnyRunnableSafeFn
-//     ? TUnparsedInput &
-//         SafeFnRunArgs<InferUnparsedInput<TParent>, InferSafeFnParent<TParent>>
-//     : TUnparsedInput;
+export type SafeFnRunArgs<TUnparsedInput> = TToTuple<TUnparsedInput>;
 
 /**
  * @param TParent the parent safe function or undefined
