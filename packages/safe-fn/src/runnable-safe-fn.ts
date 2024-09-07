@@ -1,5 +1,6 @@
 import { ResultAsync, safeTry } from "neverthrow";
 
+import type { SafeFnRunArgs } from "../dist";
 import { actionErr, actionOk, ok } from "./result";
 import type {
   AnyRunnableSafeFn,
@@ -14,7 +15,6 @@ import type {
   SafeFnOutput,
   SafeFnOutputParseError,
   SafeFnReturn,
-  SafeFnRunArgs,
   SchemaOutputOrFallback,
 } from "./types";
 import { isFrameworkError, mapZodError, safeZodAsyncParse } from "./util";
@@ -89,8 +89,9 @@ export class RunnableSafeFn<
 ################################
   */
   run(
-    ...args: SafeFnRunArgs<TUnparsedInput, TParent>
+    ...args: SafeFnRunArgs<TUnparsedInput>
   ): SafeFnReturn<
+    TParent,
     TInputSchema,
     TOutputSchema,
     THandlerRes,
@@ -100,9 +101,10 @@ export class RunnableSafeFn<
     return this._run(args[0], false);
   }
   _run<TAsAction extends boolean>(
-    args: SafeFnRunArgs<TUnparsedInput, TParent>[0],
+    args: SafeFnRunArgs<TUnparsedInput>[0],
     tAsAction: TAsAction,
   ): SafeFnReturn<
+    TParent,
     TInputSchema,
     TOutputSchema,
     THandlerRes,
@@ -119,7 +121,9 @@ export class RunnableSafeFn<
 
     const res = safeTry(async function* () {
       const ctx =
-        parent === undefined ? undefined : yield* parent.run(args).safeUnwrap();
+        parent === undefined
+          ? undefined
+          : yield* parent._run(args, tAsAction).safeUnwrap();
 
       const parsedInput =
         inputSchema === undefined
@@ -154,8 +158,9 @@ export class RunnableSafeFn<
   }
 
   async runAsAction(
-    ...args: SafeFnActionArgs<TUnparsedInput, TParent>
+    ...args: SafeFnActionArgs<TUnparsedInput>
   ): SafeFnActionReturn<
+    TParent,
     TInputSchema,
     TOutputSchema,
     THandlerRes,
@@ -165,6 +170,7 @@ export class RunnableSafeFn<
     if (res.isOk()) {
       return actionOk(res.value) as Awaited<
         SafeFnActionReturn<
+          TParent,
           TInputSchema,
           TOutputSchema,
           THandlerRes,
@@ -174,6 +180,7 @@ export class RunnableSafeFn<
     }
     return actionErr(res.error) as Awaited<
       SafeFnActionReturn<
+        TParent,
         TInputSchema,
         TOutputSchema,
         THandlerRes,

@@ -4,6 +4,7 @@ import { err, type MergeResults, type Result } from "./result";
 import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
+  InferUnparsedInput,
   Prettify,
   SafeFnDefaultCatchHandler,
   SafeFnDefaultCatchHandlerErr,
@@ -14,6 +15,7 @@ import type {
   SafeFnInternals,
   SafeFnOutput,
   SchemaInputOrFallback,
+  UnionIfNotT,
 } from "./types";
 
 export class SafeFnBuilder<
@@ -49,7 +51,12 @@ export class SafeFnBuilder<
 */
   static new<TNewParent extends AnyRunnableSafeFn | undefined = undefined>(
     parent?: TNewParent,
-  ): SafeFnBuilder<TNewParent, undefined, undefined, never> {
+  ): SafeFnBuilder<
+    TNewParent,
+    undefined,
+    undefined,
+    InferUnparsedInput<TNewParent>
+  > {
     return new SafeFnBuilder({
       parent,
       inputSchema: undefined,
@@ -77,7 +84,7 @@ export class SafeFnBuilder<
       TParent,
       TNewInputSchema,
       TOutputSchema,
-      z.input<TNewInputSchema>
+      UnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>
     >,
     "input" | "unparsedInput"
   > {
@@ -89,14 +96,19 @@ export class SafeFnBuilder<
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
   unparsedInput<TNewUnparsedInput>(): Omit<
-    SafeFnBuilder<TParent, TInputSchema, TOutputSchema, TNewUnparsedInput>,
+    SafeFnBuilder<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
+    >,
     "input" | "unparsedInput"
   > {
     return this as unknown as SafeFnBuilder<
       TParent,
       TInputSchema,
       TOutputSchema,
-      TNewUnparsedInput
+      UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
     >;
   }
 

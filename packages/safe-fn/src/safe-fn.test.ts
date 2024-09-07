@@ -568,6 +568,7 @@ describe("runnable-safe-fn", () => {
             test(`should pass parent result from ${parentName} to ${childName}`, async () => {
               const parent = createParentSafeFn();
               const child = createChildSafeFn(parent as AnyRunnableSafeFn);
+              // @ts-expect-error - cast to any so input is not compatible
               const res = await child.run();
               expect(res).toBeOk();
               assert(res.isOk());
@@ -635,6 +636,8 @@ describe("runnable-safe-fn", () => {
               parent as AnyRunnableSafeFn,
               mockHandler,
             );
+
+            // @ts-expect-error - cast to any so input is not compatible
             const res = await child.run();
             test(`should pass error from ${parentName} to ${childName}`, () => {
               expect(res).toBeErr();
@@ -650,6 +653,15 @@ describe("runnable-safe-fn", () => {
     );
   });
 
+  const testChild = SafeFnBuilder.new()
+    .input(
+      z.object({
+        hello: z.string(),
+      }),
+    )
+    .handler(() => ok(""));
+  const testParent = SafeFnBuilder.new(testChild).handler(() => ok(""));
+
   describe("createAction", () => {
     describe("input", async () => {
       test("should transform input error", async () => {
@@ -660,6 +672,26 @@ describe("runnable-safe-fn", () => {
 
         // @ts-expect-error
         const res = await action({});
+        expect(res.ok).toBe(false);
+        assert(!res.ok);
+        expect(res.error.code).toBe("INPUT_PARSING");
+        assert(res.error.code === "INPUT_PARSING");
+        expect(res.error.cause).toHaveProperty(["formattedError"]);
+        expect(res.error.cause.formattedError).toHaveProperty(["name"]);
+        expect(res.error.cause).toHaveProperty(["flattenedError"]);
+      });
+
+      test("should transform input error from parent", async () => {
+        const parent = SafeFnBuilder.new()
+          .input(z.object({ name: z.string() }))
+          .handler((args) => ok(args));
+        const child = SafeFnBuilder.new(parent)
+          .input(z.object({ age: z.number() }))
+          .handler((args) => ok(args))
+          .createAction();
+
+        // @ts-expect-error
+        const res = await child({});
         expect(res.ok).toBe(false);
         assert(!res.ok);
         expect(res.error.code).toBe("INPUT_PARSING");
@@ -688,6 +720,49 @@ describe("runnable-safe-fn", () => {
         expect(res.error.cause).toHaveProperty(["formattedError"]);
         expect(res.error.cause.formattedError).toHaveProperty(["name"]);
         expect(res.error.cause).toHaveProperty(["flattenedError"]);
+      });
+
+      test("should transform output error from parent", async () => {
+        const parent = SafeFnBuilder.new()
+          .output(z.object({ name: z.string() }))
+          //@ts-expect-error - passing wrong input on purpose
+          .handler((args) => {
+            return ok({});
+          });
+        const child = SafeFnBuilder.new(parent)
+          .handler((args) => ok(args))
+          .createAction();
+
+        const res = await child();
+
+        expect(res.ok).toBe(false);
+        assert(!res.ok);
+
+        expect(res.error.code).toBe("OUTPUT_PARSING");
+        assert(res.error.code === "OUTPUT_PARSING");
+        expect(res.error.cause).toHaveProperty(["formattedError"]);
+        expect(res.error.cause.formattedError).toHaveProperty(["name"]);
+        expect(res.error.cause).toHaveProperty(["flattenedError"]);
+
+        const child2 = SafeFnBuilder.new(parent)
+          .output(z.object({ age: z.number() }))
+          .handler(() => {
+            return ok({ age: 100 });
+          });
+
+        const child3 = SafeFnBuilder.new(child2)
+          .handler(() => ok({}))
+          .createAction();
+
+        const res2 = await child3();
+        console.log(res2);
+        expect(res2.ok).toBe(false);
+        assert(!res2.ok);
+        expect(res2.error.code).toBe("OUTPUT_PARSING");
+        assert(res2.error.code === "OUTPUT_PARSING");
+        expect(res2.error.cause).toHaveProperty(["formattedError"]);
+        expect(res2.error.cause.formattedError).toHaveProperty(["name"]);
+        expect(res2.error.cause).toHaveProperty(["flattenedError"]);
       });
     });
   });
