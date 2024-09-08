@@ -412,7 +412,7 @@ export type InferSafeFnErrError<
 export type SafeFnReturnData<
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
-> = SchemaOutputOrFallback<TOutputSchema, InferOkData<THandlerRes>>;
+> = SchemaOutputOrFallback<TOutputSchema, InferOkData<Awaited<THandlerRes>>>;
 
 /**
  * @param TParent the parent safe function or undefined
@@ -486,7 +486,7 @@ export type SafeFnReturn<
         >
       >
     : ResultAsync<
-        SafeFnReturnData<TOutputSchema, Awaited<THandlerRes>>,
+        SafeFnReturnData<TOutputSchema, THandlerRes>,
         DistributeUnion<
           SafeFnReturnError<
             TParent,
@@ -575,3 +575,152 @@ export type SafeFnAction<
   THandlerRes,
   TCatchHandlerRes
 >;
+
+/* 
+################################
+||                            ||
+||         Callbacks          ||
+||                            ||
+################################
+*/
+
+export type SafeFnCallBacks<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+> = {
+  onStart: SafeFnOnStart<TParent, TUnparsedInput> | undefined;
+  onSuccess:
+    | SafeFnOnSuccess<
+        TParent,
+        TInputSchema,
+        TOutputSchema,
+        TUnparsedInput,
+        THandlerRes
+      >
+    | undefined;
+  onError:
+    | SafeFnOnError<
+        TParent,
+        TInputSchema,
+        TUnparsedInput,
+        THandlerRes,
+        TCatchHandlerRes
+      >
+    | undefined;
+  onComplete:
+    | SafeFnOnComplete<
+        TParent,
+        TInputSchema,
+        TOutputSchema,
+        TUnparsedInput,
+        THandlerRes,
+        TCatchHandlerRes
+      >
+    | undefined;
+};
+export type SafeFnOnStart<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TUnparsedInput,
+> = (
+  args: Prettify<{
+    unsafeRawInput: TUnparsedInput;
+    ctx: TParent extends AnyRunnableSafeFn
+      ? InferSafeFnOkData<TParent, false>
+      : undefined;
+  }>,
+) => MaybePromise<void>;
+
+export type SafeFnOnSuccess<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+> = (
+  args: Prettify<
+    SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> & {
+      value: SafeFnReturnData<TOutputSchema, THandlerRes>;
+    }
+  >,
+) => MaybePromise<void>;
+
+export type SafeFnOnError<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+> = (
+  args: Prettify<
+    SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> &
+      (
+        | {
+            asAction: true;
+            error: SafeFnReturnError<
+              TParent,
+              TInputSchema,
+              undefined,
+              Awaited<THandlerRes>,
+              TCatchHandlerRes,
+              true
+            >;
+          }
+        | {
+            asAction: false;
+            error: SafeFnReturnError<
+              TParent,
+              TInputSchema,
+              undefined,
+              Awaited<THandlerRes>,
+              TCatchHandlerRes,
+              false
+            >;
+          }
+      )
+  >,
+) => MaybePromise<void>;
+
+export type SafeFnOnComplete<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnInput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
+> = (
+  args: Prettify<
+    SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> &
+      (
+        | {
+            asAction: true;
+            result: Awaited<
+              SafeFnReturn<
+                TParent,
+                TInputSchema,
+                TOutputSchema,
+                THandlerRes,
+                TThrownHandlerRes,
+                true
+              >
+            >;
+          }
+        | {
+            asAction: false;
+            result: Awaited<
+              SafeFnReturn<
+                TParent,
+                TInputSchema,
+                TOutputSchema,
+                THandlerRes,
+                TThrownHandlerRes,
+                false
+              >
+            >;
+          }
+      )
+  >,
+) => MaybePromise<void>;

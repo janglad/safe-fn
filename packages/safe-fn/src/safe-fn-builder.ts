@@ -136,10 +136,18 @@ export class SafeFnBuilder<
     TNewHandlerResult,
     SafeFnDefaultCatchHandlerErr
   > {
-    return new RunnableSafeFn({
-      ...this._internals,
-      handler,
-    });
+    return new RunnableSafeFn(
+      {
+        ...this._internals,
+        handler,
+      },
+      {
+        onStart: undefined,
+        onSuccess: undefined,
+        onError: undefined,
+        onComplete: undefined,
+      },
+    );
   }
 
   safeHandler<
@@ -169,9 +177,17 @@ export class SafeFnBuilder<
       return (await fn(args).next()).value;
     };
 
-    return new RunnableSafeFn({
-      ...this._internals,
-      handler,
-    });
+    return new RunnableSafeFn(
+      {
+        ...this._internals,
+        handler,
+      },
+      {
+        onStart: undefined,
+        onSuccess: undefined,
+        onError: undefined,
+        onComplete: undefined,
+      },
+    );
   }
 }

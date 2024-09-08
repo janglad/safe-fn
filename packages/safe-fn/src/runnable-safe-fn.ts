@@ -13,10 +13,15 @@ import type {
   SafeFnAction,
   SafeFnActionArgs,
   SafeFnActionReturn,
+  SafeFnCallBacks,
   SafeFnHandlerArgs,
   SafeFnInput,
   SafeFnInputParseError,
   SafeFnInternals,
+  SafeFnOnComplete,
+  SafeFnOnError,
+  SafeFnOnStart,
+  SafeFnOnSuccess,
   SafeFnOutputParseError,
   SafeFnReturn,
   SafeFnRunArgs,
@@ -39,6 +44,15 @@ export class RunnableSafeFn<
     TUnparsedInput
   >;
 
+  readonly _callBacks: SafeFnCallBacks<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    THandlerRes,
+    TThrownHandlerRes
+  >;
+
   constructor(
     internals: SafeFnInternals<
       TParent,
@@ -46,8 +60,17 @@ export class RunnableSafeFn<
       TOutputSchema,
       TUnparsedInput
     >,
+    callBacks: SafeFnCallBacks<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes
+    >,
   ) {
     this._internals = internals;
+    this._callBacks = callBacks;
   }
 
   createAction(): SafeFnAction<
@@ -80,11 +103,51 @@ export class RunnableSafeFn<
     THandlerRes,
     TNewThrownHandlerRes
   > {
-    return new RunnableSafeFn({
-      ...this._internals,
-      uncaughtErrorHandler: handler,
-    });
+    return new RunnableSafeFn(
+      {
+        ...this._internals,
+        uncaughtErrorHandler: handler,
+      },
+      this._callBacks as SafeFnCallBacks<
+        TParent,
+        TInputSchema,
+        TOutputSchema,
+        TUnparsedInput,
+        THandlerRes,
+        TNewThrownHandlerRes
+      >,
+    );
   }
+
+  onStart(fn: SafeFnOnStart<TParent, TUnparsedInput>) {}
+  onSuccess(
+    fn: SafeFnOnSuccess<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes
+    >,
+  ) {}
+  onError(
+    fn: SafeFnOnError<
+      TParent,
+      TInputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes
+    >,
+  ) {}
+  onComplete(
+    fn: SafeFnOnComplete<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes
+    >,
+  ) {}
 
   /*
 ################################
