@@ -16,6 +16,12 @@ export const isFrameworkError = (error: unknown) => {
   return false;
 };
 
+export const throwFrameworkErrorOrVoid = (error: unknown): void => {
+  if (isFrameworkError(error)) {
+    throw error;
+  }
+};
+
 type SafeZodAsyncParseReturn<T extends z.ZodTypeAny> = ResultAsync<
   z.input<T>,
   | {
