@@ -1,14 +1,12 @@
+import type { Err, Result, ResultAsync } from "neverthrow";
 import type { z, ZodFormattedError, ZodTypeAny } from "zod";
 import type {
-  Err,
   InferActionErrError,
   InferActionOkData,
   InferAsyncErrError,
   InferAsyncOkData,
   InferErrError,
   InferOkData,
-  Result,
-  ResultAsync,
   ResultAsyncToPromiseActionResult,
 } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
