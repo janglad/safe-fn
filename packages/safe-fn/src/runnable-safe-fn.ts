@@ -59,7 +59,7 @@ export class RunnableSafeFn<
     TThrownHandlerRes
   > {
     // TODO: strip stack traces etc here
-    return this.runAsAction.bind(this);
+    return this._runAsAction.bind(this);
   }
 
   /*
@@ -112,6 +112,81 @@ export class RunnableSafeFn<
       false
     >;
   }
+
+  /*
+################################
+||                            ||
+||          Internal          ||
+||                            ||
+################################
+*/
+
+  _parseInput<TAsAction extends boolean = false>(
+    input: unknown,
+    asAction: TAsAction,
+  ): ResultAsync<
+    SchemaOutputOrFallback<TInputSchema, never>,
+    SafeFnInputParseError<TInputSchema, TAsAction>
+  > {
+    if (this._internals.inputSchema === undefined) {
+      throw new Error("No input schema defined");
+    }
+
+    return safeZodAsyncParse(this._internals.inputSchema, input).mapErr(
+      (error) => {
+        if (error.code === "PARSING_UNHANDLED") {
+          throw error.cause;
+        }
+
+        if (asAction) {
+          const cause = mapZodError(error.cause as any);
+          return {
+            code: "INPUT_PARSING",
+            cause,
+          } as SafeFnInputParseError<TInputSchema, TAsAction>;
+        }
+
+        return {
+          code: "INPUT_PARSING",
+          cause: error.cause,
+        } as SafeFnInputParseError<TInputSchema, TAsAction>;
+      },
+    );
+  }
+
+  _parseOutput<TAsAction extends boolean = false>(
+    output: unknown,
+    asAction: TAsAction,
+  ): ResultAsync<
+    SchemaOutputOrFallback<TOutputSchema, never>,
+    SafeFnOutputParseError<TOutputSchema, TAsAction>
+  > {
+    if (this._internals.outputSchema === undefined) {
+      throw new Error("No output schema defined");
+    }
+
+    return safeZodAsyncParse(this._internals.outputSchema, output).mapErr(
+      (error) => {
+        if (error.code === "PARSING_UNHANDLED") {
+          throw error.cause;
+        }
+
+        if (asAction) {
+          const cause = mapZodError(error.cause as any);
+          return {
+            code: "OUTPUT_PARSING",
+            cause,
+          } as SafeFnOutputParseError<TOutputSchema, TAsAction>;
+        }
+
+        return {
+          code: "OUTPUT_PARSING",
+          cause: error.cause,
+        } as SafeFnOutputParseError<TOutputSchema, TAsAction>;
+      },
+    );
+  }
+
   _run<TAsAction extends boolean, TAsProcedure extends boolean>(
     args: SafeFnRunArgs<TUnparsedInput>[0],
     tAsAction: TAsAction,
@@ -191,7 +266,7 @@ export class RunnableSafeFn<
     }).andThen((res) => res) as any;
   }
 
-  async runAsAction(
+  async _runAsAction(
     ...args: SafeFnActionArgs<TUnparsedInput>
   ): SafeFnActionReturn<
     TParent,
@@ -229,79 +304,5 @@ export class RunnableSafeFn<
         TThrownHandlerRes
       >
     >;
-  }
-
-  /*
-################################
-||                            ||
-||          Internal          ||
-||                            ||
-################################
-*/
-
-  _parseInput<TAsAction extends boolean = false>(
-    input: unknown,
-    asAction: TAsAction,
-  ): ResultAsync<
-    SchemaOutputOrFallback<TInputSchema, never>,
-    SafeFnInputParseError<TInputSchema, TAsAction>
-  > {
-    if (this._internals.inputSchema === undefined) {
-      throw new Error("No input schema defined");
-    }
-
-    return safeZodAsyncParse(this._internals.inputSchema, input).mapErr(
-      (error) => {
-        if (error.code === "PARSING_UNHANDLED") {
-          throw error.cause;
-        }
-
-        if (asAction) {
-          const cause = mapZodError(error.cause as any);
-          return {
-            code: "INPUT_PARSING",
-            cause,
-          } as SafeFnInputParseError<TInputSchema, TAsAction>;
-        }
-
-        return {
-          code: "INPUT_PARSING",
-          cause: error.cause,
-        } as SafeFnInputParseError<TInputSchema, TAsAction>;
-      },
-    );
-  }
-
-  _parseOutput<TAsAction extends boolean = false>(
-    output: unknown,
-    asAction: TAsAction,
-  ): ResultAsync<
-    SchemaOutputOrFallback<TOutputSchema, never>,
-    SafeFnOutputParseError<TOutputSchema, TAsAction>
-  > {
-    if (this._internals.outputSchema === undefined) {
-      throw new Error("No output schema defined");
-    }
-
-    return safeZodAsyncParse(this._internals.outputSchema, output).mapErr(
-      (error) => {
-        if (error.code === "PARSING_UNHANDLED") {
-          throw error.cause;
-        }
-
-        if (asAction) {
-          const cause = mapZodError(error.cause as any);
-          return {
-            code: "OUTPUT_PARSING",
-            cause,
-          } as SafeFnOutputParseError<TOutputSchema, TAsAction>;
-        }
-
-        return {
-          code: "OUTPUT_PARSING",
-          cause: error.cause,
-        } as SafeFnOutputParseError<TOutputSchema, TAsAction>;
-      },
-    );
   }
 }

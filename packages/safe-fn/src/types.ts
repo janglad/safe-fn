@@ -378,7 +378,7 @@ export type InferSafeFnReturn<
   T extends AnyRunnableSafeFn,
   TAsAction extends boolean,
 > = TAsAction extends true
-  ? ReturnType<T["runAsAction"]>
+  ? ReturnType<T["_runAsAction"]>
   : ReturnType<T["run"]>;
 
 /**
