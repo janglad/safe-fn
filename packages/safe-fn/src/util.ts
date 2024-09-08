@@ -120,8 +120,14 @@ export const runCallbacks = <
         callbacks.onComplete,
         throwFrameworkErrorOrVoid,
       )({
+        // TODO: fix this, only returns if result is ok
         asAction,
         result: res.map((res) => res.result),
+        ctx: res.map((res) => res.ctx).unwrapOr(undefined),
+        input: res.map((res) => res.input).unwrapOr(undefined),
+        unsafeRawInput: res
+          .map((res) => res.unsafeRawInput)
+          .unwrapOr(undefined),
       } as SafeFnOnCompleteArgs<
         TParent,
         TInputSchema,
