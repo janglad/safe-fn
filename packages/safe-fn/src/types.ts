@@ -626,7 +626,7 @@ export type SafeFnOnStart<TUnparsedInput> = (
   args: Prettify<{
     unsafeRawInput: TUnparsedInput;
   }>,
-) => MaybePromise<void>;
+) => Promise<void>;
 
 export type SafeFnOnSuccess<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -640,7 +640,7 @@ export type SafeFnOnSuccess<
       value: SafeFnReturnData<TOutputSchema, THandlerRes>;
     }
   >,
-) => MaybePromise<void>;
+) => Promise<void>;
 
 export type SafeFnOnError<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -676,7 +676,7 @@ export type SafeFnOnError<
           }
       )
   >,
-) => MaybePromise<void>;
+) => Promise<void>;
 
 export type SafeFnOnComplete<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -717,4 +717,4 @@ export type SafeFnOnComplete<
           }
       )
   >,
-) => MaybePromise<void>;
+) => Promise<void>;
