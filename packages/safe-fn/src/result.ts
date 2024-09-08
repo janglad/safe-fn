@@ -1,30 +1,20 @@
-import * as NT from "neverthrow";
+import { err, ok, Result, ResultAsync } from "neverthrow";
 
-export type Result<TData, TError> = NT.Result<TData, TError>;
-export type ResultAsync<TData, TError> = NT.ResultAsync<TData, TError>;
 export type AnyResult = Result<any, any>;
 
-export type Ok<TData, TError = never> = NT.Ok<TData, TError>;
 export type InferOkData<T> = T extends Result<infer TData, any> ? TData : never;
 export type InferAsyncOkData<T> =
   T extends ResultAsync<infer TData, any> ? TData : never;
 
-export const ok = <const TData>(data: TData): Ok<TData, never> => NT.ok(data);
-
-export type Err<TData = never, TError = unknown> = NT.Err<TData, TError>;
 export type InferErrError<T> =
   T extends Result<any, infer TError> ? TError : never;
 export type InferAsyncErrError<T> =
   T extends ResultAsync<any, infer TError> ? TError : never;
 
-export type AnyErr = Err<never, any>;
-export const err = <const TError>(error: TError): Err<never, TError> =>
-  NT.err(error);
-
 export type MergeResults<T1, T2> =
-  T1 extends NT.Result<infer D1, infer E1>
-    ? T2 extends NT.Result<infer D2, infer E2>
-      ? NT.Result<D1 | D2, E1 | E2>
+  T1 extends Result<infer D1, infer E1>
+    ? T2 extends Result<infer D2, infer E2>
+      ? Result<D1 | D2, E1 | E2>
       : never
     : never;
 

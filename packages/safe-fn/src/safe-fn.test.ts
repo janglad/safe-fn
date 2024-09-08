@@ -1,6 +1,6 @@
+import { err, ok, type Result } from "neverthrow";
 import { assert, describe, expect, test, vi, type Mock } from "vitest";
 import { z, ZodError } from "zod";
-import { err, ok, type Result } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type { AnyRunnableSafeFn, TODO } from "./types";
 
@@ -740,7 +740,7 @@ describe("runnable-safe-fn", () => {
       test("should transform output error", async () => {
         const action = SafeFnBuilder.new()
           .output(z.object({ name: z.string() }))
-          // @ts-expect-error
+          // @ts-expect-error - passing wrong input on purpose
           .handler((args) => {
             return ok({});
           })

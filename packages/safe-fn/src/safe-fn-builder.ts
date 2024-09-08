@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { err, type MergeResults, type Result } from "./result";
+import { err, Result } from "neverthrow";
+import type { MergeResults } from "./result";
 import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,

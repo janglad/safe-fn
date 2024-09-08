@@ -1,8 +1,5 @@
-import type { Err, Ok, Result } from "./result";
 import {
   actionResultToResult,
-  err,
-  ok,
   type ActionErr,
   type ActionOk,
   type ActionResult,
@@ -38,7 +35,7 @@ import type {
   SafeFnRunArgs,
 } from "./types";
 
-export { actionResultToResult, err, ok, SafeFnBuilder as SafeFn };
+export { actionResultToResult, SafeFnBuilder as SafeFn };
 export type {
   ActionErr,
   ActionOk,
@@ -47,7 +44,6 @@ export type {
   AnyRunnableSafeFn,
   AnySafeFnAction,
   AnySafeFnCatchHandler,
-  Err,
   InferActionErrError,
   InferActionOkData,
   InferInputSchema,
@@ -61,8 +57,6 @@ export type {
   InferSafeFnOkData,
   InferSafeFnReturn,
   InferUnparsedInput,
-  Ok,
-  Result,
   SafeFnAction,
   SafeFnActionArgs,
   SafeFnActionReturn,

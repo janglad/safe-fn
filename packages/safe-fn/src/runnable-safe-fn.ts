@@ -1,9 +1,8 @@
-import { ResultAsync, safeTry } from "neverthrow";
+import { ok, ResultAsync, safeTry } from "neverthrow";
 
 import {
   actionErr,
   actionOk,
-  ok,
   type InferAsyncErrError,
   type InferAsyncOkData,
 } from "./result";

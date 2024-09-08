@@ -1,6 +1,7 @@
+import { err, ok, type Result } from "neverthrow";
 import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
-import { err, ok, type ActionResult, type Result } from "./result";
+import { type ActionResult } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   Prettify,
