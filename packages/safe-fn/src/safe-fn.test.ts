@@ -300,7 +300,7 @@ describe("runnable-safe-fn", () => {
             SafeFnBuilder.new()
               .unparsedInput<{ name: string; lastName: string }>()
               .output(outputSchema)
-              .handler((args) => ok(args.unparsedInput)),
+              .handler((args) => ok(args.unsafeRawInput)),
         },
         {
           name: "async",
@@ -308,7 +308,7 @@ describe("runnable-safe-fn", () => {
             SafeFnBuilder.new()
               .unparsedInput<{ name: string; lastName: string }>()
               .output(outputSchema)
-              .handler(async (args) => ok(args.unparsedInput)),
+              .handler(async (args) => ok(args.unsafeRawInput)),
         },
         {
           name: "generator",
@@ -317,7 +317,7 @@ describe("runnable-safe-fn", () => {
               .unparsedInput<{ name: string; lastName: string }>()
               .output(outputSchema)
               .safeHandler(async function* (args) {
-                return ok(args.unparsedInput);
+                return ok(args.unsafeRawInput);
               }),
         },
       ];
@@ -328,14 +328,14 @@ describe("runnable-safe-fn", () => {
           createSafeFn: () =>
             SafeFnBuilder.new()
               .unparsedInput<{ name: string; lastName: string }>()
-              .handler((args) => ok(args.unparsedInput)),
+              .handler((args) => ok(args.unsafeRawInput)),
         },
         {
           name: "async",
           createSafeFn: () =>
             SafeFnBuilder.new()
               .unparsedInput<{ name: string; lastName: string }>()
-              .handler(async (args) => ok(args.unparsedInput)),
+              .handler(async (args) => ok(args.unsafeRawInput)),
         },
         {
           name: "generator",
@@ -343,7 +343,7 @@ describe("runnable-safe-fn", () => {
             SafeFnBuilder.new()
               .unparsedInput<{ name: string; lastName: string }>()
               .safeHandler(async function* (args) {
-                return ok(args.unparsedInput);
+                return ok(args.unsafeRawInput);
               }),
         },
       ];

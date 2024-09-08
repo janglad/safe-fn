@@ -267,7 +267,7 @@ type SafeFnHandlerArgsWParent<
   TUnparsedInput,
   TParent extends AnyRunnableSafeFn,
 > = {
-  parsedInput: Prettify<
+  input: Prettify<
     UnionIfNotT<
       SchemaOutputOrFallback<TInputSchema, undefined>,
       SchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
@@ -275,7 +275,7 @@ type SafeFnHandlerArgsWParent<
     >
   >;
   // Prettify<unknown> results in {}
-  unparsedInput: UnionIfNotT<
+  unsafeRawInput: UnionIfNotT<
     TUnparsedInput,
     InferUnparsedInput<TParent>,
     never
@@ -292,8 +292,8 @@ type SafeFnHandlerArgsNoParent<
   TInputSchema extends SafeFnInput,
   TUnparsedInput,
 > = {
-  parsedInput: SchemaOutputOrFallback<TInputSchema, undefined>;
-  unparsedInput: TUnparsedInput;
+  input: SchemaOutputOrFallback<TInputSchema, undefined>;
+  unsafeRawInput: TUnparsedInput;
   ctx: undefined;
 };
 
