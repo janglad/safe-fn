@@ -592,7 +592,7 @@ export type SafeFnCallBacks<
   THandlerRes extends AnySafeFnHandlerRes,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = {
-  onStart: SafeFnOnStart<TParent, TUnparsedInput> | undefined;
+  onStart: SafeFnOnStart<TUnparsedInput> | undefined;
   onSuccess:
     | SafeFnOnSuccess<
         TParent,
@@ -622,15 +622,9 @@ export type SafeFnCallBacks<
       >
     | undefined;
 };
-export type SafeFnOnStart<
-  TParent extends AnyRunnableSafeFn | undefined,
-  TUnparsedInput,
-> = (
+export type SafeFnOnStart<TUnparsedInput> = (
   args: Prettify<{
     unsafeRawInput: TUnparsedInput;
-    ctx: TParent extends AnyRunnableSafeFn
-      ? InferSafeFnOkData<TParent, false>
-      : undefined;
   }>,
 ) => MaybePromise<void>;
 
