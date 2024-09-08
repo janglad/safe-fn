@@ -48,51 +48,45 @@ describe("SafeFnBuilder", () => {
       test("should properly type parsed and unparsed input for primitives", () => {
         safeFnPrimitiveInput.handler((input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<SchemaPrimitiveInput>();
-          expectTypeOf(
-            input.parsedInput,
-          ).toEqualTypeOf<SchemaPrimitiveOutput>();
+          expectTypeOf(input.input).toEqualTypeOf<SchemaPrimitiveOutput>();
           return ok(input);
         });
 
         safeFnPrimitiveInput.handler(async (input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<SchemaPrimitiveInput>();
-          expectTypeOf(
-            input.parsedInput,
-          ).toEqualTypeOf<SchemaPrimitiveOutput>();
+          expectTypeOf(input.input).toEqualTypeOf<SchemaPrimitiveOutput>();
           return ok(input);
         });
 
         safeFnPrimitiveInput.safeHandler(async function* (input) {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<SchemaPrimitiveInput>();
-          expectTypeOf(
-            input.parsedInput,
-          ).toEqualTypeOf<SchemaPrimitiveOutput>();
+          expectTypeOf(input.input).toEqualTypeOf<SchemaPrimitiveOutput>();
           return ok(input);
         });
       });
 
       test("should properly type parsed and unparsed input for objects", () => {
         safeFnObjectInput.handler((input) => {
-          expectTypeOf(input.unparsedInput).toEqualTypeOf<SchemaObjectInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<SchemaObjectInput>();
+          expectTypeOf(input.input).toEqualTypeOf<SchemaObjectOutput>();
           return ok(input);
         });
 
         safeFnObjectInput.handler(async (input) => {
-          expectTypeOf(input.unparsedInput).toEqualTypeOf<SchemaObjectInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<SchemaObjectInput>();
+          expectTypeOf(input.input).toEqualTypeOf<SchemaObjectOutput>();
           return ok(input);
         });
 
         safeFnObjectInput.safeHandler(async function* (input) {
-          expectTypeOf(input.unparsedInput).toEqualTypeOf<SchemaObjectInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<SchemaObjectOutput>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<SchemaObjectInput>();
+          expectTypeOf(input.input).toEqualTypeOf<SchemaObjectOutput>();
           return ok(input);
         });
       });
@@ -100,68 +94,62 @@ describe("SafeFnBuilder", () => {
       test("should properly type parsed and unparsed input for transformed schemas", () => {
         safeFnTransformedInput.handler((input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<SchemaTransformedInput>();
-          expectTypeOf(
-            input.parsedInput,
-          ).toEqualTypeOf<SchemaTransformedOutput>();
+          expectTypeOf(input.input).toEqualTypeOf<SchemaTransformedOutput>();
           return ok(input);
         });
 
         safeFnTransformedInput.handler(async (input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<SchemaTransformedInput>();
-          expectTypeOf(
-            input.parsedInput,
-          ).toEqualTypeOf<SchemaTransformedOutput>();
+          expectTypeOf(input.input).toEqualTypeOf<SchemaTransformedOutput>();
           return ok(input);
         });
 
         safeFnTransformedInput.safeHandler(async function* (input) {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<SchemaTransformedInput>();
-          expectTypeOf(
-            input.parsedInput,
-          ).toEqualTypeOf<SchemaTransformedOutput>();
+          expectTypeOf(input.input).toEqualTypeOf<SchemaTransformedOutput>();
           return ok(input);
         });
       });
 
       test("should type parsedInput as undefined, unparsed input as never when no input schema is provided", () => {
         safeFnNoInput.handler((input) => {
-          expectTypeOf(input.unparsedInput).toEqualTypeOf<never>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<never>();
+          expectTypeOf(input.input).toEqualTypeOf<undefined>();
           return ok(input);
         });
 
         safeFnNoInput.handler(async (input) => {
-          expectTypeOf(input.unparsedInput).toEqualTypeOf<never>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<never>();
+          expectTypeOf(input.input).toEqualTypeOf<undefined>();
           return ok(input);
         });
 
         safeFnNoInput.safeHandler(async function* (input) {
-          expectTypeOf(input.unparsedInput).toEqualTypeOf<never>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<undefined>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<never>();
+          expectTypeOf(input.input).toEqualTypeOf<undefined>();
           return ok(input);
         });
       });
 
       test("should properly type unparsed input when manually set", () => {
         safeFnUnparsedInput.handler((input) => {
-          expectTypeOf(input.unparsedInput).toEqualTypeOf<{ name: string }>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<{ name: string }>();
           return ok(input);
         });
 
         safeFnUnparsedInput.handler(async (input) => {
-          expectTypeOf(input.unparsedInput).toEqualTypeOf<{ name: string }>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<{ name: string }>();
           return ok(input);
         });
 
         safeFnUnparsedInput.safeHandler(async function* (input) {
-          expectTypeOf(input.unparsedInput).toEqualTypeOf<{ name: string }>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<{ name: string }>();
           return ok(input);
         });
       });
@@ -184,25 +172,25 @@ describe("SafeFnBuilder", () => {
 
         child.handler((input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
 
         child.handler(async (input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
 
         child.safeHandler(async function* (input) {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
       });
@@ -227,25 +215,25 @@ describe("SafeFnBuilder", () => {
 
         child.handler((input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
 
         child.handler(async (input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
 
         child.safeHandler(async function* (input) {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
       });
@@ -273,25 +261,25 @@ describe("SafeFnBuilder", () => {
 
         child.handler((input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
 
         child.handler(async (input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
 
         child.safeHandler(async function* (input) {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
       });
@@ -305,25 +293,25 @@ describe("SafeFnBuilder", () => {
 
         child.handler((input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
 
         child.handler(async (input) => {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
 
         child.safeHandler(async function* (input) {
           expectTypeOf(
-            input.unparsedInput,
+            input.unsafeRawInput,
           ).toEqualTypeOf<ExpectedUnparsedInput>();
-          expectTypeOf(input.parsedInput).toEqualTypeOf<ExpectedParsedInput>();
+          expectTypeOf(input.input).toEqualTypeOf<ExpectedParsedInput>();
           return ok(input);
         });
       });

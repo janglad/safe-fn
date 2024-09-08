@@ -96,7 +96,7 @@ describe("safe-fn-builder", () => {
     });
   });
 
-  describe("unparsedInput", () => {
+  describe("unsafeRawInput", () => {
     test("should return the same instance", () => {
       const builder = SafeFnBuilder.new();
       const builder2 = builder.unparsedInput<string>();
@@ -229,7 +229,7 @@ describe("runnable-safe-fn", () => {
           expect(res).toBeOk();
           assert(res.isOk());
           expect(res.value).toMatchObject({
-            parsedInput: {
+            input: {
               fullName: "John Doe",
             },
           });
@@ -241,7 +241,7 @@ describe("runnable-safe-fn", () => {
           assert(res.isOk());
           console.log(res.value);
           expect(res.value).toMatchObject({
-            unparsedInput: {
+            unsafeRawInput: {
               name: "John",
               lastName: "Doe",
             },
@@ -270,7 +270,7 @@ describe("runnable-safe-fn", () => {
           expect(res).toBeOk();
           assert(res.isOk());
           expect(res.value).toEqual({
-            unparsedInput: { name: "John", lastName: "Doe" },
+            unsafeRawInput: { name: "John", lastName: "Doe" },
           });
         });
 
@@ -300,7 +300,7 @@ describe("runnable-safe-fn", () => {
             SafeFnBuilder.new()
               .unparsedInput<{ name: string; lastName: string }>()
               .output(outputSchema)
-              .handler((args) => ok(args.unparsedInput)),
+              .handler((args) => ok(args.unsafeRawInput)),
         },
         {
           name: "async",
@@ -308,7 +308,7 @@ describe("runnable-safe-fn", () => {
             SafeFnBuilder.new()
               .unparsedInput<{ name: string; lastName: string }>()
               .output(outputSchema)
-              .handler(async (args) => ok(args.unparsedInput)),
+              .handler(async (args) => ok(args.unsafeRawInput)),
         },
         {
           name: "generator",
@@ -317,7 +317,7 @@ describe("runnable-safe-fn", () => {
               .unparsedInput<{ name: string; lastName: string }>()
               .output(outputSchema)
               .safeHandler(async function* (args) {
-                return ok(args.unparsedInput);
+                return ok(args.unsafeRawInput);
               }),
         },
       ];
@@ -328,14 +328,14 @@ describe("runnable-safe-fn", () => {
           createSafeFn: () =>
             SafeFnBuilder.new()
               .unparsedInput<{ name: string; lastName: string }>()
-              .handler((args) => ok(args.unparsedInput)),
+              .handler((args) => ok(args.unsafeRawInput)),
         },
         {
           name: "async",
           createSafeFn: () =>
             SafeFnBuilder.new()
               .unparsedInput<{ name: string; lastName: string }>()
-              .handler(async (args) => ok(args.unparsedInput)),
+              .handler(async (args) => ok(args.unsafeRawInput)),
         },
         {
           name: "generator",
@@ -343,7 +343,7 @@ describe("runnable-safe-fn", () => {
             SafeFnBuilder.new()
               .unparsedInput<{ name: string; lastName: string }>()
               .safeHandler(async function* (args) {
-                return ok(args.unparsedInput);
+                return ok(args.unsafeRawInput);
               }),
         },
       ];
@@ -683,11 +683,11 @@ describe("runnable-safe-fn", () => {
       assert(res.isOk());
       expect(res.value).toEqual({
         ctx: "ctx",
-        parsedInput: {
+        input: {
           parsed1: "parsed1",
           parsed3: "parsed3",
         },
-        unparsedInput: {
+        unsafeRawInput: {
           parsed1: "parsed1",
           unparsed2: "unparsed2",
           parsed3: "parsed3",

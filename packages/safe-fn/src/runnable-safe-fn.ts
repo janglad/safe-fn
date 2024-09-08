@@ -13,6 +13,7 @@ import type {
   SafeFnAction,
   SafeFnActionArgs,
   SafeFnActionReturn,
+  SafeFnHandlerArgs,
   SafeFnInput,
   SafeFnInputParseError,
   SafeFnInternals,
@@ -159,10 +160,10 @@ export class RunnableSafeFn<
 
       const handlerRes = yield* (
         await handler({
-          parsedInput,
-          unparsedInput: args,
+          input: parsedInput,
+          unsafeRawInput: args,
           ctx: parentHandlerRes,
-        } as any)
+        } as SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>)
       ).safeUnwrap();
 
       const parsedOutput =
