@@ -119,27 +119,42 @@ export class RunnableSafeFn<
     );
   }
 
-  onStart(fn: SafeFnOnStart<TParent, TUnparsedInput>) {}
+  onStart(onStartFn: SafeFnOnStart<TParent, TUnparsedInput>) {
+    return new RunnableSafeFn(this._internals, {
+      ...this._callBacks,
+      onStart: onStartFn,
+    });
+  }
   onSuccess(
-    fn: SafeFnOnSuccess<
+    onSuccessFn: SafeFnOnSuccess<
       TParent,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes
     >,
-  ) {}
+  ) {
+    return new RunnableSafeFn(this._internals, {
+      ...this._callBacks,
+      onSuccess: onSuccessFn,
+    });
+  }
   onError(
-    fn: SafeFnOnError<
+    onErrorFn: SafeFnOnError<
       TParent,
       TInputSchema,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes
     >,
-  ) {}
+  ) {
+    return new RunnableSafeFn(this._internals, {
+      ...this._callBacks,
+      onError: onErrorFn,
+    });
+  }
   onComplete(
-    fn: SafeFnOnComplete<
+    onCompleteFn: SafeFnOnComplete<
       TParent,
       TInputSchema,
       TOutputSchema,
@@ -147,7 +162,12 @@ export class RunnableSafeFn<
       THandlerRes,
       TThrownHandlerRes
     >,
-  ) {}
+  ) {
+    return new RunnableSafeFn(this._internals, {
+      ...this._callBacks,
+      onComplete: onCompleteFn,
+    });
+  }
 
   /*
 ################################
