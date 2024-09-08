@@ -1,11 +1,6 @@
 import { ok, ResultAsync, safeTry } from "neverthrow";
 
-import {
-  actionErr,
-  actionOk,
-  type InferAsyncErrError,
-  type InferAsyncOkData,
-} from "./result";
+import { actionErr, actionOk } from "./result";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnCatchHandlerRes,
@@ -17,6 +12,7 @@ import type {
   SafeFnHandlerArgs,
   SafeFnInput,
   SafeFnInputParseError,
+  SafeFnInternalRunReturn,
   SafeFnInternals,
   SafeFnOnComplete,
   SafeFnOnError,
@@ -27,7 +23,13 @@ import type {
   SafeFnRunArgs,
   SchemaOutputOrFallback,
 } from "./types";
-import { isFrameworkError, mapZodError, safeZodAsyncParse } from "./util";
+import {
+  isFrameworkError,
+  mapZodError,
+  runCallbacks,
+  safeZodAsyncParse,
+  throwFrameworkErrorOrVoid,
+} from "./util";
 
 export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -119,7 +121,7 @@ export class RunnableSafeFn<
     );
   }
 
-  onStart(onStartFn: SafeFnOnStart<TParent, TUnparsedInput>) {
+  onStart(onStartFn: SafeFnOnStart<TUnparsedInput>) {
     return new RunnableSafeFn(this._internals, {
       ...this._callBacks,
       onStart: onStartFn,
@@ -274,24 +276,16 @@ export class RunnableSafeFn<
     args: SafeFnRunArgs<TUnparsedInput>[0],
     tAsAction: TAsAction,
     tAsProcedure: TAsProcedure,
-  ): SafeFnReturn<
+  ): SafeFnInternalRunReturn<
     TParent,
     TInputSchema,
     TOutputSchema,
+    TUnparsedInput,
     THandlerRes,
     TThrownHandlerRes,
-    TAsAction
-  > extends infer HandlerRes
-    ? TAsProcedure extends true
-      ? ResultAsync<
-          {
-            handlerRes: InferAsyncOkData<HandlerRes>;
-            parsedInput: SchemaOutputOrFallback<TInputSchema, undefined>;
-          },
-          InferAsyncErrError<HandlerRes>
-        >
-      : HandlerRes
-    : never {
+    TAsAction,
+    TAsProcedure
+  > {
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;
     const handler = this._internals.handler;
@@ -299,11 +293,21 @@ export class RunnableSafeFn<
     const uncaughtErrorHandler = this._internals.uncaughtErrorHandler;
     const _parseOutput = this._parseOutput.bind(this);
     const _parseInput = this._parseInput.bind(this);
+    const _callBacks = this._callBacks;
+    const onStartCallback: ResultAsync<void, void> | undefined =
+      _callBacks.onStart === undefined
+        ? undefined
+        : ResultAsync.fromThrowable(
+            _callBacks.onStart,
+            throwFrameworkErrorOrVoid,
+          )({
+            unsafeRawInput: args as TUnparsedInput,
+          });
 
-    const res = safeTry(async function* () {
-      const { handlerRes: parentHandlerRes, parsedInput: parentParsedInput } =
+    const safeTryPromise = safeTry(async function* () {
+      const { result: parentHandlerRes, input: parentParsedInput } =
         parent === undefined
-          ? { handlerRes: undefined, parsedInput: undefined }
+          ? { result: undefined, input: undefined }
           : yield* parent._run(args, tAsAction, true).safeUnwrap();
 
       const parsedInput =
@@ -330,23 +334,73 @@ export class RunnableSafeFn<
           : yield* _parseOutput(handlerRes, tAsAction).safeUnwrap();
 
       const res = parsedOutput === undefined ? handlerRes : parsedOutput;
-      return tAsProcedure
-        ? ok({
-            handlerRes: res,
-            parsedInput,
-          })
-        : ok(res);
+
+      return ok({
+        result: res,
+        input: parsedInput,
+        ctx: parentHandlerRes,
+      });
     });
 
-    return ResultAsync.fromPromise(res, (error) => {
+    const internalRes: SafeFnInternalRunReturn<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes,
+      TAsAction,
+      true
+    > = ResultAsync.fromPromise(safeTryPromise, (error) => {
       if (isFrameworkError(error)) {
         throw error;
       }
       const handledErr = uncaughtErrorHandler(error);
-      if (handledErr.isOk())
+      if (handledErr.isOk()) {
         throw new Error("uncaught error handler returned ok");
+      }
       return handledErr.error;
-    }).andThen((res) => res) as any;
+    })
+      .andThen((res) => {
+        return res;
+      })
+      .map((res) => ({
+        ...res,
+        unsafeRawInput: args,
+      })) as SafeFnInternalRunReturn<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes,
+      TAsAction,
+      true
+    >;
+
+    const withCallbacks = runCallbacks(
+      internalRes,
+      tAsAction,
+      this._callBacks,
+      onStartCallback,
+    );
+
+    return withCallbacks.map((res) => {
+      if (tAsProcedure) {
+        return res;
+      } else {
+        return res.result;
+      }
+    }) as SafeFnInternalRunReturn<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes,
+      TAsAction,
+      TAsProcedure
+    >;
   }
 
   async _runAsAction(
