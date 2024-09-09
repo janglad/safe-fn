@@ -16,7 +16,7 @@ export type MergeResults<T1, T2> =
       : never
     : never;
 
-export type ResultToResultAsync<T extends Result<unknown, unknown>> =
+export type ResultToResultAsync<T> =
   T extends Result<infer D, infer E> ? ResultAsync<D, E> : never;
 
 export type MergeResultAsync<T1, T2> =
