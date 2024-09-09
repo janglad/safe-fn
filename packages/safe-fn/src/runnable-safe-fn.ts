@@ -46,6 +46,7 @@ export class RunnableSafeFn<
 > {
   readonly _internals: SafeFnInternals<
     TParent,
+    TCtx,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput
@@ -53,6 +54,7 @@ export class RunnableSafeFn<
 
   readonly _callBacks: SafeFnCallBacks<
     TParent,
+    TCtx,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -63,12 +65,14 @@ export class RunnableSafeFn<
   constructor(
     internals: SafeFnInternals<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput
     >,
     callBacks: SafeFnCallBacks<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -118,6 +122,7 @@ export class RunnableSafeFn<
       },
       this._callBacks as unknown as SafeFnCallBacks<
         TParent,
+        TCtx,
         TInputSchema,
         TOutputSchema,
         TUnparsedInput,
@@ -136,6 +141,7 @@ export class RunnableSafeFn<
   onSuccess(
     onSuccessFn: SafeFnOnSuccess<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -150,6 +156,7 @@ export class RunnableSafeFn<
   onError(
     onErrorFn: SafeFnOnError<
       TParent,
+      TCtx,
       TInputSchema,
       TUnparsedInput,
       THandlerRes,
@@ -164,6 +171,7 @@ export class RunnableSafeFn<
   onComplete(
     onCompleteFn: SafeFnOnComplete<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -377,7 +385,7 @@ export class RunnableSafeFn<
             input: parsedInput,
             unsafeRawInput: args,
             ctx: parentHandlerRes,
-          } as SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>)
+          } as SafeFnHandlerArgs<TParent, TCtx, TInputSchema, TUnparsedInput>)
         )
           .mapErr(
             (e) =>

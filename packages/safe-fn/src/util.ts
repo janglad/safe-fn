@@ -36,6 +36,7 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 
 export const runCallbacks = <
   TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
@@ -65,6 +66,7 @@ export const runCallbacks = <
   unsafeRawInput: TUnparsedInput;
   callbacks: SafeFnCallBacks<
     TParent,
+    TCtx,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -92,6 +94,7 @@ export const runCallbacks = <
         value: res.value.result,
       } as SafeFnOnSuccessArgs<
         TParent,
+        TCtx,
         TInputSchema,
         TOutputSchema,
         TUnparsedInput,
@@ -110,6 +113,7 @@ export const runCallbacks = <
         unsafeRawInput: args.unsafeRawInput,
       } as SafeFnOnErrorArgs<
         TParent,
+        TCtx,
         TInputSchema,
         TUnparsedInput,
         THandlerRes,
@@ -139,6 +143,7 @@ export const runCallbacks = <
         unsafeRawInput: args.unsafeRawInput,
       } as SafeFnOnCompleteArgs<
         TParent,
+        TCtx,
         TInputSchema,
         TOutputSchema,
         TUnparsedInput,

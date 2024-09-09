@@ -28,6 +28,7 @@ export class SafeFnBuilder<
 > {
   readonly _internals: SafeFnInternals<
     TParent,
+    TCtx,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput
@@ -36,6 +37,7 @@ export class SafeFnBuilder<
   protected constructor(
     internals: SafeFnInternals<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput
@@ -140,7 +142,9 @@ export class SafeFnBuilder<
 
   handler<TNewHandlerResult extends SafeFnHandlerReturn<TOutputSchema>>(
     handler: (
-      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+      args: Prettify<
+        SafeFnHandlerArgs<TParent, TCtx, TInputSchema, TUnparsedInput>
+      >,
     ) => TNewHandlerResult,
   ): RunnableSafeFn<
     TParent,
@@ -173,7 +177,9 @@ export class SafeFnBuilder<
     >,
   >(
     fn: (
-      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+      args: Prettify<
+        SafeFnHandlerArgs<TParent, TCtx, TInputSchema, TUnparsedInput>
+      >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): RunnableSafeFn<
     TParent,
@@ -188,7 +194,9 @@ export class SafeFnBuilder<
     SafeFnDefaultCatchHandlerErr
   > {
     const handler = async (
-      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+      args: Prettify<
+        SafeFnHandlerArgs<TParent, TCtx, TInputSchema, TUnparsedInput>
+      >,
     ) => {
       return (await fn(args).next()).value;
     };
