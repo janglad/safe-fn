@@ -2,7 +2,6 @@ import { ok, Result, ResultAsync, safeTry } from "neverthrow";
 
 import { actionErr, actionOk, type InferErrError } from "./result";
 import type {
-  AnyRunnableSafeFn,
   AnySafeFnCatchHandlerRes,
   AnySafeFnHandlerRes,
   ErrorObj,
@@ -37,7 +36,6 @@ import {
 } from "./util";
 
 export class RunnableSafeFn<
-  TParent extends AnyRunnableSafeFn | undefined,
   TCtx,
   TInputSchema extends SafeFnInput,
   TMergedInputSchema extends SafeFnInput,
@@ -48,7 +46,6 @@ export class RunnableSafeFn<
   TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
 > {
   readonly _internals: SafeFnInternals<
-    TParent,
     TCtx,
     TInputSchema,
     TMergedInputSchema,
@@ -57,7 +54,6 @@ export class RunnableSafeFn<
   >;
 
   readonly _callBacks: SafeFnCallBacks<
-    TParent,
     TCtx,
     TInputSchema,
     TMergedInputSchema,
@@ -70,7 +66,6 @@ export class RunnableSafeFn<
 
   constructor(
     internals: SafeFnInternals<
-      TParent,
       TCtx,
       TInputSchema,
       TMergedInputSchema,
@@ -78,7 +73,6 @@ export class RunnableSafeFn<
       TUnparsedInput
     >,
     callBacks: SafeFnCallBacks<
-      TParent,
       TCtx,
       TInputSchema,
       TMergedInputSchema,
@@ -94,7 +88,6 @@ export class RunnableSafeFn<
   }
 
   createAction(): SafeFnAction<
-    TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -117,7 +110,6 @@ export class RunnableSafeFn<
   catch<TNewThrownHandlerRes extends AnySafeFnCatchHandlerRes>(
     handler: (error: unknown) => TNewThrownHandlerRes,
   ): RunnableSafeFn<
-    TParent,
     TCtx,
     TInputSchema,
     TMergedInputSchema,
@@ -133,7 +125,6 @@ export class RunnableSafeFn<
         uncaughtErrorHandler: handler,
       },
       this._callBacks as unknown as SafeFnCallBacks<
-        TParent,
         TCtx,
         TInputSchema,
         TMergedInputSchema,
@@ -154,9 +145,7 @@ export class RunnableSafeFn<
   }
   onSuccess(
     onSuccessFn: SafeFnOnSuccess<
-      TParent,
       TCtx,
-      TInputSchema,
       TMergedInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -170,7 +159,6 @@ export class RunnableSafeFn<
   }
   onError(
     onErrorFn: SafeFnOnError<
-      TParent,
       TCtx,
       TInputSchema,
       TMergedInputSchema,
@@ -187,7 +175,6 @@ export class RunnableSafeFn<
   }
   onComplete(
     onCompleteFn: SafeFnOnComplete<
-      TParent,
       TCtx,
       TInputSchema,
       TMergedInputSchema,
@@ -214,7 +201,6 @@ export class RunnableSafeFn<
   run(
     ...args: SafeFnRunArgs<TUnparsedInput>
   ): SafeFnReturn<
-    TParent,
     TInputSchema,
     TOutputSchema,
     THandlerRes,
@@ -223,7 +209,6 @@ export class RunnableSafeFn<
     false
   > {
     return this._run(args[0], false, false) as SafeFnReturn<
-      TParent,
       TInputSchema,
       TOutputSchema,
       THandlerRes,
@@ -312,7 +297,6 @@ export class RunnableSafeFn<
     tAsAction: TAsAction,
     tAsProcedure: TAsProcedure,
   ): SafeFnInternalRunReturn<
-    TParent,
     TCtx,
     TInputSchema,
     TOutputSchema,
@@ -342,7 +326,6 @@ export class RunnableSafeFn<
           });
 
     type InternalOk = SafeFnSuperInternalRunReturnData<
-      TParent,
       TCtx,
       TInputSchema,
       TOutputSchema,
@@ -353,7 +336,6 @@ export class RunnableSafeFn<
       TAsAction
     >;
     type InternalErr = SafeFnSuperInternalRunReturnError<
-      TParent,
       TCtx,
       TInputSchema,
       TOutputSchema,
@@ -372,7 +354,7 @@ export class RunnableSafeFn<
             : yield* parent
                 ._run(args, tAsAction, true)
                 .mapErr(
-                  (e) =>
+                  (e: TODO) =>
                     ({
                       public: e as TODO,
                       private: {
@@ -458,7 +440,6 @@ export class RunnableSafeFn<
     );
 
     const internalRes: SafeFnSuperInternalRunReturn<
-      TParent,
       TCtx,
       TInputSchema,
       TOutputSchema,
@@ -512,7 +493,6 @@ export class RunnableSafeFn<
           return res.result;
         }
       }) as SafeFnInternalRunReturn<
-      TParent,
       TCtx,
       TInputSchema,
       TOutputSchema,
@@ -528,7 +508,6 @@ export class RunnableSafeFn<
   async _runAsAction(
     ...args: SafeFnActionArgs<TUnparsedInput>
   ): SafeFnActionReturn<
-    TParent,
     TInputSchema,
     TOutputSchema,
     THandlerRes,
@@ -536,7 +515,6 @@ export class RunnableSafeFn<
     TThrownHandlerRes
   > {
     const res = await (this._run(args[0], true, false) as SafeFnReturn<
-      TParent,
       TInputSchema,
       TOutputSchema,
       THandlerRes,
@@ -548,7 +526,6 @@ export class RunnableSafeFn<
     if (res.isOk()) {
       return actionOk(res.value) as Awaited<
         SafeFnActionReturn<
-          TParent,
           TInputSchema,
           TOutputSchema,
           THandlerRes,
@@ -559,7 +536,6 @@ export class RunnableSafeFn<
     }
     return actionErr(res.error) as Awaited<
       SafeFnActionReturn<
-        TParent,
         TInputSchema,
         TOutputSchema,
         THandlerRes,

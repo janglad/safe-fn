@@ -47,7 +47,6 @@ export const runCallbacks = <
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
   TRes extends SafeFnSuperInternalRunReturn<
-    TParent,
     TCtx,
     TInputSchema,
     TOutputSchema,
@@ -57,7 +56,6 @@ export const runCallbacks = <
     TCatchHandlerRes,
     NoInfer<TAsAction>
   > = SafeFnSuperInternalRunReturn<
-    TParent,
     TCtx,
     TInputSchema,
     TOutputSchema,
@@ -72,7 +70,6 @@ export const runCallbacks = <
   asAction: TAsAction;
   unsafeRawInput: TUnparsedInput;
   callbacks: SafeFnCallBacks<
-    TParent,
     TCtx,
     TInputSchema,
     TMergedInputSchema,
@@ -101,7 +98,7 @@ export const runCallbacks = <
         input: res.value.input,
         ctx: res.value.ctx,
         value: res.value.result,
-      } as SafeFnOnSuccessArgs<
+      } as unknown as SafeFnOnSuccessArgs<
         TCtx,
         TMergedInputSchema,
         TOutputSchema,
@@ -120,7 +117,6 @@ export const runCallbacks = <
         input: res.error.private.input,
         unsafeRawInput: args.unsafeRawInput,
       } as SafeFnOnErrorArgs<
-        TParent,
         TCtx,
         TInputSchema,
         TMergedInputSchema,
@@ -152,7 +148,6 @@ export const runCallbacks = <
         ),
         unsafeRawInput: args.unsafeRawInput,
       } as SafeFnOnCompleteArgs<
-        TParent,
         TCtx,
         TInputSchema,
         TMergedInputSchema,

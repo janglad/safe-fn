@@ -10,10 +10,22 @@ import type {
 } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
 
-export type ErrorObj = {
+export interface ErrorObj {
   action: unknown;
   regular: unknown;
-};
+}
+
+export type GetErrorFromObj<
+  TErrorObj extends ErrorObj | undefined,
+  TAsAction extends boolean,
+> = TErrorObj extends {
+  action: infer TAction;
+  regular: infer TRegular;
+}
+  ? TAsAction extends true
+    ? TAction
+    : TRegular
+  : never;
 
 /*
 ################################
@@ -23,20 +35,17 @@ export type ErrorObj = {
 ################################
 */
 export interface SafeFnInternals<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
   in out TInputSchema extends SafeFnInput,
   in out TMergedInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnInput,
   in out TUnparsedInput,
 > {
-  parent: TParent;
+  parent: AnyRunnableSafeFn | undefined;
   inputSchema: TInputSchema;
   outputSchema: TOutputSchema;
   handler: (
-    input: Prettify<
-      SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>
-    >,
+    input: SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>,
   ) => SafeFnHandlerReturn<TOutputSchema>;
   uncaughtErrorHandler: (error: unknown) => Result<never, unknown>;
 }
@@ -51,8 +60,8 @@ export interface SafeFnInternals<
 
 // Never union is kinda dirty but needed for now.
 export type AnyRunnableSafeFn =
-  | RunnableSafeFn<any, any, any, any, any, any, any, any, any>
-  | RunnableSafeFn<any, any, any, any, any, never, any, any, any>;
+  | RunnableSafeFn<any, any, any, any, any, any, any, any>
+  | RunnableSafeFn<any, any, any, any, never, any, any, any>;
 
 /*
 ################################
@@ -105,7 +114,7 @@ export type SafeFnOutput = z.ZodTypeAny | undefined;
 export type MergeZodTypes<T, U> =
   T extends z.ZodType<infer In1, TODO, infer Out1>
     ? U extends z.ZodType<infer In2, TODO, infer Out2>
-      ? z.ZodType<Prettify<In1 & In2>, TODO, Prettify<Out1 & Out2>>
+      ? z.ZodType<In1 & In2, TODO, Out1 & Out2>
       : T
     : U;
 
@@ -117,7 +126,6 @@ export type MergeZodTypes<T, U> =
 
 export type InferInputSchema<T> =
   T extends RunnableSafeFn<
-    any,
     any,
     infer TInputSchema,
     any,
@@ -141,7 +149,6 @@ export type InferOutputSchema<T> =
     any,
     any,
     any,
-    any,
     infer TOutputSchema,
     any,
     any,
@@ -157,17 +164,7 @@ export type InferOutputSchema<T> =
  * @returns the unparsed input of the safe function
  */
 export type InferUnparsedInput<T> =
-  T extends RunnableSafeFn<
-    any,
-    any,
-    any,
-    any,
-    any,
-    infer TUnparsed,
-    any,
-    any,
-    any
-  >
+  T extends RunnableSafeFn<any, any, any, any, infer TUnparsed, any, any, any>
     ? TUnparsed
     : never;
 
@@ -437,7 +434,6 @@ export type SafeFnReturnData<
  * - A `SafeFnOutputParseError` if the output schema is defined and the output could not be parsed
  */
 export type SafeFnReturnError<
-  TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
@@ -451,9 +447,7 @@ export type SafeFnReturnError<
   | (Awaited<THandlerRes> extends Result<never, any>
       ? never
       : SafeFnOutputParseError<TOutputSchema, TAsAction>)
-  | (TParent extends AnyRunnableSafeFn
-      ? InferSafeFnErrError<TParent, TAsAction>
-      : never);
+  | GetErrorFromObj<TParentErr, TAsAction>;
 
 /**
  * @param TUnparsedInput the unparsed input of the safe function
@@ -476,7 +470,6 @@ export type SafeFnRunArgs<TUnparsedInput> = TToTuple<TUnparsedInput>;
  *
  */
 export type SafeFnReturn<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   in out THandlerRes extends AnySafeFnHandlerRes,
@@ -487,7 +480,6 @@ export type SafeFnReturn<
   SafeFnReturnData<TOutputSchema, THandlerRes>,
   DistributeUnion<
     SafeFnReturnError<
-      TParent,
       TInputSchema,
       TOutputSchema,
       Awaited<THandlerRes>,
@@ -499,7 +491,6 @@ export type SafeFnReturn<
 >;
 
 export type SafeFnInternalRunReturn<
-  TParent extends AnyRunnableSafeFn | undefined,
   TCtx,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
@@ -511,7 +502,6 @@ export type SafeFnInternalRunReturn<
   TAsProcedure extends boolean,
 > =
   SafeFnReturn<
-    TParent,
     TInputSchema,
     TOutputSchema,
     THandlerRes,
@@ -532,7 +522,6 @@ export type SafeFnInternalRunReturn<
     : never;
 
 export type SafeFnSuperInternalRunReturn<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
@@ -543,7 +532,6 @@ export type SafeFnSuperInternalRunReturn<
   in out TAsAction extends boolean,
 > =
   SafeFnReturn<
-    TParent,
     TInputSchema,
     TOutputSchema,
     THandlerRes,
@@ -570,7 +558,6 @@ export type SafeFnSuperInternalRunReturn<
     : never;
 
 export type SafeFnSuperInternalRunReturnData<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
@@ -582,7 +569,6 @@ export type SafeFnSuperInternalRunReturnData<
 > = {
   result: InferAsyncOkData<
     SafeFnReturn<
-      TParent,
       TInputSchema,
       TOutputSchema,
       THandlerRes,
@@ -597,7 +583,6 @@ export type SafeFnSuperInternalRunReturnData<
 };
 
 export type SafeFnSuperInternalRunReturnError<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
@@ -609,7 +594,6 @@ export type SafeFnSuperInternalRunReturnError<
 > = {
   public: InferAsyncErrError<
     SafeFnReturn<
-      TParent,
       TInputSchema,
       TOutputSchema,
       THandlerRes,
@@ -634,7 +618,7 @@ export type SafeFnSuperInternalRunReturnError<
 ################################
 */
 
-export type AnySafeFnAction = SafeFnAction<any, any, any, any, any, any, any>;
+export type AnySafeFnAction = SafeFnAction<any, any, any, any, any, any>;
 
 /**
  * @param T the action created through `createAction()`
@@ -671,7 +655,6 @@ export type InferSafeFnActionError<T extends AnySafeFnAction> = Promise<
 export type SafeFnActionArgs<TUnparsedInput> = SafeFnRunArgs<TUnparsedInput>;
 
 export type SafeFnActionReturn<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   in out THandlerRes extends AnySafeFnHandlerRes,
@@ -679,7 +662,6 @@ export type SafeFnActionReturn<
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = ResultAsyncToPromiseActionResult<
   SafeFnReturn<
-    TParent,
     TInputSchema,
     TOutputSchema,
     THandlerRes,
@@ -689,7 +671,6 @@ export type SafeFnActionReturn<
   >
 >;
 export type SafeFnAction<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
@@ -699,7 +680,6 @@ export type SafeFnAction<
 > = (
   ...args: SafeFnActionArgs<TUnparsedInput>
 ) => SafeFnActionReturn<
-  TParent,
   TInputSchema,
   TOutputSchema,
   THandlerRes,
@@ -719,7 +699,6 @@ export type SafeFnAction<
 
 export type InferSafeFnCallbacks<T> =
   T extends RunnableSafeFn<
-    infer TParent,
     infer TCtx,
     infer TInputSchema,
     infer TMergedInputSchema,
@@ -730,7 +709,6 @@ export type InferSafeFnCallbacks<T> =
     infer TCatchHandlerRes
   >
     ? SafeFnCallBacks<
-        TParent,
         TCtx,
         TInputSchema,
         TMergedInputSchema,
@@ -743,7 +721,6 @@ export type InferSafeFnCallbacks<T> =
     : never;
 
 export type SafeFnCallBacks<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
   in out TInputSchema extends SafeFnInput,
   in out TMergedInputSchema extends SafeFnInput,
@@ -756,9 +733,7 @@ export type SafeFnCallBacks<
   onStart: SafeFnOnStart<TUnparsedInput> | undefined;
   onSuccess:
     | SafeFnOnSuccess<
-        TParent,
         TCtx,
-        TInputSchema,
         TMergedInputSchema,
         TOutputSchema,
         TUnparsedInput,
@@ -767,7 +742,6 @@ export type SafeFnCallBacks<
     | undefined;
   onError:
     | SafeFnOnError<
-        TParent,
         TCtx,
         TInputSchema,
         TMergedInputSchema,
@@ -779,7 +753,6 @@ export type SafeFnCallBacks<
     | undefined;
   onComplete:
     | SafeFnOnComplete<
-        TParent,
         TCtx,
         TInputSchema,
         TMergedInputSchema,
@@ -807,9 +780,7 @@ export type SafeFnOnSuccessArgs<
   }
 >;
 export type SafeFnOnSuccess<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
-  in out TInputSchema extends SafeFnInput,
   in out TMergedInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
@@ -830,7 +801,6 @@ type ToOptionalSafeFnArgs<T extends SafeFnHandlerArgs<any, any, any>> = {
 };
 
 export type SafeFnOnErrorArgs<
-  TParent extends AnyRunnableSafeFn | undefined,
   TCtx,
   TInputSchema extends SafeFnInput,
   TMergedInputSchema extends SafeFnInput,
@@ -846,7 +816,6 @@ export type SafeFnOnErrorArgs<
       | {
           asAction: true;
           error: SafeFnReturnError<
-            TParent,
             TInputSchema,
             undefined,
             Awaited<THandlerRes>,
@@ -858,7 +827,6 @@ export type SafeFnOnErrorArgs<
       | {
           asAction: false;
           error: SafeFnReturnError<
-            TParent,
             TInputSchema,
             undefined,
             Awaited<THandlerRes>,
@@ -871,7 +839,6 @@ export type SafeFnOnErrorArgs<
 >;
 
 export type SafeFnOnError<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
   in out TInputSchema extends SafeFnInput,
   in out TMergedInputSchema extends SafeFnInput,
@@ -881,7 +848,6 @@ export type SafeFnOnError<
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = (
   args: SafeFnOnErrorArgs<
-    TParent,
     TCtx,
     TInputSchema,
     TMergedInputSchema,
@@ -893,7 +859,6 @@ export type SafeFnOnError<
 ) => Promise<void>;
 
 export type SafeFnOnCompleteArgs<
-  TParent extends AnyRunnableSafeFn | undefined,
   TCtx,
   TInputSchema extends SafeFnInput,
   TMergedInputSchema extends SafeFnInput,
@@ -908,7 +873,6 @@ export type SafeFnOnCompleteArgs<
       result: Err<
         never,
         SafeFnReturnError<
-          TParent,
           TInputSchema,
           undefined,
           Awaited<THandlerRes>,
@@ -925,7 +889,6 @@ export type SafeFnOnCompleteArgs<
       result: Err<
         never,
         SafeFnReturnError<
-          TParent,
           TInputSchema,
           undefined,
           Awaited<THandlerRes>,
@@ -944,7 +907,6 @@ export type SafeFnOnCompleteArgs<
 >;
 
 export type SafeFnOnComplete<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
   in out TInputSchema extends SafeFnInput,
   in out TMergedInputSchema extends SafeFnInput,
@@ -955,7 +917,6 @@ export type SafeFnOnComplete<
   in out TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
 > = (
   args: SafeFnOnCompleteArgs<
-    TParent,
     TCtx,
     TInputSchema,
     TMergedInputSchema,

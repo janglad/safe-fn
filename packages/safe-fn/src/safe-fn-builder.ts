@@ -25,7 +25,6 @@ import type {
 } from "./types";
 
 export class SafeFnBuilder<
-  TParent extends AnyRunnableSafeFn | undefined,
   TCtx,
   TInputSchema extends SafeFnInput,
   TMergedInputSchema extends SafeFnInput,
@@ -34,7 +33,6 @@ export class SafeFnBuilder<
   TParentErr extends ErrorObj | undefined,
 > {
   readonly _internals: SafeFnInternals<
-    TParent,
     TCtx,
     TInputSchema,
     TMergedInputSchema,
@@ -44,7 +42,6 @@ export class SafeFnBuilder<
 
   protected constructor(
     internals: SafeFnInternals<
-      TParent,
       TCtx,
       TInputSchema,
       TMergedInputSchema,
@@ -65,7 +62,6 @@ export class SafeFnBuilder<
   static new<TNewParent extends AnyRunnableSafeFn | undefined = undefined>(
     parent?: TNewParent,
   ): SafeFnBuilder<
-    TNewParent,
     TNewParent extends AnyRunnableSafeFn
       ? InferSafeFnOkData<TNewParent>
       : undefined,
@@ -104,7 +100,6 @@ export class SafeFnBuilder<
     schema: TNewInputSchema,
   ): Omit<
     SafeFnBuilder<
-      TParent,
       TCtx,
       TNewInputSchema,
       MergeZodTypes<TMergedInputSchema, TNewInputSchema>,
@@ -123,7 +118,6 @@ export class SafeFnBuilder<
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
   unparsedInput<TNewUnparsedInput>(): Omit<
     SafeFnBuilder<
-      TParent,
       TCtx,
       TInputSchema,
       TMergedInputSchema,
@@ -134,7 +128,6 @@ export class SafeFnBuilder<
     "input" | "unparsedInput"
   > {
     return this as unknown as SafeFnBuilder<
-      TParent,
       TCtx,
       TInputSchema,
       TMergedInputSchema,
@@ -148,7 +141,6 @@ export class SafeFnBuilder<
     schema: TNewOutputSchema,
   ): Omit<
     SafeFnBuilder<
-      TParent,
       TCtx,
       TInputSchema,
       TMergedInputSchema,
@@ -171,7 +163,6 @@ export class SafeFnBuilder<
       >,
     ) => TNewHandlerResult,
   ): RunnableSafeFn<
-    TParent,
     TCtx,
     TInputSchema,
     TMergedInputSchema,
@@ -208,7 +199,6 @@ export class SafeFnBuilder<
       >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): RunnableSafeFn<
-    TParent,
     TCtx,
     TInputSchema,
     TMergedInputSchema,
