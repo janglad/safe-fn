@@ -10,6 +10,11 @@ import type {
 } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
 
+export type ErrorObj = {
+  action: unknown;
+  regular: unknown;
+};
+
 /*
 ################################
 ||                            ||
@@ -46,8 +51,8 @@ export interface SafeFnInternals<
 
 // Never union is kinda dirty but needed for now.
 export type AnyRunnableSafeFn =
-  | RunnableSafeFn<any, any, any, any, any, any, any, any>
-  | RunnableSafeFn<any, any, any, any, any, never, any, any>;
+  | RunnableSafeFn<any, any, any, any, any, any, any, any, any>
+  | RunnableSafeFn<any, any, any, any, any, never, any, any, any>;
 
 /*
 ################################
@@ -119,6 +124,7 @@ export type InferInputSchema<T> =
     any,
     any,
     any,
+    any,
     any
   >
     ? TInputSchema
@@ -139,6 +145,7 @@ export type InferOutputSchema<T> =
     infer TOutputSchema,
     any,
     any,
+    any,
     any
   >
     ? TOutputSchema
@@ -150,7 +157,17 @@ export type InferOutputSchema<T> =
  * @returns the unparsed input of the safe function
  */
 export type InferUnparsedInput<T> =
-  T extends RunnableSafeFn<any, any, any, any, any, infer TUnparsed, any, any>
+  T extends RunnableSafeFn<
+    any,
+    any,
+    any,
+    any,
+    any,
+    infer TUnparsed,
+    any,
+    any,
+    any
+  >
     ? TUnparsed
     : never;
 
@@ -424,6 +441,7 @@ export type SafeFnReturnError<
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
+  TParentErr extends ErrorObj | undefined,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
 > =
@@ -462,6 +480,7 @@ export type SafeFnReturn<
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TParentErr extends ErrorObj | undefined,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   in out TAsAction extends boolean,
 > = ResultAsync<
@@ -472,6 +491,7 @@ export type SafeFnReturn<
       TInputSchema,
       TOutputSchema,
       Awaited<THandlerRes>,
+      TParentErr,
       TCatchHandlerRes,
       TAsAction
     >
@@ -485,6 +505,7 @@ export type SafeFnInternalRunReturn<
   TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
   THandlerRes extends AnySafeFnHandlerRes,
+  TParentErr extends ErrorObj | undefined,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
   TAsProcedure extends boolean,
@@ -494,6 +515,7 @@ export type SafeFnInternalRunReturn<
     TInputSchema,
     TOutputSchema,
     THandlerRes,
+    TParentErr,
     TCatchHandlerRes,
     TAsAction
   > extends infer HandlerRes
@@ -516,6 +538,7 @@ export type SafeFnSuperInternalRunReturn<
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TParentErr extends ErrorObj | undefined,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   in out TAsAction extends boolean,
 > =
@@ -524,6 +547,7 @@ export type SafeFnSuperInternalRunReturn<
     TInputSchema,
     TOutputSchema,
     THandlerRes,
+    TParentErr,
     TCatchHandlerRes,
     TAsAction
   > extends infer HandlerRes
@@ -552,6 +576,7 @@ export type SafeFnSuperInternalRunReturnData<
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TParentErr extends ErrorObj | undefined,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   in out TAsAction extends boolean,
 > = {
@@ -561,6 +586,7 @@ export type SafeFnSuperInternalRunReturnData<
       TInputSchema,
       TOutputSchema,
       THandlerRes,
+      TParentErr,
       TCatchHandlerRes,
       TAsAction
     >
@@ -577,6 +603,7 @@ export type SafeFnSuperInternalRunReturnError<
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TParentErr extends ErrorObj | undefined,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   in out TAsAction extends boolean,
 > = {
@@ -586,6 +613,7 @@ export type SafeFnSuperInternalRunReturnError<
       TInputSchema,
       TOutputSchema,
       THandlerRes,
+      TParentErr,
       TCatchHandlerRes,
       TAsAction
     >
@@ -606,7 +634,7 @@ export type SafeFnSuperInternalRunReturnError<
 ################################
 */
 
-export type AnySafeFnAction = SafeFnAction<any, any, any, any, any, any>;
+export type AnySafeFnAction = SafeFnAction<any, any, any, any, any, any, any>;
 
 /**
  * @param T the action created through `createAction()`
@@ -647,6 +675,7 @@ export type SafeFnActionReturn<
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TParentErr extends ErrorObj | undefined,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = ResultAsyncToPromiseActionResult<
   SafeFnReturn<
@@ -654,6 +683,7 @@ export type SafeFnActionReturn<
     TInputSchema,
     TOutputSchema,
     THandlerRes,
+    TParentErr,
     TCatchHandlerRes,
     true
   >
@@ -664,6 +694,7 @@ export type SafeFnAction<
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TParentErr extends ErrorObj | undefined,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = (
   ...args: SafeFnActionArgs<TUnparsedInput>
@@ -672,6 +703,7 @@ export type SafeFnAction<
   TInputSchema,
   TOutputSchema,
   THandlerRes,
+  TParentErr,
   TCatchHandlerRes
 >;
 
@@ -694,6 +726,7 @@ export type InferSafeFnCallbacks<T> =
     infer TOutputSchema,
     infer TUnparsedInput,
     infer THandlerRes,
+    infer TParentErr,
     infer TCatchHandlerRes
   >
     ? SafeFnCallBacks<
@@ -704,6 +737,7 @@ export type InferSafeFnCallbacks<T> =
         TOutputSchema,
         TUnparsedInput,
         THandlerRes,
+        TParentErr,
         TCatchHandlerRes
       >
     : never;
@@ -716,6 +750,7 @@ export type SafeFnCallBacks<
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TParentErr extends ErrorObj | undefined,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = {
   onStart: SafeFnOnStart<TUnparsedInput> | undefined;
@@ -738,6 +773,7 @@ export type SafeFnCallBacks<
         TMergedInputSchema,
         TUnparsedInput,
         THandlerRes,
+        TParentErr,
         TCatchHandlerRes
       >
     | undefined;
@@ -750,6 +786,7 @@ export type SafeFnCallBacks<
         TOutputSchema,
         TUnparsedInput,
         THandlerRes,
+        TParentErr,
         TCatchHandlerRes
       >
     | undefined;
@@ -799,6 +836,7 @@ export type SafeFnOnErrorArgs<
   TMergedInputSchema extends SafeFnInput,
   TUnparsedInput,
   THandlerRes extends AnySafeFnHandlerRes,
+  TParentErr extends ErrorObj | undefined,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = Prettify<
   ToOptionalSafeFnArgs<
@@ -812,6 +850,7 @@ export type SafeFnOnErrorArgs<
             TInputSchema,
             undefined,
             Awaited<THandlerRes>,
+            TParentErr,
             TCatchHandlerRes,
             true
           >;
@@ -823,6 +862,7 @@ export type SafeFnOnErrorArgs<
             TInputSchema,
             undefined,
             Awaited<THandlerRes>,
+            TParentErr,
             TCatchHandlerRes,
             false
           >;
@@ -837,6 +877,7 @@ export type SafeFnOnError<
   in out TMergedInputSchema extends SafeFnInput,
   in out TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TParentErr extends ErrorObj | undefined,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = (
   args: SafeFnOnErrorArgs<
@@ -846,6 +887,7 @@ export type SafeFnOnError<
     TMergedInputSchema,
     TUnparsedInput,
     THandlerRes,
+    TParentErr,
     TCatchHandlerRes
   >,
 ) => Promise<void>;
@@ -858,6 +900,7 @@ export type SafeFnOnCompleteArgs<
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
   THandlerRes extends AnySafeFnHandlerRes,
+  TParentErr extends ErrorObj | undefined,
   TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
 > = Prettify<
   | ({
@@ -869,6 +912,7 @@ export type SafeFnOnCompleteArgs<
           TInputSchema,
           undefined,
           Awaited<THandlerRes>,
+          TParentErr,
           TThrownHandlerRes,
           true
         >
@@ -885,6 +929,7 @@ export type SafeFnOnCompleteArgs<
           TInputSchema,
           undefined,
           Awaited<THandlerRes>,
+          TParentErr,
           TThrownHandlerRes,
           false
         >
@@ -906,6 +951,7 @@ export type SafeFnOnComplete<
   in out TOutputSchema extends SafeFnInput,
   in out TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TParentErr extends ErrorObj | undefined,
   in out TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
 > = (
   args: SafeFnOnCompleteArgs<
@@ -916,6 +962,7 @@ export type SafeFnOnComplete<
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
+    TParentErr,
     TThrownHandlerRes
   >,
 ) => Promise<void>;

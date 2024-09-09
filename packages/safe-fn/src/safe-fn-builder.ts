@@ -5,7 +5,9 @@ import type { MergeResults } from "./result";
 import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
+  ErrorObj,
   InferInputSchema,
+  InferSafeFnErrError,
   InferSafeFnOkData,
   InferUnparsedInput,
   MergeZodTypes,
@@ -29,6 +31,7 @@ export class SafeFnBuilder<
   TMergedInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
+  TParentErr extends ErrorObj | undefined,
 > {
   readonly _internals: SafeFnInternals<
     TParent,
@@ -69,7 +72,13 @@ export class SafeFnBuilder<
     undefined,
     TOrFallback<InferInputSchema<TNewParent>, undefined>,
     undefined,
-    InferUnparsedInput<TNewParent>
+    InferUnparsedInput<TNewParent>,
+    TNewParent extends AnyRunnableSafeFn
+      ? {
+          action: InferSafeFnErrError<TNewParent, true>;
+          regular: InferSafeFnErrError<TNewParent, false>;
+        }
+      : undefined
   > {
     return new SafeFnBuilder({
       parent,
@@ -100,7 +109,8 @@ export class SafeFnBuilder<
       TNewInputSchema,
       MergeZodTypes<TMergedInputSchema, TNewInputSchema>,
       TOutputSchema,
-      UnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>
+      UnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>,
+      TParentErr
     >,
     "input" | "unparsedInput"
   > {
@@ -118,7 +128,8 @@ export class SafeFnBuilder<
       TInputSchema,
       TMergedInputSchema,
       TOutputSchema,
-      UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
+      UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>,
+      TParentErr
     >,
     "input" | "unparsedInput"
   > {
@@ -128,7 +139,8 @@ export class SafeFnBuilder<
       TInputSchema,
       TMergedInputSchema,
       TOutputSchema,
-      UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
+      UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>,
+      TParentErr
     >;
   }
 
@@ -141,7 +153,8 @@ export class SafeFnBuilder<
       TInputSchema,
       TMergedInputSchema,
       TNewOutputSchema,
-      TUnparsedInput
+      TUnparsedInput,
+      TParentErr
     >,
     "output"
   > {
@@ -165,6 +178,7 @@ export class SafeFnBuilder<
     TOutputSchema,
     TUnparsedInput,
     TNewHandlerResult,
+    TParentErr,
     SafeFnDefaultCatchHandlerErr
   > {
     return new RunnableSafeFn(
@@ -204,6 +218,7 @@ export class SafeFnBuilder<
     [YieldErr] extends [never]
       ? GeneratorResult
       : MergeResults<GeneratorResult, YieldErr>,
+    TParentErr,
     SafeFnDefaultCatchHandlerErr
   > {
     const handler = async (

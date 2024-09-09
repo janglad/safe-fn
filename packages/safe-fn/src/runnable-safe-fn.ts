@@ -5,6 +5,7 @@ import type {
   AnyRunnableSafeFn,
   AnySafeFnCatchHandlerRes,
   AnySafeFnHandlerRes,
+  ErrorObj,
   SafeFnAction,
   SafeFnActionArgs,
   SafeFnActionReturn,
@@ -43,6 +44,7 @@ export class RunnableSafeFn<
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
   THandlerRes extends AnySafeFnHandlerRes,
+  TParentErr extends ErrorObj | undefined,
   TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
 > {
   readonly _internals: SafeFnInternals<
@@ -62,6 +64,7 @@ export class RunnableSafeFn<
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
+    TParentErr,
     TThrownHandlerRes
   >;
 
@@ -82,6 +85,7 @@ export class RunnableSafeFn<
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
+      TParentErr,
       TThrownHandlerRes
     >,
   ) {
@@ -95,6 +99,7 @@ export class RunnableSafeFn<
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
+    TParentErr,
     TThrownHandlerRes
   > {
     // TODO: strip stack traces etc here
@@ -119,6 +124,7 @@ export class RunnableSafeFn<
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
+    TParentErr,
     TNewThrownHandlerRes
   > {
     return new RunnableSafeFn(
@@ -134,6 +140,7 @@ export class RunnableSafeFn<
         TOutputSchema,
         TUnparsedInput,
         THandlerRes,
+        TParentErr,
         TNewThrownHandlerRes
       >,
     );
@@ -169,6 +176,7 @@ export class RunnableSafeFn<
       TMergedInputSchema,
       TUnparsedInput,
       THandlerRes,
+      TParentErr,
       TThrownHandlerRes
     >,
   ) {
@@ -186,6 +194,7 @@ export class RunnableSafeFn<
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
+      TParentErr,
       TThrownHandlerRes
     >,
   ) {
@@ -209,6 +218,7 @@ export class RunnableSafeFn<
     TInputSchema,
     TOutputSchema,
     THandlerRes,
+    TParentErr,
     TThrownHandlerRes,
     false
   > {
@@ -217,6 +227,7 @@ export class RunnableSafeFn<
       TInputSchema,
       TOutputSchema,
       THandlerRes,
+      TParentErr,
       TThrownHandlerRes,
       false
     >;
@@ -307,6 +318,7 @@ export class RunnableSafeFn<
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
+    TParentErr,
     TThrownHandlerRes,
     TAsAction,
     TAsProcedure
@@ -336,6 +348,7 @@ export class RunnableSafeFn<
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
+      TParentErr,
       TThrownHandlerRes,
       TAsAction
     >;
@@ -346,6 +359,7 @@ export class RunnableSafeFn<
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
+      TParentErr,
       TThrownHandlerRes,
       TAsAction
     >;
@@ -450,6 +464,7 @@ export class RunnableSafeFn<
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
+      TParentErr,
       TThrownHandlerRes,
       TAsAction
     > = ResultAsync.fromPromise(safeTryPromise, (error) => {
@@ -503,6 +518,7 @@ export class RunnableSafeFn<
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
+      TParentErr,
       TThrownHandlerRes,
       TAsAction,
       TAsProcedure
@@ -516,6 +532,7 @@ export class RunnableSafeFn<
     TInputSchema,
     TOutputSchema,
     THandlerRes,
+    TParentErr,
     TThrownHandlerRes
   > {
     const res = await (this._run(args[0], true, false) as SafeFnReturn<
@@ -523,6 +540,7 @@ export class RunnableSafeFn<
       TInputSchema,
       TOutputSchema,
       THandlerRes,
+      TParentErr,
       TThrownHandlerRes,
       true
     >);
@@ -534,6 +552,7 @@ export class RunnableSafeFn<
           TInputSchema,
           TOutputSchema,
           THandlerRes,
+          TParentErr,
           TThrownHandlerRes
         >
       >;
@@ -544,6 +563,7 @@ export class RunnableSafeFn<
         TInputSchema,
         TOutputSchema,
         THandlerRes,
+        TParentErr,
         TThrownHandlerRes
       >
     >;

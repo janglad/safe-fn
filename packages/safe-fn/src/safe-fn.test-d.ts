@@ -2,7 +2,6 @@ import { Err, err, Ok, ok, type Result } from "neverthrow";
 import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 import { type ActionResult } from "./result";
-import type { RunnableSafeFn } from "./runnable-safe-fn";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   Prettify,
@@ -162,20 +161,6 @@ describe("SafeFnBuilder", () => {
         });
         const parent = safeFnTransformedInput.handler(() => ok(""));
         const child = SafeFnBuilder.new(parent).input(input2);
-
-        type InferMergedInput<T> =
-          T extends RunnableSafeFn<
-            any,
-            any,
-            any,
-            infer TMergedInputSchema,
-            any,
-            any,
-            any,
-            any
-          >
-            ? TMergedInputSchema
-            : never;
 
         type ExpectedUnparsedInput = Prettify<
           SchemaTransformedInput & z.input<typeof input2>

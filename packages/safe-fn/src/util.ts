@@ -4,6 +4,7 @@ import type {
   AnyRunnableSafeFn,
   AnySafeFnCatchHandlerRes,
   AnySafeFnHandlerRes,
+  ErrorObj,
   SafeFnCallBacks,
   SafeFnInput,
   SafeFnOnCompleteArgs,
@@ -42,6 +43,7 @@ export const runCallbacks = <
   TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
   THandlerRes extends AnySafeFnHandlerRes,
+  TParentErr extends ErrorObj | undefined,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
   TRes extends SafeFnSuperInternalRunReturn<
@@ -51,6 +53,7 @@ export const runCallbacks = <
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
+    TParentErr,
     TCatchHandlerRes,
     NoInfer<TAsAction>
   > = SafeFnSuperInternalRunReturn<
@@ -60,6 +63,7 @@ export const runCallbacks = <
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
+    TParentErr,
     TCatchHandlerRes,
     NoInfer<TAsAction>
   >,
@@ -75,6 +79,7 @@ export const runCallbacks = <
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
+    TParentErr,
     TCatchHandlerRes
   >;
   hotOnStartCallback: ResultAsync<void, void> | undefined;
@@ -121,6 +126,7 @@ export const runCallbacks = <
         TMergedInputSchema,
         TUnparsedInput,
         THandlerRes,
+        TParentErr,
         TCatchHandlerRes
       >);
       callbackPromises.push(onErrorPromise);
@@ -153,6 +159,7 @@ export const runCallbacks = <
         TOutputSchema,
         TUnparsedInput,
         THandlerRes,
+        TParentErr,
         TCatchHandlerRes
       >);
       callbackPromises.push(onCompletePromise);
