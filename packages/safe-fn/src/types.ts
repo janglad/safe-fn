@@ -764,11 +764,9 @@ export type SafeFnCallBacks<
       >
     | undefined;
 };
-export type SafeFnOnStart<TUnparsedInput> = (
-  args: Prettify<{
-    unsafeRawInput: TUnparsedInput;
-  }>,
-) => Promise<void>;
+export type SafeFnOnStart<TUnparsedInput> = (args: {
+  unsafeRawInput: Prettify<TUnparsedInput>;
+}) => Promise<void>;
 
 export type SafeFnOnSuccessArgs<
   TParent extends AnyRunnableSafeFn | undefined,

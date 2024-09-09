@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "neverthrow";
+import { Err, err, Ok, ok, type Result } from "neverthrow";
 import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 import { type ActionResult } from "./result";
@@ -953,6 +953,192 @@ describe("runnableSafeFn", () => {
               cause: z.ZodError<SchemaTransformedInput>;
             }
         >();
+      });
+    });
+
+    describe("callbacks", () => {
+      const safeFn = SafeFnBuilder.new()
+        .input(schemaTransformed)
+        .handler(() => ok("hello" as const));
+      const childSchema = z.object({ child: z.string() });
+      type ChildSchemaInput = z.input<typeof childSchema>;
+      const child = SafeFnBuilder.new(safeFn)
+        .input(childSchema)
+        .handler(() => ok("world" as const));
+
+      test("onStart", () => {
+        type OnStartArgs = Parameters<Parameters<typeof child.onStart>[0]>[0];
+
+        type ExpectedUnsafeRawInput = Prettify<
+          SchemaTransformedInput & { child: string }
+        >;
+
+        type ExpectedArgs = Prettify<{
+          unsafeRawInput: ExpectedUnsafeRawInput;
+        }>;
+
+        expectTypeOf<OnStartArgs>().toEqualTypeOf<ExpectedArgs>();
+      });
+
+      test("onError", () => {
+        type OnErrorArgs = Parameters<Parameters<typeof child.onError>[0]>[0];
+
+        type UnsafeRawInput = Prettify<
+          SchemaTransformedInput & { child: string }
+        >;
+
+        type ExpectedInput =
+          | Prettify<SchemaTransformedOutput & { child: string }>
+          | undefined;
+        type ExpectedCtx = "hello" | undefined;
+        type ExpectedRunErrError =
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: z.ZodError<SchemaTransformedInput>;
+            }
+          | {
+              code: "INPUT_PARSING";
+              cause: z.ZodError<ChildSchemaInput>;
+            };
+
+        type ExpectedActionErrError =
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: {
+                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
+                flattenedError: z.typeToFlattenedError<
+                  SchemaTransformedInput,
+                  string
+                >;
+              };
+            }
+          | {
+              code: "INPUT_PARSING";
+              cause: {
+                formattedError: z.ZodFormattedError<ChildSchemaInput>;
+                flattenedError: z.typeToFlattenedError<
+                  ChildSchemaInput,
+                  string
+                >;
+              };
+            };
+        type ExpectedArgs = Prettify<
+          | {
+              asAction: true;
+              error: ExpectedActionErrError;
+              input: ExpectedInput;
+              ctx: ExpectedCtx;
+              unsafeRawInput: UnsafeRawInput;
+            }
+          | {
+              asAction: false;
+              error: ExpectedRunErrError;
+              input: ExpectedInput;
+              ctx: ExpectedCtx;
+              unsafeRawInput: UnsafeRawInput;
+            }
+        >;
+
+        expectTypeOf<OnErrorArgs>().toEqualTypeOf<ExpectedArgs>();
+      });
+
+      test("onSuccess", () => {
+        type OnSuccessArgs = Parameters<
+          Parameters<typeof child.onSuccess>[0]
+        >[0];
+
+        type ExpectedUnsafeRawInput = Prettify<
+          SchemaTransformedInput & { child: string }
+        >;
+        type ExpectedInput = Prettify<
+          SchemaTransformedOutput & { child: string }
+        >;
+        type ExpectedCtx = "hello";
+        type ExpectedOkData = "world";
+
+        type ExpectedArgs = Prettify<{
+          unsafeRawInput: ExpectedUnsafeRawInput;
+          input: ExpectedInput;
+          ctx: ExpectedCtx;
+          value: ExpectedOkData;
+        }>;
+
+        expectTypeOf<OnSuccessArgs>().toMatchTypeOf<ExpectedArgs>();
+      });
+
+      test("onComplete", () => {
+        type OnCompleteArgs = Parameters<
+          Parameters<typeof child.onComplete>[0]
+        >[0];
+
+        type ExpectedUnsafeRawInput = Prettify<
+          SchemaTransformedInput & { child: string }
+        >;
+        type ExpectedInput = Prettify<
+          SchemaTransformedOutput & { child: string }
+        >;
+        type ExpectedCtx = "hello";
+        type ExpectedOkData = "world";
+        type ExpectedRunErrError =
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: z.ZodError<SchemaTransformedInput>;
+            }
+          | {
+              code: "INPUT_PARSING";
+              cause: z.ZodError<ChildSchemaInput>;
+            };
+
+        type ExpectedActionErrError =
+          | SafeFnDefaultCatchHandlerErr["error"]
+          | {
+              code: "INPUT_PARSING";
+              cause: {
+                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
+                flattenedError: z.typeToFlattenedError<
+                  SchemaTransformedInput,
+                  string
+                >;
+              };
+            }
+          | {
+              code: "INPUT_PARSING";
+              cause: {
+                formattedError: z.ZodFormattedError<ChildSchemaInput>;
+                flattenedError: z.typeToFlattenedError<
+                  ChildSchemaInput,
+                  string
+                >;
+              };
+            };
+
+        type ExpectedArgs = Prettify<
+          | {
+              asAction: boolean;
+              unsafeRawInput: ExpectedUnsafeRawInput;
+              input: ExpectedInput;
+              ctx: ExpectedCtx;
+              result: Ok<ExpectedOkData, never>;
+            }
+          | {
+              asAction: true;
+              unsafeRawInput: ExpectedUnsafeRawInput;
+              input: ExpectedInput | undefined;
+              ctx: ExpectedCtx | undefined;
+              result: Err<never, ExpectedActionErrError>;
+            }
+          | {
+              asAction: false;
+              unsafeRawInput: ExpectedUnsafeRawInput;
+              input: ExpectedInput | undefined;
+              ctx: ExpectedCtx | undefined;
+              result: Err<never, ExpectedRunErrError>;
+            }
+        >;
+        expectTypeOf<ExpectedArgs>().toEqualTypeOf<OnCompleteArgs>();
       });
     });
   });
