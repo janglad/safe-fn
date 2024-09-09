@@ -2,7 +2,6 @@ import { Err, err, Ok, ok, type Result } from "neverthrow";
 import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 import { type ActionResult } from "./result";
-import type { RunnableSafeFn } from "./runnable-safe-fn";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   Prettify,
@@ -161,12 +160,6 @@ describe("SafeFnBuilder", () => {
           properties: z.array(z.number()),
         });
         const parent = safeFnTransformedInput.handler(() => ok(""));
-
-        type InferCtx<T> =
-          T extends RunnableSafeFn<any, infer TCtx, any, any, any, any, any>
-            ? TCtx
-            : never;
-
         const child = SafeFnBuilder.new(parent).input(input2);
 
         type ExpectedUnparsedInput = Prettify<

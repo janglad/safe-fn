@@ -5,8 +5,10 @@ import type { MergeResults } from "./result";
 import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
+  InferInputSchema,
   InferSafeFnOkData,
   InferUnparsedInput,
+  MergeZodTypes,
   Prettify,
   SafeFnDefaultCatchHandler,
   SafeFnDefaultCatchHandlerErr,
@@ -23,6 +25,7 @@ export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
   TCtx,
   TInputSchema extends SafeFnInput,
+  TMergedInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
 > {
@@ -61,6 +64,7 @@ export class SafeFnBuilder<
       ? InferSafeFnOkData<TNewParent>
       : undefined,
     undefined,
+    InferInputSchema<TNewParent>,
     undefined,
     InferUnparsedInput<TNewParent>
   > {
@@ -91,6 +95,7 @@ export class SafeFnBuilder<
       TParent,
       TCtx,
       TNewInputSchema,
+      MergeZodTypes<TMergedInputSchema, TNewInputSchema>,
       TOutputSchema,
       UnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>
     >,
@@ -108,6 +113,7 @@ export class SafeFnBuilder<
       TParent,
       TCtx,
       TInputSchema,
+      TMergedInputSchema,
       TOutputSchema,
       UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
     >,
@@ -117,6 +123,7 @@ export class SafeFnBuilder<
       TParent,
       TCtx,
       TInputSchema,
+      TMergedInputSchema,
       TOutputSchema,
       UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
     >;
@@ -129,6 +136,7 @@ export class SafeFnBuilder<
       TParent,
       TCtx,
       TInputSchema,
+      TMergedInputSchema,
       TNewOutputSchema,
       TUnparsedInput
     >,
@@ -150,6 +158,7 @@ export class SafeFnBuilder<
     TParent,
     TCtx,
     TInputSchema,
+    TMergedInputSchema,
     TOutputSchema,
     TUnparsedInput,
     TNewHandlerResult,
@@ -185,6 +194,7 @@ export class SafeFnBuilder<
     TParent,
     TCtx,
     TInputSchema,
+    TMergedInputSchema,
     TOutputSchema,
     TUnparsedInput,
     // YieldErr can be never if the generator never yields an error, [] cause distribution

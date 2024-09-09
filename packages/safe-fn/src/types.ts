@@ -1,5 +1,6 @@
 import type { Err, Ok, Result, ResultAsync } from "neverthrow";
-import type { z, ZodFormattedError, ZodTypeAny } from "zod";
+import type { ZodFormattedError, ZodTypeAny } from "zod";
+import { z } from "zod";
 import type {
   InferActionErrError,
   InferActionOkData,
@@ -45,8 +46,8 @@ export type SafeFnInternals<
 
 // Never union is kinda dirty but needed for now.
 export type AnyRunnableSafeFn =
-  | RunnableSafeFn<any, any, any, any, any, any, any>
-  | RunnableSafeFn<any, any, any, any, never, any, any>;
+  | RunnableSafeFn<any, any, any, any, any, any, any, any>
+  | RunnableSafeFn<any, any, any, any, any, never, any, any>;
 
 /*
 ################################
@@ -96,6 +97,13 @@ export type SafeFnInput = z.ZodTypeAny | undefined;
  */
 export type SafeFnOutput = z.ZodTypeAny | undefined;
 
+export type MergeZodTypes<T, U> =
+  T extends z.ZodType<infer In1, TODO, infer Out1>
+    ? U extends z.ZodType<infer In2, TODO, infer Out2>
+      ? z.ZodType<Prettify<In1 & In2>, TODO, Prettify<Out1 & Out2>>
+      : never
+    : never;
+
 /**
  * Infer the input schema of a runnable safe function.
  * @param T the runnable safe function
@@ -120,7 +128,7 @@ export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
  * @returns the unparsed input of the safe function
  */
 export type InferUnparsedInput<T> =
-  T extends RunnableSafeFn<any, any, any, any, infer TUnparsed, any, any>
+  T extends RunnableSafeFn<any, any, any, any, any, infer TUnparsed, any, any>
     ? TUnparsed
     : never;
 
@@ -704,6 +712,7 @@ export type InferSafeFnCallbacks<T> =
     infer TParent,
     infer TCtx,
     infer TInputSchema,
+    infer TMergedInputSchema,
     infer TOutputSchema,
     infer TUnparsedInput,
     infer THandlerRes,
