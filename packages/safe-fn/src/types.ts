@@ -1,4 +1,4 @@
-import type { Err, Result, ResultAsync } from "neverthrow";
+import type { Err, Ok, Result, ResultAsync } from "neverthrow";
 import type { z, ZodFormattedError, ZodTypeAny } from "zod";
 import type {
   InferActionErrError,
@@ -705,6 +705,8 @@ export type SafeFnAction<
 ################################
 */
 
+// TODO: issue with approach of passing TParent is really starting to show here. Redo this.
+
 export type InferSafeFnCallbacks<T> =
   T extends RunnableSafeFn<
     infer TParent,
@@ -795,6 +797,11 @@ export type SafeFnOnSuccess<
   >,
 ) => Promise<void>;
 
+// Temporary, will be fixed when I fix types in general
+type ToOptionalSafeFnArgs<T extends Record<PropertyKey, unknown>> = {
+  [K in keyof T]: K extends "unsafeRawInput" ? T[K] : T[K] | undefined;
+};
+
 export type SafeFnOnErrorArgs<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,
@@ -802,7 +809,9 @@ export type SafeFnOnErrorArgs<
   THandlerRes extends AnySafeFnHandlerRes,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = Prettify<
-  SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> &
+  ToOptionalSafeFnArgs<
+    SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+  > &
     (
       | {
           asAction: true;
@@ -853,35 +862,42 @@ export type SafeFnOnCompleteArgs<
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
 > = Prettify<
-  SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> &
-    (
-      | {
-          asAction: true;
-          result: Awaited<
-            SafeFnReturn<
-              TParent,
-              TInputSchema,
-              TOutputSchema,
-              THandlerRes,
-              TThrownHandlerRes,
-              true
-            >
-          >;
-        }
-      | {
-          asAction: false;
-          result: Awaited<
-            SafeFnReturn<
-              TParent,
-              TInputSchema,
-              TOutputSchema,
-              THandlerRes,
-              TThrownHandlerRes,
-              false
-            >
-          >;
-        }
-    )
+  | ({
+      asAction: true;
+      result: Err<
+        never,
+        SafeFnReturnError<
+          TParent,
+          TInputSchema,
+          undefined,
+          Awaited<THandlerRes>,
+          TThrownHandlerRes,
+          true
+        >
+      >;
+    } & ToOptionalSafeFnArgs<
+      SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+    >)
+  | ({
+      asAction: false;
+      result: Err<
+        never,
+        SafeFnReturnError<
+          TParent,
+          TInputSchema,
+          undefined,
+          Awaited<THandlerRes>,
+          TThrownHandlerRes,
+          false
+        >
+      >;
+    } & ToOptionalSafeFnArgs<
+      SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+    >)
+  | ({
+      asAction: boolean;
+      result: Ok<SafeFnReturnData<TOutputSchema, THandlerRes>, never>;
+    } & SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>)
 >;
 
 export type SafeFnOnComplete<
