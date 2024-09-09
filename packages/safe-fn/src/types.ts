@@ -289,7 +289,7 @@ type SafeFnHandlerArgsWParent<
       : Prettify<Merged>
     : never;
 
-  ctx: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
+  ctx: TOrFallback<InferSafeFnOkData<TParent>, undefined>;
 };
 
 type SafeFnHandlerArgsNoParent<
@@ -384,12 +384,9 @@ export type InferSafeFnReturn<
  * @param T the runnable safe function
  * @returns the `.value` type of the returned `AsyncResult` assuming it's an `AsyncOk`.
  */
-export type InferSafeFnOkData<
-  T extends AnyRunnableSafeFn,
-  TAsAction extends boolean,
-> = TAsAction extends true
-  ? InferActionOkData<Awaited<InferSafeFnReturn<T, TAsAction>>>
-  : InferAsyncOkData<InferSafeFnReturn<T, TAsAction>>;
+export type InferSafeFnOkData<T extends AnyRunnableSafeFn> = InferAsyncOkData<
+  InferSafeFnReturn<T, boolean>
+>;
 
 /**
  * @param T the runnable safe function
@@ -514,7 +511,7 @@ export type SafeFnInternalRunReturn<
             result: InferAsyncOkData<HandlerRes>;
             input: SchemaOutputOrFallback<TInputSchema, undefined>;
             ctx: TParent extends AnyRunnableSafeFn
-              ? InferSafeFnOkData<TParent, TAsAction>
+              ? InferSafeFnOkData<TParent>
               : undefined;
           },
           InferAsyncErrError<HandlerRes>
@@ -544,7 +541,7 @@ export type SafeFnSuperInternalRunReturn<
           result: InferAsyncOkData<HandlerRes>;
           input: SchemaOutputOrFallback<TInputSchema, undefined>;
           ctx: TParent extends AnyRunnableSafeFn
-            ? InferSafeFnOkData<TParent, TAsAction>
+            ? InferSafeFnOkData<TParent>
             : undefined;
           unsafeRawInput: TUnparsedInput;
         },
@@ -554,7 +551,7 @@ export type SafeFnSuperInternalRunReturn<
             input: SchemaInputOrFallback<TInputSchema, undefined> | undefined;
             ctx:
               | (TParent extends AnyRunnableSafeFn
-                  ? InferSafeFnOkData<TParent, TAsAction>
+                  ? InferSafeFnOkData<TParent>
                   : undefined)
               | undefined;
             unsafeRawInput: TUnparsedInput;
@@ -584,7 +581,7 @@ export type SafeFnSuperInternalRunReturnData<
   >;
   input: SchemaOutputOrFallback<TInputSchema, undefined>;
   ctx: TParent extends AnyRunnableSafeFn
-    ? InferSafeFnOkData<TParent, TAsAction>
+    ? InferSafeFnOkData<TParent>
     : undefined;
   unsafeRawInput: TUnparsedInput;
 };
@@ -612,7 +609,7 @@ export type SafeFnSuperInternalRunReturnError<
     input: SchemaInputOrFallback<TInputSchema, undefined> | undefined;
     ctx:
       | (TParent extends AnyRunnableSafeFn
-          ? InferSafeFnOkData<TParent, TAsAction>
+          ? InferSafeFnOkData<TParent>
           : undefined)
       | undefined;
     unsafeRawInput: TUnparsedInput;

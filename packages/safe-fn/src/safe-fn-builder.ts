@@ -5,6 +5,7 @@ import type { MergeResults } from "./result";
 import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
+  InferSafeFnOkData,
   InferUnparsedInput,
   Prettify,
   SafeFnDefaultCatchHandler,
@@ -54,7 +55,9 @@ export class SafeFnBuilder<
     parent?: TNewParent,
   ): SafeFnBuilder<
     TNewParent,
-    undefined,
+    TNewParent extends AnyRunnableSafeFn
+      ? InferSafeFnOkData<TNewParent>
+      : undefined,
     undefined,
     undefined,
     InferUnparsedInput<TNewParent>
