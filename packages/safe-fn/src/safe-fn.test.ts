@@ -2,7 +2,7 @@ import { err, ok, type Result } from "neverthrow";
 import { assert, describe, expect, test, vi, type Mock } from "vitest";
 import { z, ZodError } from "zod";
 import { SafeFnBuilder } from "./safe-fn-builder";
-import type { AnyRunnableSafeFn, TODO } from "./types";
+import type { AnyRunnableSafeFn, InferSafeFnCallbacks, TODO } from "./types";
 
 // TODO: this does not belong here
 expect.extend({
@@ -239,7 +239,6 @@ describe("runnable-safe-fn", () => {
           const res = await safeFn.run({ name: "John", lastName: "Doe" });
           expect(res).toBeOk();
           assert(res.isOk());
-          console.log(res.value);
           expect(res.value).toMatchObject({
             unsafeRawInput: {
               name: "John",
@@ -519,6 +518,109 @@ describe("runnable-safe-fn", () => {
         expect(postYieldMock).not.toHaveBeenCalled();
       });
     });
+
+    describe("callbacks", () => {
+      test.only("should run callbacks with right args", async () => {
+        const callbackMocks = {
+          onStart: vi.fn(),
+          onSuccess: vi.fn(),
+          onError: vi.fn(),
+          onComplete: vi.fn(),
+        };
+
+        const parentInputSchema = z.object({ age: z.number() });
+        const parent = SafeFnBuilder.new()
+          .input(parentInputSchema)
+          .handler(() => ok("Parent!" as const));
+
+        const childInputSchema = z.object({ name: z.string() });
+        const safeFn = SafeFnBuilder.new(parent)
+          .input(childInputSchema)
+          .handler(() => ok("Ok!" as const))
+          .onStart(callbackMocks.onStart)
+          .onSuccess(callbackMocks.onSuccess)
+          .onError(callbackMocks.onError)
+          .onComplete(callbackMocks.onComplete);
+
+        const res = await safeFn.run({ name: "John", age: 100 });
+
+        type Callbacks = InferSafeFnCallbacks<typeof safeFn>;
+        type CallbackArgs = {
+          [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
+            args: infer Args,
+          ) => void
+            ? Args
+            : never;
+        };
+
+        expect(callbackMocks.onError).not.toHaveBeenCalled();
+        expect(callbackMocks.onStart).toHaveBeenCalledWith({
+          unsafeRawInput: { name: "John", age: 100 },
+        } satisfies CallbackArgs["onStart"]);
+        expect(callbackMocks.onSuccess).toHaveBeenCalledWith({
+          input: { name: "John", age: 100 },
+          unsafeRawInput: { name: "John", age: 100 },
+          ctx: "Parent!",
+          value: "Ok!",
+        } satisfies CallbackArgs["onSuccess"]);
+        expect(callbackMocks.onComplete).toHaveBeenCalledWith({
+          asAction: false,
+          input: { name: "John", age: 100 },
+          unsafeRawInput: { name: "John", age: 100 },
+          ctx: "Parent!",
+          result: ok("Ok!"),
+        } satisfies CallbackArgs["onComplete"]);
+
+        callbackMocks.onStart.mockClear();
+        callbackMocks.onSuccess.mockClear();
+        callbackMocks.onError.mockClear();
+        callbackMocks.onComplete.mockClear();
+
+        const safeFn2 = SafeFnBuilder.new(parent)
+          .input(childInputSchema)
+          .handler((args) => {
+            return err("Woops!");
+          })
+          .onStart(callbackMocks.onStart)
+          .onSuccess(callbackMocks.onSuccess)
+          .onError(callbackMocks.onError)
+          .onComplete(callbackMocks.onComplete);
+
+        callbackMocks.onStart.mockClear();
+        callbackMocks.onSuccess.mockClear();
+        callbackMocks.onError.mockClear();
+        callbackMocks.onComplete.mockClear();
+
+        const res2 = await safeFn2.run({ name: "John", age: 100 });
+        type Callbacks2 = InferSafeFnCallbacks<typeof safeFn2>;
+        type CallbackArgs2 = {
+          [K in keyof Callbacks2]: Exclude<Callbacks2[K], undefined> extends (
+            args: infer Args,
+          ) => void
+            ? Args
+            : never;
+        };
+
+        expect(callbackMocks.onStart).toHaveBeenCalledWith({
+          unsafeRawInput: { name: "John", age: 100 },
+        } satisfies CallbackArgs2["onStart"]);
+        expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
+        expect(callbackMocks.onError).toHaveBeenCalledWith({
+          asAction: false,
+          error: "Woops!",
+          ctx: "Parent!",
+          input: { name: "John", age: 100 },
+          unsafeRawInput: { name: "John", age: 100 },
+        } satisfies CallbackArgs2["onError"]);
+        expect(callbackMocks.onComplete).toHaveBeenCalledWith({
+          asAction: false,
+          input: { name: "John", age: 100 },
+          unsafeRawInput: { name: "John", age: 100 },
+          ctx: "Parent!",
+          result: err("Woops!"),
+        } satisfies CallbackArgs2["onComplete"]);
+      });
+    });
   });
 
   describe("parent", () => {
@@ -789,7 +891,6 @@ describe("runnable-safe-fn", () => {
           .createAction();
 
         const res2 = await child3();
-        console.log(res2);
         expect(res2.ok).toBe(false);
         assert(!res2.ok);
         expect(res2.error.code).toBe("OUTPUT_PARSING");

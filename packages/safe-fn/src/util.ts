@@ -6,12 +6,12 @@ import type {
   AnySafeFnHandlerRes,
   SafeFnCallBacks,
   SafeFnInput,
-  SafeFnInternalRunReturn,
   SafeFnOnCompleteArgs,
   SafeFnOnErrorArgs,
   SafeFnOnSuccessArgs,
   SafeFnOutput,
   SafeFnParseError,
+  SafeFnSuperInternalRunReturn,
 } from "./types";
 
 const NEXT_JS_ERROR_MESSAGES = ["NEXT_REDIRECT", "NEXT_NOT_FOUND"];
@@ -42,28 +42,27 @@ export const runCallbacks = <
   THandlerRes extends AnySafeFnHandlerRes,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
-  TRes extends SafeFnInternalRunReturn<
+  TRes extends SafeFnSuperInternalRunReturn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
     TCatchHandlerRes,
-    NoInfer<TAsAction>,
-    true
-  > = SafeFnInternalRunReturn<
+    NoInfer<TAsAction>
+  > = SafeFnSuperInternalRunReturn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
     TCatchHandlerRes,
-    NoInfer<TAsAction>,
-    true
+    NoInfer<TAsAction>
   >,
->(
-  resultAsync: TRes,
-  asAction: TAsAction,
+>(args: {
+  resultAsync: TRes;
+  asAction: TAsAction;
+  unsafeRawInput: TUnparsedInput;
   callbacks: SafeFnCallBacks<
     TParent,
     TInputSchema,
@@ -71,19 +70,20 @@ export const runCallbacks = <
     TUnparsedInput,
     THandlerRes,
     TCatchHandlerRes
-  >,
-  hotOnStartCallback: ResultAsync<void, void> | undefined,
-): TRes => {
+  >;
+  hotOnStartCallback: ResultAsync<void, void> | undefined;
+}): TRes => {
   const exec = async () => {
-    const res = await resultAsync;
+    const res = await args.resultAsync;
+
     const callbackPromises: ResultAsync<void, void>[] = [];
-    if (hotOnStartCallback !== undefined) {
-      callbackPromises.push(hotOnStartCallback);
+    if (args.hotOnStartCallback !== undefined) {
+      callbackPromises.push(args.hotOnStartCallback);
     }
 
-    if (res.isOk() && callbacks.onSuccess !== undefined) {
+    if (res.isOk() && args.callbacks.onSuccess !== undefined) {
       const onSuccessPromise = ResultAsync.fromThrowable(
-        callbacks.onSuccess,
+        args.callbacks.onSuccess,
         throwFrameworkErrorOrVoid,
       )({
         unsafeRawInput: res.value.unsafeRawInput,
@@ -98,13 +98,16 @@ export const runCallbacks = <
         THandlerRes
       >);
       callbackPromises.push(onSuccessPromise);
-    } else if (res.isErr() && callbacks.onError !== undefined) {
+    } else if (res.isErr() && args.callbacks.onError !== undefined) {
       const onErrorPromise = ResultAsync.fromThrowable(
-        callbacks.onError,
+        args.callbacks.onError,
         throwFrameworkErrorOrVoid,
       )({
-        asAction,
-        error: res.error,
+        asAction: args.asAction as any,
+        error: res.error.public as any,
+        ctx: res.error.private.ctx,
+        input: res.error.private.input,
+        unsafeRawInput: args.unsafeRawInput,
       } as SafeFnOnErrorArgs<
         TParent,
         TInputSchema,
@@ -115,19 +118,25 @@ export const runCallbacks = <
       callbackPromises.push(onErrorPromise);
     }
 
-    if (callbacks.onComplete !== undefined) {
+    if (args.callbacks.onComplete !== undefined) {
       const onCompletePromise = ResultAsync.fromThrowable(
-        callbacks.onComplete,
+        args.callbacks.onComplete,
         throwFrameworkErrorOrVoid,
       )({
-        // TODO: fix this, only returns if result is ok
-        asAction,
-        result: res.map((res) => res.result),
-        ctx: res.map((res) => res.ctx).unwrapOr(undefined),
-        input: res.map((res) => res.input).unwrapOr(undefined),
-        unsafeRawInput: res
-          .map((res) => res.unsafeRawInput)
-          .unwrapOr(undefined),
+        asAction: args.asAction,
+        result: res.match(
+          (value) => ok(value.result),
+          (error) => err(error.public),
+        ),
+        ctx: res.match(
+          (value) => value.ctx,
+          (err) => err.private.ctx,
+        ),
+        input: res.match(
+          (value) => value.input,
+          (err) => err.private.input,
+        ),
+        unsafeRawInput: args.unsafeRawInput,
       } as SafeFnOnCompleteArgs<
         TParent,
         TInputSchema,

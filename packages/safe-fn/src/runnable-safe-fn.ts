@@ -1,6 +1,6 @@
-import { ok, ResultAsync, safeTry } from "neverthrow";
+import { ok, Result, ResultAsync, safeTry } from "neverthrow";
 
-import { actionErr, actionOk } from "./result";
+import { actionErr, actionOk, type InferErrError } from "./result";
 import type {
   AnyRunnableSafeFn,
   AnySafeFnCatchHandlerRes,
@@ -21,7 +21,11 @@ import type {
   SafeFnOutputParseError,
   SafeFnReturn,
   SafeFnRunArgs,
+  SafeFnSuperInternalRunReturn,
+  SafeFnSuperInternalRunReturnData,
+  SafeFnSuperInternalRunReturnError,
   SchemaOutputOrFallback,
+  TODO,
 } from "./types";
 import {
   isFrameworkError,
@@ -304,94 +308,171 @@ export class RunnableSafeFn<
             unsafeRawInput: args as TUnparsedInput,
           });
 
-    const safeTryPromise = safeTry(async function* () {
-      const { result: parentHandlerRes, input: parentParsedInput } =
-        parent === undefined
-          ? { result: undefined, input: undefined }
-          : yield* parent._run(args, tAsAction, true).safeUnwrap();
-
-      const parsedInput =
-        inputSchema === undefined
-          ? parentParsedInput
-          : yield* _parseInput(args, tAsAction)
-              .map((res) => ({
-                ...parentParsedInput,
-                ...res,
-              }))
-              .safeUnwrap();
-
-      const handlerRes = yield* (
-        await handler({
-          input: parsedInput,
-          unsafeRawInput: args,
-          ctx: parentHandlerRes,
-        } as SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>)
-      ).safeUnwrap();
-
-      const parsedOutput =
-        outputSchema === undefined
-          ? undefined
-          : yield* _parseOutput(handlerRes, tAsAction).safeUnwrap();
-
-      const res = parsedOutput === undefined ? handlerRes : parsedOutput;
-
-      return ok({
-        result: res,
-        input: parsedInput,
-        ctx: parentHandlerRes,
-      });
-    });
-
-    const internalRes: SafeFnInternalRunReturn<
+    type InternalOk = SafeFnSuperInternalRunReturnData<
       TParent,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes,
-      TAsAction,
-      true
+      TAsAction
+    >;
+    type InternalErr = SafeFnSuperInternalRunReturnError<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes,
+      TAsAction
+    >;
+
+    const safeTryPromise: Promise<Result<InternalOk, InternalErr>> = safeTry(
+      async function* () {
+        const { result: parentHandlerRes, input: parentParsedInput } =
+          parent === undefined
+            ? { result: undefined, input: undefined }
+            : yield* parent
+                ._run(args, tAsAction, true)
+                .mapErr(
+                  (e) =>
+                    ({
+                      public: e as TODO,
+                      private: {
+                        unsafeRawInput: args as TUnparsedInput,
+                        input: undefined,
+                        ctx: undefined,
+                        handlerRes: undefined,
+                      },
+                    }) satisfies InternalErr,
+                )
+                .safeUnwrap();
+
+        const parsedInput =
+          inputSchema === undefined
+            ? parentParsedInput
+            : yield* _parseInput(args, tAsAction)
+                .map((res) => ({
+                  ...parentParsedInput,
+                  ...res,
+                }))
+                .mapErr(
+                  (e) =>
+                    ({
+                      public: e,
+                      private: {
+                        ctx: parentHandlerRes,
+                        unsafeRawInput: args as TUnparsedInput,
+                        input: undefined,
+                        handlerRes: undefined,
+                      },
+                    }) satisfies InternalErr,
+                )
+                .safeUnwrap();
+
+        const handlerRes = yield* (
+          await handler({
+            input: parsedInput,
+            unsafeRawInput: args,
+            ctx: parentHandlerRes,
+          } as SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>)
+        )
+          .mapErr(
+            (e) =>
+              ({
+                public: e,
+                private: {
+                  ctx: parentHandlerRes,
+                  input: parsedInput,
+                  unsafeRawInput: args as TUnparsedInput,
+                  handlerRes: undefined,
+                },
+              }) satisfies InternalErr,
+          )
+          .safeUnwrap();
+
+        const parsedOutput =
+          outputSchema === undefined
+            ? undefined
+            : yield* _parseOutput(handlerRes, tAsAction)
+                .mapErr(
+                  (e) =>
+                    ({
+                      public: e as TODO,
+                      private: {
+                        ctx: parentHandlerRes,
+                        input: parsedInput,
+                        handlerRes,
+                        unsafeRawInput: args as TUnparsedInput,
+                      },
+                    }) satisfies InternalErr,
+                )
+                .safeUnwrap();
+
+        const res = parsedOutput === undefined ? handlerRes : parsedOutput;
+
+        return ok({
+          result: res,
+          input: parsedInput,
+          ctx: parentHandlerRes,
+          unsafeRawInput: args as TUnparsedInput,
+        });
+      },
+    );
+
+    const internalRes: SafeFnSuperInternalRunReturn<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes,
+      TAsAction
     > = ResultAsync.fromPromise(safeTryPromise, (error) => {
       if (isFrameworkError(error)) {
         throw error;
       }
-      const handledErr = uncaughtErrorHandler(error);
+      const handledErr = uncaughtErrorHandler(
+        error,
+      ) as InferErrError<TThrownHandlerRes>;
       if (handledErr.isOk()) {
         throw new Error("uncaught error handler returned ok");
       }
-      return handledErr.error;
+      return {
+        public: handledErr.error,
+        private: {
+          unsafeRawInput: args as TUnparsedInput,
+          input: undefined,
+          ctx: undefined,
+          handlerRes: undefined,
+        },
+      };
     })
       .andThen((res) => {
         return res;
       })
       .map((res) => ({
         ...res,
-        unsafeRawInput: args,
-      })) as SafeFnInternalRunReturn<
-      TParent,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes,
-      TAsAction,
-      true
-    >;
+        unsafeRawInput: args as TUnparsedInput,
+      }));
 
-    const withCallbacks = runCallbacks(
-      internalRes,
-      tAsAction,
-      this._callBacks,
-      onStartCallback,
-    );
+    const withCallbacks = runCallbacks({
+      resultAsync: internalRes,
+      asAction: tAsAction,
+      callbacks: _callBacks,
+      hotOnStartCallback: onStartCallback,
+      unsafeRawInput: args as TUnparsedInput,
+    });
 
-    return withCallbacks.map((res) => {
-      if (tAsProcedure) {
-        return res;
-      } else {
-        return res.result;
-      }
-    }) as SafeFnInternalRunReturn<
+    return withCallbacks
+      .mapErr((e) => e.public)
+      .map((res) => {
+        if (tAsProcedure) {
+          return res;
+        } else {
+          return res.result;
+        }
+      }) as SafeFnInternalRunReturn<
       TParent,
       TInputSchema,
       TOutputSchema,
