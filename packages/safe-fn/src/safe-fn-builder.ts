@@ -18,6 +18,7 @@ import type {
   SafeFnInput,
   SafeFnInternals,
   SchemaInputOrFallback,
+  TOrFallback,
   UnionIfNotT,
 } from "./types";
 
@@ -33,6 +34,7 @@ export class SafeFnBuilder<
     TParent,
     TCtx,
     TInputSchema,
+    TMergedInputSchema,
     TOutputSchema,
     TUnparsedInput
   >;
@@ -42,6 +44,7 @@ export class SafeFnBuilder<
       TParent,
       TCtx,
       TInputSchema,
+      TMergedInputSchema,
       TOutputSchema,
       TUnparsedInput
     >,
@@ -64,7 +67,7 @@ export class SafeFnBuilder<
       ? InferSafeFnOkData<TNewParent>
       : undefined,
     undefined,
-    InferInputSchema<TNewParent>,
+    TOrFallback<InferInputSchema<TNewParent>, undefined>,
     undefined,
     InferUnparsedInput<TNewParent>
   > {
@@ -151,7 +154,13 @@ export class SafeFnBuilder<
   handler<TNewHandlerResult extends SafeFnHandlerReturn<TOutputSchema>>(
     handler: (
       args: Prettify<
-        SafeFnHandlerArgs<TParent, TCtx, TInputSchema, TUnparsedInput>
+        SafeFnHandlerArgs<
+          TParent,
+          TCtx,
+          TInputSchema,
+          TMergedInputSchema,
+          TUnparsedInput
+        >
       >,
     ) => TNewHandlerResult,
   ): RunnableSafeFn<
@@ -187,7 +196,13 @@ export class SafeFnBuilder<
   >(
     fn: (
       args: Prettify<
-        SafeFnHandlerArgs<TParent, TCtx, TInputSchema, TUnparsedInput>
+        SafeFnHandlerArgs<
+          TParent,
+          TCtx,
+          TInputSchema,
+          TMergedInputSchema,
+          TUnparsedInput
+        >
       >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): RunnableSafeFn<
@@ -205,7 +220,13 @@ export class SafeFnBuilder<
   > {
     const handler = async (
       args: Prettify<
-        SafeFnHandlerArgs<TParent, TCtx, TInputSchema, TUnparsedInput>
+        SafeFnHandlerArgs<
+          TParent,
+          TCtx,
+          TInputSchema,
+          TMergedInputSchema,
+          TUnparsedInput
+        >
       >,
     ) => {
       return (await fn(args).next()).value;

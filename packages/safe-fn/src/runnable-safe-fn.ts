@@ -49,6 +49,7 @@ export class RunnableSafeFn<
     TParent,
     TCtx,
     TInputSchema,
+    TMergedInputSchema,
     TOutputSchema,
     TUnparsedInput
   >;
@@ -57,6 +58,7 @@ export class RunnableSafeFn<
     TParent,
     TCtx,
     TInputSchema,
+    TMergedInputSchema,
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
@@ -68,6 +70,7 @@ export class RunnableSafeFn<
       TParent,
       TCtx,
       TInputSchema,
+      TMergedInputSchema,
       TOutputSchema,
       TUnparsedInput
     >,
@@ -75,6 +78,7 @@ export class RunnableSafeFn<
       TParent,
       TCtx,
       TInputSchema,
+      TMergedInputSchema,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
@@ -126,6 +130,7 @@ export class RunnableSafeFn<
         TParent,
         TCtx,
         TInputSchema,
+        TMergedInputSchema,
         TOutputSchema,
         TUnparsedInput,
         THandlerRes,
@@ -145,6 +150,7 @@ export class RunnableSafeFn<
       TParent,
       TCtx,
       TInputSchema,
+      TMergedInputSchema,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes
@@ -160,6 +166,7 @@ export class RunnableSafeFn<
       TParent,
       TCtx,
       TInputSchema,
+      TMergedInputSchema,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes
@@ -175,6 +182,7 @@ export class RunnableSafeFn<
       TParent,
       TCtx,
       TInputSchema,
+      TMergedInputSchema,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
@@ -390,7 +398,13 @@ export class RunnableSafeFn<
             input: parsedInput,
             unsafeRawInput: args,
             ctx: parentHandlerRes,
-          } as SafeFnHandlerArgs<TParent, TCtx, TInputSchema, TUnparsedInput>)
+          } as SafeFnHandlerArgs<
+            TParent,
+            TCtx,
+            TInputSchema,
+            TMergedInputSchema,
+            TUnparsedInput
+          >)
         )
           .mapErr(
             (e) =>
