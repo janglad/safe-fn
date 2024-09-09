@@ -35,3 +35,6 @@ yarn-error.log*
 .env*.local
 .vercel
 next-env.d.ts
+
+# Typescript diagnostics
+ts-tracedir
