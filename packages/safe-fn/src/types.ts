@@ -1,4 +1,4 @@
-import type { Err, Result, ResultAsync } from "neverthrow";
+import type { Err, Ok, Result, ResultAsync } from "neverthrow";
 import type { z, ZodFormattedError, ZodTypeAny } from "zod";
 import type {
   InferActionErrError,
@@ -6,7 +6,6 @@ import type {
   InferAsyncErrError,
   InferAsyncOkData,
   InferErrError,
-  InferOkData,
   ResultAsyncToPromiseActionResult,
 } from "./result";
 import type { RunnableSafeFn } from "./runnable-safe-fn";
@@ -378,7 +377,7 @@ export type InferSafeFnReturn<
   T extends AnyRunnableSafeFn,
   TAsAction extends boolean,
 > = TAsAction extends true
-  ? ReturnType<T["runAsAction"]>
+  ? ReturnType<T["_runAsAction"]>
   : ReturnType<T["run"]>;
 
 /**
@@ -412,7 +411,12 @@ export type InferSafeFnErrError<
 export type SafeFnReturnData<
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
-> = SchemaOutputOrFallback<TOutputSchema, InferOkData<THandlerRes>>;
+> =
+  Awaited<THandlerRes> extends Result<infer TData, any>
+    ? [TData] extends [never]
+      ? never
+      : SchemaOutputOrFallback<TOutputSchema, TData>
+    : never;
 
 /**
  * @param TParent the parent safe function or undefined
@@ -438,7 +442,9 @@ export type SafeFnReturnError<
   | InferErrError<THandlerRes>
   | InferErrError<TCatchHandlerRes>
   | SafeFnInputParseError<TInputSchema, TAsAction>
-  | SafeFnOutputParseError<TOutputSchema, TAsAction>
+  | (Awaited<THandlerRes> extends Result<never, any>
+      ? never
+      : SafeFnOutputParseError<TOutputSchema, TAsAction>)
   | (TParent extends AnyRunnableSafeFn
       ? InferSafeFnErrError<TParent, TAsAction>
       : never);
@@ -470,34 +476,149 @@ export type SafeFnReturn<
   THandlerRes extends AnySafeFnHandlerRes,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
+> = ResultAsync<
+  SafeFnReturnData<TOutputSchema, THandlerRes>,
+  DistributeUnion<
+    SafeFnReturnError<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      Awaited<THandlerRes>,
+      TCatchHandlerRes,
+      TAsAction
+    >
+  >
+>;
+
+export type SafeFnInternalRunReturn<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+  TAsAction extends boolean,
+  TAsProcedure extends boolean,
 > =
-  Awaited<THandlerRes> extends Result<never, any>
+  SafeFnReturn<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    THandlerRes,
+    TCatchHandlerRes,
+    TAsAction
+  > extends infer HandlerRes
+    ? TAsProcedure extends true
+      ? ResultAsync<
+          {
+            result: InferAsyncOkData<HandlerRes>;
+            input: SchemaOutputOrFallback<TInputSchema, undefined>;
+            ctx: TParent extends AnyRunnableSafeFn
+              ? InferSafeFnOkData<TParent, TAsAction>
+              : undefined;
+          },
+          InferAsyncErrError<HandlerRes>
+        >
+      : HandlerRes
+    : never;
+
+export type SafeFnSuperInternalRunReturn<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+  TAsAction extends boolean,
+> =
+  SafeFnReturn<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    THandlerRes,
+    TCatchHandlerRes,
+    TAsAction
+  > extends infer HandlerRes
     ? ResultAsync<
-        never,
-        DistributeUnion<
-          SafeFnReturnError<
-            TParent,
-            TInputSchema,
-            undefined,
-            Awaited<THandlerRes>,
-            TCatchHandlerRes,
-            TAsAction
-          >
-        >
+        {
+          result: InferAsyncOkData<HandlerRes>;
+          input: SchemaOutputOrFallback<TInputSchema, undefined>;
+          ctx: TParent extends AnyRunnableSafeFn
+            ? InferSafeFnOkData<TParent, TAsAction>
+            : undefined;
+          unsafeRawInput: TUnparsedInput;
+        },
+        {
+          public: InferAsyncErrError<HandlerRes>;
+          private: {
+            input: SchemaInputOrFallback<TInputSchema, undefined> | undefined;
+            ctx:
+              | (TParent extends AnyRunnableSafeFn
+                  ? InferSafeFnOkData<TParent, TAsAction>
+                  : undefined)
+              | undefined;
+            unsafeRawInput: TUnparsedInput;
+          };
+        }
       >
-    : ResultAsync<
-        SafeFnReturnData<TOutputSchema, Awaited<THandlerRes>>,
-        DistributeUnion<
-          SafeFnReturnError<
-            TParent,
-            TInputSchema,
-            TOutputSchema,
-            Awaited<THandlerRes>,
-            TCatchHandlerRes,
-            TAsAction
-          >
-        >
-      >;
+    : never;
+
+export type SafeFnSuperInternalRunReturnData<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+  TAsAction extends boolean,
+> = {
+  result: InferAsyncOkData<
+    SafeFnReturn<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      THandlerRes,
+      TCatchHandlerRes,
+      TAsAction
+    >
+  >;
+  input: SchemaOutputOrFallback<TInputSchema, undefined>;
+  ctx: TParent extends AnyRunnableSafeFn
+    ? InferSafeFnOkData<TParent, TAsAction>
+    : undefined;
+  unsafeRawInput: TUnparsedInput;
+};
+
+export type SafeFnSuperInternalRunReturnError<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+  TAsAction extends boolean,
+> = {
+  public: InferAsyncErrError<
+    SafeFnReturn<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      THandlerRes,
+      TCatchHandlerRes,
+      TAsAction
+    >
+  >;
+  private: {
+    input: SchemaInputOrFallback<TInputSchema, undefined> | undefined;
+    ctx:
+      | (TParent extends AnyRunnableSafeFn
+          ? InferSafeFnOkData<TParent, TAsAction>
+          : undefined)
+      | undefined;
+    unsafeRawInput: TUnparsedInput;
+    handlerRes: TODO;
+  };
+};
 
 /* 
 ################################
@@ -575,3 +696,222 @@ export type SafeFnAction<
   THandlerRes,
   TCatchHandlerRes
 >;
+
+/* 
+################################
+||                            ||
+||         Callbacks          ||
+||                            ||
+################################
+*/
+
+// TODO: issue with approach of passing TParent is really starting to show here. Redo this.
+
+export type InferSafeFnCallbacks<T> =
+  T extends RunnableSafeFn<
+    infer TParent,
+    infer TInputSchema,
+    infer TOutputSchema,
+    infer TUnparsedInput,
+    infer THandlerRes,
+    infer TCatchHandlerRes
+  >
+    ? SafeFnCallBacks<
+        TParent,
+        TInputSchema,
+        TOutputSchema,
+        TUnparsedInput,
+        THandlerRes,
+        TCatchHandlerRes
+      >
+    : never;
+
+export type SafeFnCallBacks<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+> = {
+  onStart: SafeFnOnStart<TUnparsedInput> | undefined;
+  onSuccess:
+    | SafeFnOnSuccess<
+        TParent,
+        TInputSchema,
+        TOutputSchema,
+        TUnparsedInput,
+        THandlerRes
+      >
+    | undefined;
+  onError:
+    | SafeFnOnError<
+        TParent,
+        TInputSchema,
+        TUnparsedInput,
+        THandlerRes,
+        TCatchHandlerRes
+      >
+    | undefined;
+  onComplete:
+    | SafeFnOnComplete<
+        TParent,
+        TInputSchema,
+        TOutputSchema,
+        TUnparsedInput,
+        THandlerRes,
+        TCatchHandlerRes
+      >
+    | undefined;
+};
+export type SafeFnOnStart<TUnparsedInput> = (args: {
+  unsafeRawInput: Prettify<TUnparsedInput>;
+}) => Promise<void>;
+
+export type SafeFnOnSuccessArgs<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+> = Prettify<
+  SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> & {
+    value: SafeFnReturnData<TOutputSchema, THandlerRes>;
+  }
+>;
+export type SafeFnOnSuccess<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnOutput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+> = (
+  args: SafeFnOnSuccessArgs<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    THandlerRes
+  >,
+) => Promise<void>;
+
+// Temporary, will be fixed when I fix types in general
+type ToOptionalSafeFnArgs<T extends Record<PropertyKey, unknown>> = {
+  [K in keyof T]: K extends "unsafeRawInput" ? T[K] : T[K] | undefined;
+};
+
+export type SafeFnOnErrorArgs<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+> = Prettify<
+  ToOptionalSafeFnArgs<
+    SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+  > &
+    (
+      | {
+          asAction: true;
+          error: SafeFnReturnError<
+            TParent,
+            TInputSchema,
+            undefined,
+            Awaited<THandlerRes>,
+            TCatchHandlerRes,
+            true
+          >;
+        }
+      | {
+          asAction: false;
+          error: SafeFnReturnError<
+            TParent,
+            TInputSchema,
+            undefined,
+            Awaited<THandlerRes>,
+            TCatchHandlerRes,
+            false
+          >;
+        }
+    )
+>;
+
+export type SafeFnOnError<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+> = (
+  args: SafeFnOnErrorArgs<
+    TParent,
+    TInputSchema,
+    TUnparsedInput,
+    THandlerRes,
+    TCatchHandlerRes
+  >,
+) => Promise<void>;
+
+export type SafeFnOnCompleteArgs<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnInput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
+> = Prettify<
+  | ({
+      asAction: true;
+      result: Err<
+        never,
+        SafeFnReturnError<
+          TParent,
+          TInputSchema,
+          undefined,
+          Awaited<THandlerRes>,
+          TThrownHandlerRes,
+          true
+        >
+      >;
+    } & ToOptionalSafeFnArgs<
+      SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+    >)
+  | ({
+      asAction: false;
+      result: Err<
+        never,
+        SafeFnReturnError<
+          TParent,
+          TInputSchema,
+          undefined,
+          Awaited<THandlerRes>,
+          TThrownHandlerRes,
+          false
+        >
+      >;
+    } & ToOptionalSafeFnArgs<
+      SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+    >)
+  | ({
+      asAction: boolean;
+      result: Ok<SafeFnReturnData<TOutputSchema, THandlerRes>, never>;
+    } & SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>)
+>;
+
+export type SafeFnOnComplete<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnInput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
+> = (
+  args: SafeFnOnCompleteArgs<
+    TParent,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput,
+    THandlerRes,
+    TThrownHandlerRes
+  >,
+) => Promise<void>;
