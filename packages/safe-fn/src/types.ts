@@ -42,8 +42,8 @@ export type SafeFnInternals<
 
 // Never union is kinda dirty but needed for now.
 export type AnyRunnableSafeFn =
-  | RunnableSafeFn<any, any, any, any, any, any>
-  | RunnableSafeFn<any, any, any, never, any, any>;
+  | RunnableSafeFn<any, any, any, any, any, any, any>
+  | RunnableSafeFn<any, any, any, any, never, any, any>;
 
 /*
 ################################
@@ -117,7 +117,7 @@ export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
  * @returns the unparsed input of the safe function
  */
 export type InferUnparsedInput<T> =
-  T extends RunnableSafeFn<any, any, any, infer TUnparsed, any, any>
+  T extends RunnableSafeFn<any, any, any, any, infer TUnparsed, any, any>
     ? TUnparsed
     : never;
 
@@ -710,6 +710,7 @@ export type SafeFnAction<
 export type InferSafeFnCallbacks<T> =
   T extends RunnableSafeFn<
     infer TParent,
+    infer TCtx,
     infer TInputSchema,
     infer TOutputSchema,
     infer TUnparsedInput,

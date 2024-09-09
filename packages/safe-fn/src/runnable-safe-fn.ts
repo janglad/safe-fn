@@ -37,6 +37,7 @@ import {
 
 export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
@@ -103,6 +104,7 @@ export class RunnableSafeFn<
     handler: (error: unknown) => TNewThrownHandlerRes,
   ): RunnableSafeFn<
     TParent,
+    TCtx,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,

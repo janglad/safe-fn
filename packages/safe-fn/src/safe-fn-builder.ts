@@ -20,6 +20,7 @@ import type {
 
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
   TInputSchema extends SafeFnInput,
   TOutputSchema extends SafeFnInput,
   TUnparsedInput,
@@ -55,6 +56,7 @@ export class SafeFnBuilder<
     TNewParent,
     undefined,
     undefined,
+    undefined,
     InferUnparsedInput<TNewParent>
   > {
     return new SafeFnBuilder({
@@ -82,6 +84,7 @@ export class SafeFnBuilder<
   ): Omit<
     SafeFnBuilder<
       TParent,
+      TCtx,
       TNewInputSchema,
       TOutputSchema,
       UnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>
@@ -98,6 +101,7 @@ export class SafeFnBuilder<
   unparsedInput<TNewUnparsedInput>(): Omit<
     SafeFnBuilder<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
@@ -106,6 +110,7 @@ export class SafeFnBuilder<
   > {
     return this as unknown as SafeFnBuilder<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
@@ -115,7 +120,13 @@ export class SafeFnBuilder<
   output<TNewOutputSchema extends z.ZodTypeAny>(
     schema: TNewOutputSchema,
   ): Omit<
-    SafeFnBuilder<TParent, TInputSchema, TNewOutputSchema, TUnparsedInput>,
+    SafeFnBuilder<
+      TParent,
+      TCtx,
+      TInputSchema,
+      TNewOutputSchema,
+      TUnparsedInput
+    >,
     "output"
   > {
     return new SafeFnBuilder({
@@ -130,6 +141,7 @@ export class SafeFnBuilder<
     ) => TNewHandlerResult,
   ): RunnableSafeFn<
     TParent,
+    TCtx,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -162,6 +174,7 @@ export class SafeFnBuilder<
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): RunnableSafeFn<
     TParent,
+    TCtx,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
