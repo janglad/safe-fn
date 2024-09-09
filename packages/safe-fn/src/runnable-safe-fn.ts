@@ -114,7 +114,7 @@ export class RunnableSafeFn<
         ...this._internals,
         uncaughtErrorHandler: handler,
       },
-      this._callBacks as SafeFnCallBacks<
+      this._callBacks as unknown as SafeFnCallBacks<
         TParent,
         TInputSchema,
         TOutputSchema,
