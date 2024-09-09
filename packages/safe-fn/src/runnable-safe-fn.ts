@@ -398,13 +398,7 @@ export class RunnableSafeFn<
             input: parsedInput,
             unsafeRawInput: args,
             ctx: parentHandlerRes,
-          } as SafeFnHandlerArgs<
-            TParent,
-            TCtx,
-            TInputSchema,
-            TMergedInputSchema,
-            TUnparsedInput
-          >)
+          } as SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>)
         )
           .mapErr(
             (e) =>

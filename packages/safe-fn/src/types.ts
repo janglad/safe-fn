@@ -30,13 +30,7 @@ export type SafeFnInternals<
   outputSchema: TOutputSchema;
   handler: (
     input: Prettify<
-      SafeFnHandlerArgs<
-        TParent,
-        TCtx,
-        TInputSchema,
-        TMergedInputSchema,
-        TUnparsedInput
-      >
+      SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>
     >,
   ) => SafeFnHandlerReturn<TOutputSchema>;
   uncaughtErrorHandler: (error: unknown) => Result<never, unknown>;
@@ -271,54 +265,15 @@ export type SafeFnDefaultHandlerFn = () => Result<
  * @returns the type of the arguments available in the passed handler function.
  */
 export type SafeFnHandlerArgs<
-  TParent,
   TCtx,
-  TInputSchema extends SafeFnInput,
   TMergedInputSchema extends SafeFnInput,
   TUnparsedInput,
-> = TParent extends AnyRunnableSafeFn
-  ? SafeFnHandlerArgsWParent<TParent, TCtx, TInputSchema, TUnparsedInput>
-  : SafeFnHandlerArgsNoParent<TInputSchema, TUnparsedInput>;
-
-type SafeFnHandlerArgsWParent<
-  in out TParent extends AnyRunnableSafeFn,
-  in out TCtx,
-  in out TInputSchema extends SafeFnInput,
-  in out TUnparsedInput,
 > = {
-  input: Prettify<
-    UnionIfNotT<
-      SchemaOutputOrFallback<TInputSchema, undefined>,
-      SchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
-      undefined
-    >
-  >;
-  /**
-   * The raw input passed to the handler function.
-   *
-   *  **WARNING**: this can have excess values that are not in the type when you use this SafeFn as a parent for another SafeFn.
-   */
-  // Prettify<unknown> results in {}
+  input: Prettify<SchemaOutputOrFallback<TMergedInputSchema, undefined>>;
   unsafeRawInput: IsUnknown<TUnparsedInput> extends true
     ? unknown
     : Prettify<TUnparsedInput>;
-
   ctx: TCtx;
-};
-
-type SafeFnHandlerArgsNoParent<
-  in out TInputSchema extends SafeFnInput,
-  in out TUnparsedInput,
-> = {
-  input: SchemaOutputOrFallback<TInputSchema, undefined>;
-  /**
-   * The raw input passed to the handler function.
-   *
-   *  **WARNING**: this can have excess values that are not in the type when you use this SafeFn as a parent for another SafeFn.
-
-   */
-  unsafeRawInput: TUnparsedInput;
-  ctx: undefined;
 };
 
 /**
@@ -338,22 +293,12 @@ export type SafeFnHandlerReturn<TOutputSchema extends SafeFnOutput> =
  * @returns the type of a handler function for a safe function passed to `handler()`. See `SafeFnHandlerArgs` and `SafeFnHandlerReturn` for more information.
  */
 export type SafeFnRegularHandlerFn<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
-  in out TInputSchema extends SafeFnInput,
   in out TMergedInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
 > = (
-  args: Prettify<
-    SafeFnHandlerArgs<
-      TParent,
-      TCtx,
-      TInputSchema,
-      TMergedInputSchema,
-      TUnparsedInput
-    >
-  >,
+  args: Prettify<SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>>,
 ) => SafeFnHandlerReturn<TOutputSchema>;
 
 /**
@@ -365,22 +310,12 @@ export type SafeFnRegularHandlerFn<
  * @returns the type of a safe handler function for a safe function passed to `safeHandler()`. See `SafeFnHandlerArgs` and `SafeFnHandlerReturn` for more information.
  */
 export type SafeFnAsyncGeneratorHandlerFn<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
-  in out TInputSchema extends SafeFnInput,
   in out TMergedInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
 > = (
-  args: Prettify<
-    SafeFnHandlerArgs<
-      TParent,
-      TCtx,
-      TInputSchema,
-      TMergedInputSchema,
-      TUnparsedInput
-    >
-  >,
+  args: Prettify<SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>>,
 ) => AsyncGenerator<
   Err<never, unknown>,
   Result<SchemaInputOrFallback<TOutputSchema, any>, any>
@@ -802,21 +737,13 @@ export type SafeFnOnStart<TUnparsedInput> = (args: {
 }) => Promise<void>;
 
 export type SafeFnOnSuccessArgs<
-  in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
-  in out TInputSchema extends SafeFnInput,
   in out TMergedInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
 > = Prettify<
-  SafeFnHandlerArgs<
-    TParent,
-    TCtx,
-    TInputSchema,
-    TMergedInputSchema,
-    TUnparsedInput
-  > & {
+  SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput> & {
     value: SafeFnReturnData<TOutputSchema, THandlerRes>;
   }
 >;
@@ -830,9 +757,7 @@ export type SafeFnOnSuccess<
   in out THandlerRes extends AnySafeFnHandlerRes,
 > = (
   args: SafeFnOnSuccessArgs<
-    TParent,
     TCtx,
-    TInputSchema,
     TMergedInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -855,13 +780,7 @@ export type SafeFnOnErrorArgs<
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
 > = Prettify<
   ToOptionalSafeFnArgs<
-    SafeFnHandlerArgs<
-      TParent,
-      TCtx,
-      TInputSchema,
-      TMergedInputSchema,
-      TUnparsedInput
-    >
+    SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>
   > &
     (
       | {
@@ -933,13 +852,7 @@ export type SafeFnOnCompleteArgs<
         >
       >;
     } & ToOptionalSafeFnArgs<
-      SafeFnHandlerArgs<
-        TParent,
-        TCtx,
-        TInputSchema,
-        TMergedInputSchema,
-        TUnparsedInput
-      >
+      SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>
     >)
   | ({
       asAction: false;
@@ -955,24 +868,12 @@ export type SafeFnOnCompleteArgs<
         >
       >;
     } & ToOptionalSafeFnArgs<
-      SafeFnHandlerArgs<
-        TParent,
-        TCtx,
-        TInputSchema,
-        TMergedInputSchema,
-        TUnparsedInput
-      >
+      SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>
     >)
   | ({
       asAction: boolean;
       result: Ok<SafeFnReturnData<TOutputSchema, THandlerRes>, never>;
-    } & SafeFnHandlerArgs<
-      TParent,
-      TCtx,
-      TInputSchema,
-      TMergedInputSchema,
-      TUnparsedInput
-    >)
+    } & SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>)
 >;
 
 export type SafeFnOnComplete<

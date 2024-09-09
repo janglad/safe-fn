@@ -154,13 +154,7 @@ export class SafeFnBuilder<
   handler<TNewHandlerResult extends SafeFnHandlerReturn<TOutputSchema>>(
     handler: (
       args: Prettify<
-        SafeFnHandlerArgs<
-          TParent,
-          TCtx,
-          TInputSchema,
-          TMergedInputSchema,
-          TUnparsedInput
-        >
+        SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>
       >,
     ) => TNewHandlerResult,
   ): RunnableSafeFn<
@@ -196,13 +190,7 @@ export class SafeFnBuilder<
   >(
     fn: (
       args: Prettify<
-        SafeFnHandlerArgs<
-          TParent,
-          TCtx,
-          TInputSchema,
-          TMergedInputSchema,
-          TUnparsedInput
-        >
+        SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>
       >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): RunnableSafeFn<
@@ -220,13 +208,7 @@ export class SafeFnBuilder<
   > {
     const handler = async (
       args: Prettify<
-        SafeFnHandlerArgs<
-          TParent,
-          TCtx,
-          TInputSchema,
-          TMergedInputSchema,
-          TUnparsedInput
-        >
+        SafeFnHandlerArgs<TCtx, TMergedInputSchema, TUnparsedInput>
       >,
     ) => {
       return (await fn(args).next()).value;

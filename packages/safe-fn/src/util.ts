@@ -97,9 +97,7 @@ export const runCallbacks = <
         ctx: res.value.ctx,
         value: res.value.result,
       } as SafeFnOnSuccessArgs<
-        TParent,
         TCtx,
-        TInputSchema,
         TMergedInputSchema,
         TOutputSchema,
         TUnparsedInput,
