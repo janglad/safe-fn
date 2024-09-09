@@ -17,14 +17,14 @@ import type { RunnableSafeFn } from "./runnable-safe-fn";
 ||                            ||
 ################################
 */
-export type SafeFnInternals<
+export interface SafeFnInternals<
   in out TParent extends AnyRunnableSafeFn | undefined,
   in out TCtx,
   in out TInputSchema extends SafeFnInput,
   in out TMergedInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnInput,
   in out TUnparsedInput,
-> = {
+> {
   parent: TParent;
   inputSchema: TInputSchema;
   outputSchema: TOutputSchema;
@@ -34,7 +34,7 @@ export type SafeFnInternals<
     >,
   ) => SafeFnHandlerReturn<TOutputSchema>;
   uncaughtErrorHandler: (error: unknown) => Result<never, unknown>;
-};
+}
 
 /*
 ################################
@@ -286,17 +286,17 @@ export type SafeFnDefaultHandlerFn = () => Result<
  * @param TParent the parent safe function or undefined
  * @returns the type of the arguments available in the passed handler function.
  */
-export type SafeFnHandlerArgs<
+export interface SafeFnHandlerArgs<
   TCtx,
   TMergedInputSchema extends SafeFnInput,
   TUnparsedInput,
-> = {
+> {
   input: Prettify<SchemaOutputOrFallback<TMergedInputSchema, undefined>>;
   unsafeRawInput: IsUnknown<TUnparsedInput> extends true
     ? unknown
     : Prettify<TUnparsedInput>;
   ctx: TCtx;
-};
+}
 
 /**
  * Type used to constrain the return type of the handler function.
@@ -535,7 +535,7 @@ export type SafeFnSuperInternalRunReturn<
           unsafeRawInput: TUnparsedInput;
         },
         {
-          public: InferErrError<Awaited<HandlerRes>>;
+          public: InferAsyncErrError<HandlerRes>;
           private: {
             input: SchemaInputOrFallback<TInputSchema, undefined> | undefined;
             ctx: TCtx | undefined;
@@ -788,7 +788,7 @@ export type SafeFnOnSuccess<
 ) => Promise<void>;
 
 // Temporary, will be fixed when I fix types in general
-type ToOptionalSafeFnArgs<T extends Record<PropertyKey, unknown>> = {
+type ToOptionalSafeFnArgs<T extends SafeFnHandlerArgs<any, any, any>> = {
   [K in keyof T]: K extends "unsafeRawInput" ? T[K] : T[K] | undefined;
 };
 
