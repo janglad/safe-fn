@@ -109,18 +109,40 @@ export type MergeZodTypes<T, U> =
  * @param T the runnable safe function
  * @returns the input schema of the safe function
  */
-export type InferInputSchema<T> = T extends AnyRunnableSafeFn
-  ? T["_internals"]["inputSchema"]
-  : never;
+
+export type InferInputSchema<T> =
+  T extends RunnableSafeFn<
+    any,
+    any,
+    infer TInputSchema,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TInputSchema
+    : never;
 
 /**
  * Infer the output schema of a runnable safe function.
  * @param T the runnable safe function
  * @returns the output schema of the safe function
  */
-export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
-  ? T["_internals"]["outputSchema"]
-  : never;
+
+export type InferOutputSchema<T> =
+  T extends RunnableSafeFn<
+    any,
+    any,
+    any,
+    any,
+    infer TOutputSchema,
+    any,
+    any,
+    any
+  >
+    ? TOutputSchema
+    : never;
 
 /**
  * Infer the unparsed input of a runnable safe function.
@@ -365,8 +387,8 @@ export type InferSafeFnErrError<
   T extends AnyRunnableSafeFn,
   TAsAction extends boolean,
 > = TAsAction extends true
-  ? InferActionErrError<Awaited<InferSafeFnReturn<T, TAsAction>>>
-  : InferAsyncErrError<InferSafeFnReturn<T, TAsAction>>;
+  ? InferActionErrError<Awaited<InferSafeFnReturn<T, true>>>
+  : InferAsyncErrError<InferSafeFnReturn<T, false>>;
 
 /**
  * @param TOutputSchema a Zod schema or undefined
@@ -405,7 +427,7 @@ export type SafeFnReturnError<
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
 > =
-  | InferErrError<THandlerRes>
+  | InferErrError<Awaited<THandlerRes>>
   | InferErrError<TCatchHandlerRes>
   | SafeFnInputParseError<TInputSchema, TAsAction>
   | (Awaited<THandlerRes> extends Result<never, any>
@@ -482,7 +504,7 @@ export type SafeFnInternalRunReturn<
             input: SchemaOutputOrFallback<TInputSchema, undefined>;
             ctx: TCtx;
           },
-          InferAsyncErrError<HandlerRes>
+          InferErrError<Awaited<HandlerRes>>
         >
       : HandlerRes
     : never;
@@ -513,7 +535,7 @@ export type SafeFnSuperInternalRunReturn<
           unsafeRawInput: TUnparsedInput;
         },
         {
-          public: InferAsyncErrError<HandlerRes>;
+          public: InferErrError<Awaited<HandlerRes>>;
           private: {
             input: SchemaInputOrFallback<TInputSchema, undefined> | undefined;
             ctx: TCtx | undefined;
