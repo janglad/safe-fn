@@ -545,9 +545,7 @@ export type SafeFnSuperInternalRunReturn<
         {
           result: InferAsyncOkData<HandlerRes>;
           input: SchemaOutputOrFallback<TInputSchema, undefined>;
-          ctx: TParent extends AnyRunnableSafeFn
-            ? InferSafeFnOkData<TParent>
-            : undefined;
+          ctx: TCtx;
           unsafeRawInput: TUnparsedInput;
         },
         {
