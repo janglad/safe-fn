@@ -1,5 +1,6 @@
 import { ok, Result, ResultAsync, safeTry } from "neverthrow";
 
+import type { ZodTypeAny } from "zod";
 import { actionErr, actionOk, type InferErrError } from "./result";
 import type {
   AnySafeFnCatchHandlerRes,
@@ -264,7 +265,9 @@ export class RunnableSafeFn<
     asAction: TAsAction,
   ): ResultAsync<
     SchemaOutputOrFallback<TOutputSchema, never>,
-    SafeFnOutputParseError<TOutputSchema, TAsAction>
+    TOutputSchema extends ZodTypeAny
+      ? SafeFnOutputParseError<TOutputSchema, TAsAction>
+      : never
   > {
     if (this._internals.outputSchema === undefined) {
       throw new Error("No output schema defined");
@@ -281,13 +284,13 @@ export class RunnableSafeFn<
           return {
             code: "OUTPUT_PARSING",
             cause,
-          } as SafeFnOutputParseError<TOutputSchema, TAsAction>;
+          };
         }
 
         return {
           code: "OUTPUT_PARSING",
           cause: error.cause,
-        } as SafeFnOutputParseError<TOutputSchema, TAsAction>;
+        } as any;
       },
     );
   }

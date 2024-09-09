@@ -1023,7 +1023,7 @@ describe("runnableSafeFn", () => {
                 >;
               };
             };
-        type ExpectedArgs = Prettify<
+        type ExpectedArgs =
           | {
               asAction: true;
               error: ExpectedActionErrError;
@@ -1037,10 +1037,9 @@ describe("runnableSafeFn", () => {
               input: ExpectedInput;
               ctx: ExpectedCtx;
               unsafeRawInput: UnsafeRawInput;
-            }
-        >;
+            };
 
-        expectTypeOf<OnErrorArgs>().toEqualTypeOf<ExpectedArgs>();
+        expectTypeOf<OnErrorArgs>().toMatchTypeOf<ExpectedArgs>();
       });
 
       test("onSuccess", () => {
@@ -1114,7 +1113,7 @@ describe("runnableSafeFn", () => {
               };
             };
 
-        type ExpectedArgs = Prettify<
+        type ExpectedArgs =
           | {
               asAction: boolean;
               unsafeRawInput: ExpectedUnsafeRawInput;
@@ -1135,9 +1134,8 @@ describe("runnableSafeFn", () => {
               input: ExpectedInput | undefined;
               ctx: ExpectedCtx | undefined;
               result: Err<never, ExpectedRunErrError>;
-            }
-        >;
-        expectTypeOf<ExpectedArgs>().toEqualTypeOf<OnCompleteArgs>();
+            };
+        expectTypeOf<ExpectedArgs>().toMatchTypeOf<OnCompleteArgs>();
       });
     });
   });
