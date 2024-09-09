@@ -278,21 +278,15 @@ type SafeFnHandlerArgsWParent<
       undefined
     >
   >;
-  // Prettify<unknown> results in {}
   /**
    * The raw input passed to the handler function.
    *
    *  **WARNING**: this can have excess values that are not in the type when you use this SafeFn as a parent for another SafeFn.
    */
-  unsafeRawInput: UnionIfNotT<
-    TUnparsedInput,
-    InferUnparsedInput<TParent>,
-    never
-  > extends infer Merged
-    ? IsUnknown<Merged> extends true
-      ? unknown
-      : Prettify<Merged>
-    : never;
+  // Prettify<unknown> results in {}
+  unsafeRawInput: IsUnknown<TUnparsedInput> extends true
+    ? unknown
+    : Prettify<TUnparsedInput>;
 
   ctx: TCtx;
 };
