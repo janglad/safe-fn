@@ -520,7 +520,7 @@ describe("runnable-safe-fn", () => {
     });
 
     describe("callbacks", () => {
-      test.only("should run callbacks with right args", async () => {
+      describe("should run callbacks with right args in success case", async () => {
         const callbackMocks = {
           onStart: vi.fn(),
           onSuccess: vi.fn(),
@@ -542,7 +542,7 @@ describe("runnable-safe-fn", () => {
           .onError(callbackMocks.onError)
           .onComplete(callbackMocks.onComplete);
 
-        const res = await safeFn.run({ name: "John", age: 100 });
+        await safeFn.run({ name: "John", age: 100 });
 
         type Callbacks = InferSafeFnCallbacks<typeof safeFn>;
         type CallbackArgs = {
@@ -553,30 +553,52 @@ describe("runnable-safe-fn", () => {
             : never;
         };
 
-        expect(callbackMocks.onError).not.toHaveBeenCalled();
-        expect(callbackMocks.onStart).toHaveBeenCalledWith({
-          unsafeRawInput: { name: "John", age: 100 },
-        } satisfies CallbackArgs["onStart"]);
-        expect(callbackMocks.onSuccess).toHaveBeenCalledWith({
-          input: { name: "John", age: 100 },
-          unsafeRawInput: { name: "John", age: 100 },
-          ctx: "Parent!",
-          value: "Ok!",
-        } satisfies CallbackArgs["onSuccess"]);
-        expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-          asAction: false,
-          input: { name: "John", age: 100 },
-          unsafeRawInput: { name: "John", age: 100 },
-          ctx: "Parent!",
-          result: ok("Ok!"),
-        } satisfies CallbackArgs["onComplete"]);
+        test("onError", () => {
+          expect(callbackMocks.onError).not.toHaveBeenCalled();
+        });
 
-        callbackMocks.onStart.mockClear();
-        callbackMocks.onSuccess.mockClear();
-        callbackMocks.onError.mockClear();
-        callbackMocks.onComplete.mockClear();
+        test("onStart", () => {
+          expect(callbackMocks.onStart).toHaveBeenCalledWith({
+            unsafeRawInput: { name: "John", age: 100 },
+          } satisfies CallbackArgs["onStart"]);
+        });
 
-        const safeFn2 = SafeFnBuilder.new(parent)
+        test("onSuccess", () => {
+          expect(callbackMocks.onSuccess).toHaveBeenCalledWith({
+            input: { name: "John", age: 100 },
+            unsafeRawInput: { name: "John", age: 100 },
+            ctx: "Parent!",
+            value: "Ok!",
+          } satisfies CallbackArgs["onSuccess"]);
+        });
+
+        test("onComplete", () => {
+          expect(callbackMocks.onComplete).toHaveBeenCalledWith({
+            asAction: false,
+            input: { name: "John", age: 100 },
+            unsafeRawInput: { name: "John", age: 100 },
+            ctx: "Parent!",
+            result: ok("Ok!"),
+          } satisfies CallbackArgs["onComplete"]);
+        });
+      });
+
+      describe("should run callbacks with right args when child returns Err", async () => {
+        const callbackMocks = {
+          onStart: vi.fn(),
+          onSuccess: vi.fn(),
+          onError: vi.fn(),
+          onComplete: vi.fn(),
+        };
+
+        const parentInputSchema = z.object({ age: z.number() });
+        const childInputSchema = z.object({ name: z.string() });
+
+        const parent = SafeFnBuilder.new()
+          .input(parentInputSchema)
+          .handler(() => ok("Parent!" as const));
+
+        const safeFn = SafeFnBuilder.new(parent)
           .input(childInputSchema)
           .handler((args) => {
             return err("Woops!");
@@ -586,39 +608,189 @@ describe("runnable-safe-fn", () => {
           .onError(callbackMocks.onError)
           .onComplete(callbackMocks.onComplete);
 
-        callbackMocks.onStart.mockClear();
-        callbackMocks.onSuccess.mockClear();
-        callbackMocks.onError.mockClear();
-        callbackMocks.onComplete.mockClear();
-
-        const res2 = await safeFn2.run({ name: "John", age: 100 });
-        type Callbacks2 = InferSafeFnCallbacks<typeof safeFn2>;
-        type CallbackArgs2 = {
-          [K in keyof Callbacks2]: Exclude<Callbacks2[K], undefined> extends (
+        type Callbacks = InferSafeFnCallbacks<typeof safeFn>;
+        type CallbackArgs = {
+          [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
             args: infer Args,
           ) => void
             ? Args
             : never;
         };
 
-        expect(callbackMocks.onStart).toHaveBeenCalledWith({
-          unsafeRawInput: { name: "John", age: 100 },
-        } satisfies CallbackArgs2["onStart"]);
-        expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
-        expect(callbackMocks.onError).toHaveBeenCalledWith({
-          asAction: false,
-          error: "Woops!",
-          ctx: "Parent!",
-          input: { name: "John", age: 100 },
-          unsafeRawInput: { name: "John", age: 100 },
-        } satisfies CallbackArgs2["onError"]);
-        expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-          asAction: false,
-          input: { name: "John", age: 100 },
-          unsafeRawInput: { name: "John", age: 100 },
-          ctx: "Parent!",
-          result: err("Woops!"),
-        } satisfies CallbackArgs2["onComplete"]);
+        await safeFn.run({ name: "John", age: 100 });
+
+        test("onStart", () => {
+          expect(callbackMocks.onStart).toHaveBeenCalledWith({
+            unsafeRawInput: { name: "John", age: 100 },
+          } satisfies CallbackArgs["onStart"]);
+        });
+
+        test("onSuccess", () => {
+          expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
+        });
+
+        test("onError", () => {
+          expect(callbackMocks.onError).toHaveBeenCalledWith({
+            asAction: false,
+            error: "Woops!",
+            ctx: "Parent!",
+            input: { name: "John", age: 100 },
+            unsafeRawInput: { name: "John", age: 100 },
+          } satisfies CallbackArgs["onError"]);
+        });
+
+        test("onComplete", () => {
+          expect(callbackMocks.onComplete).toHaveBeenCalledWith({
+            asAction: false,
+            input: { name: "John", age: 100 },
+            unsafeRawInput: { name: "John", age: 100 },
+            ctx: "Parent!",
+            result: err("Woops!"),
+          } satisfies CallbackArgs["onComplete"]);
+        });
+      });
+
+      describe("should run callbacks with right args when parent returns Err", async () => {
+        const callbackMocks = {
+          onStart: vi.fn(),
+          onSuccess: vi.fn(),
+          onError: vi.fn(),
+          onComplete: vi.fn(),
+        };
+
+        const parentInputSchema = z.object({ age: z.number() });
+        const childInputSchema = z.object({ name: z.string() });
+
+        const parent = SafeFnBuilder.new()
+          .input(parentInputSchema)
+          .handler(() => err("Parent!" as const));
+
+        const safeFn = SafeFnBuilder.new(parent)
+          .input(childInputSchema)
+          .handler((args) => {
+            return ok("Child");
+          })
+          .onStart(callbackMocks.onStart)
+          .onSuccess(callbackMocks.onSuccess)
+          .onError(callbackMocks.onError)
+          .onComplete(callbackMocks.onComplete);
+
+        type Callbacks = InferSafeFnCallbacks<typeof safeFn>;
+        type CallbackArgs = {
+          [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
+            args: infer Args,
+          ) => void
+            ? Args
+            : never;
+        };
+
+        await safeFn.run({ name: "John", age: 100 });
+
+        test("onStart", () => {
+          expect(callbackMocks.onStart).toHaveBeenCalledWith({
+            unsafeRawInput: { name: "John", age: 100 },
+          } satisfies CallbackArgs["onStart"]);
+        });
+
+        test("onSuccess", () => {
+          expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
+        });
+
+        test("onError", () => {
+          expect(callbackMocks.onError).toHaveBeenCalledWith({
+            asAction: false,
+            error: "Parent!",
+            ctx: undefined,
+            input: undefined,
+            unsafeRawInput: { name: "John", age: 100 },
+          } satisfies CallbackArgs["onError"]);
+        });
+
+        test("onComplete", () => {
+          expect(callbackMocks.onComplete).toHaveBeenCalledWith({
+            asAction: false,
+            input: undefined,
+            unsafeRawInput: { name: "John", age: 100 },
+            ctx: undefined,
+            result: err("Parent!"),
+          } satisfies CallbackArgs["onComplete"]);
+        });
+      });
+
+      describe("should run callbacks with right args when parent fails parsing", async () => {
+        const callbackMocks = {
+          onStart: vi.fn(),
+          onSuccess: vi.fn(),
+          onError: vi.fn(),
+          onComplete: vi.fn(),
+        };
+
+        const parentInputSchema = z.object({ age: z.number() });
+        const childInputSchema = z.object({ name: z.string() });
+
+        const parent = SafeFnBuilder.new()
+          .input(parentInputSchema)
+          .handler(() => ok("Parent!" as const));
+
+        const safeFn = SafeFnBuilder.new(parent)
+          .input(childInputSchema)
+          .handler((args) => {
+            return ok("Child");
+          })
+          .onStart(callbackMocks.onStart)
+          .onSuccess(callbackMocks.onSuccess)
+          .onError(callbackMocks.onError)
+          .onComplete(callbackMocks.onComplete);
+
+        type Callbacks = InferSafeFnCallbacks<typeof safeFn>;
+        type CallbackArgs = {
+          [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
+            args: infer Args,
+          ) => void
+            ? Args
+            : never;
+        };
+
+        // @ts-expect-error - passing wrong inputs on purpose
+        await safeFn.run({ fake: "fake", data: "data" });
+
+        test("onStart", () => {
+          expect(callbackMocks.onStart).toHaveBeenCalledWith({
+            unsafeRawInput: { fake: "fake", data: "data" },
+          });
+        });
+
+        test("onSuccess", () => {
+          expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
+        });
+
+        test("onError", () => {
+          expect(callbackMocks.onError).toHaveBeenCalled();
+
+          const args = callbackMocks.onError.mock
+            .calls[0]![0] as CallbackArgs["onError"];
+
+          assert(args.asAction === false);
+          assert(args.ctx === undefined);
+          assert(args.input === undefined);
+          assert(args.error.code === "INPUT_PARSING");
+          assert(args.error.cause instanceof ZodError);
+          expect(args.error.cause.format()).toHaveProperty(["age"]);
+        });
+
+        test("onComplete", () => {
+          expect(callbackMocks.onComplete).toHaveBeenCalled();
+          const args = callbackMocks.onComplete.mock
+            .calls[0]![0] as CallbackArgs["onComplete"];
+
+          assert(args.asAction === false);
+          assert(args.ctx === undefined);
+          assert(args.input === undefined);
+          assert(args.result.isErr());
+          assert(args.result.error.code === "INPUT_PARSING");
+          assert(args.result.error.cause instanceof ZodError);
+          expect(args.result.error.cause.format()).toHaveProperty(["age"]);
+        });
       });
     });
   });
