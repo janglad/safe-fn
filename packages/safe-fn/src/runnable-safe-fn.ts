@@ -292,6 +292,7 @@ export class RunnableSafeFn<
     tAsProcedure: TAsProcedure,
   ): SafeFnInternalRunReturn<
     TParent,
+    TCtx,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -320,6 +321,7 @@ export class RunnableSafeFn<
 
     type InternalOk = SafeFnSuperInternalRunReturnData<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -329,6 +331,7 @@ export class RunnableSafeFn<
     >;
     type InternalErr = SafeFnSuperInternalRunReturnError<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -432,6 +435,7 @@ export class RunnableSafeFn<
 
     const internalRes: SafeFnSuperInternalRunReturn<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -464,7 +468,7 @@ export class RunnableSafeFn<
       .map((res) => ({
         ...res,
         unsafeRawInput: args as TUnparsedInput,
-      }));
+      })) as TODO;
 
     const withCallbacks = runCallbacks({
       resultAsync: internalRes,
@@ -484,6 +488,7 @@ export class RunnableSafeFn<
         }
       }) as SafeFnInternalRunReturn<
       TParent,
+      TCtx,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,

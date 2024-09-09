@@ -45,6 +45,7 @@ export const runCallbacks = <
   TAsAction extends boolean,
   TRes extends SafeFnSuperInternalRunReturn<
     TParent,
+    TCtx,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -53,6 +54,7 @@ export const runCallbacks = <
     NoInfer<TAsAction>
   > = SafeFnSuperInternalRunReturn<
     TParent,
+    TCtx,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
