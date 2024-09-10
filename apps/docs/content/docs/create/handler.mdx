@@ -16,15 +16,15 @@ const mySafeFunction = SafeFn.new()
   .handler((args) => {
     // Error: Type Ok<{ name: string; }> is not assignable to type Ok<{ fullName: string; }> // [!code highlight]
     return ok({
-      fullName: `${args.unparsedInput.firstName} ${args.unparsedInput.lastName}`,
+      fullName: `${args.unsafeRawInput.firstName} ${args.unsafeRawInput.lastName}`,
     });
   });
 ```
 
 the following arguments are passed to the handler function:
 
-- `args.parsedInput`: The result of parsing the input schema.
-- `args.unparsedInput`: The unparsed input of your function.
+- `args.input`: The result of parsing the input schema.
+- `args.unsafeRawInput`: The unparsed input of your function.
 - `args.ctx`: The `Ok` return value of the parent handler function or undefined if no parent handler function is set.
 
 ### Safe Handler

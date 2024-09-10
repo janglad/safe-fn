@@ -11,12 +11,12 @@ const mySafeFunction = SafeFn.new()
   .input(z.object({ firstName: z.string(), lastName: z.string() }))
   .handler((args) => {
     /*        ^ ?
-      { parsedInput: { firstName: string; lastName: string };
-        unparsedInput: { firstName: string; lastName: string }};
+      { input: { firstName: string; lastName: string };
+        unsafeRawInput: { firstName: string; lastName: string }};
         ...
      */
     return ok({
-      fullName: `${args.parsedInput.firstName} ${args.parsedInput.lastName}`,
+      fullName: `${args.input.firstName} ${args.input.lastName}`,
     });
   });
 ```
@@ -87,12 +87,12 @@ const mySafeFunction = SafeFn.new()
   .output(z.object({ fullName: z.string() }))
   .handler((args) => {
     /*        ^ ?
-      { parsedInput: undefined;
-        unparsedInput: { firstName: string; lastName: string }};
+      { input: undefined;
+        unsafeRawInput: { firstName: string; lastName: string }};
         ...
      */
     return ok({
-      fullName: `${args.unparsedInput.firstName} ${args.unparsedInput.lastName}`,
+      fullName: `${args.unsafeRawInput.firstName} ${args.unsafeRawInput.lastName}`,
     });
   });
 ```
@@ -107,7 +107,7 @@ const mySafeFunction = SafeFn.new()
   .output(z.object({ fullName: z.string() }))
   .handler((args) => {
     return ok({
-      fullName: `${args.parsedInput.firstName} ${args.parsedInput.lastName}`,
+      fullName: `${args.input.firstName} ${args.input.lastName}`,
     });
   });
 ```
