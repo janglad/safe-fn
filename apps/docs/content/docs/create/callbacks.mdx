@@ -1,0 +1,141 @@
+---
+title: Callback functions
+---
+
+<Callout type="info">
+  While these functions are guaranteed to finish execution before your function
+  returns (to prevent issues in serverless environments) and will be called in
+  their logical order (`onStart` -> `onSuccess` | `onError` -> `onComplete`),
+  they are not guaranteed to finish execution in that order (e.g., `onComplete`
+  can finish execution before `onStart` if `onStart` makes a long async
+  request).
+</Callout>
+<Callout type="info">
+    These functions must return `Promise<void>`. All thrown errors are automatically caught, except for framework related ones like Next's `Redirect`.
+</Callout>
+
+The examples bellow use the following SafeFn
+
+```ts
+const parent = SafeFn.new()
+  .input(z.object({ firstName: z.string(), lastName: z.string() }))
+  .handler((args) => {
+    return ok(`${args.input.firstName} ${args.input.lastName}`);
+  });
+
+const child = SafeFn.new(parent)
+  .output(z.object({ message: z.string() }))
+  .handler((args) => {
+    return ok({
+      message: `Hello ${args.ctx}`,
+    });
+  });
+```
+
+## `onStart()`
+
+```ts
+...
+  .onStart(async (args) => {
+    /*
+    (parameter) args: {
+        unsafeRawInput: {
+            firstName: string;
+            lastName: string;
+        };
+    */
+  })
+```
+
+Starts execution right when you run your SafeFn and takes in the following parameters:
+
+- `unsafeRawInput`: the raw input passed when running your SafeFn. Keep in mind this can contain additional properties when using one SafeFn as the parent of another!
+
+## `onSuccess()`
+
+```ts
+...
+  .onSuccess(async (args) => {
+    /*
+    (parameter) args: {
+    input: {
+        firstName: string;
+        lastName: string;
+    };
+    unsafeRawInput: {
+        firstName: string;
+        lastName: string;
+    }
+   ctx: string;
+    value: {
+        message: string;
+    };
+    */
+  })
+```
+
+Starts execution after output parsing has completed if you defined a schema, otherwise after your `handler()` or `safeHandler()` finished execution. Takes in the following parameters:
+
+- `unsafeRawInput`: the raw input passed when running your SafeFn. Keep in mind this can contain additional properties when using one SafeFn as the parent of another!
+- `input`: the results of parsing `unsafeRawInput` through your input schema if you defined one, otherwise `undefined`
+- `ctx`: the `Ok` value of your parent safe-fn if you defined one, otherwise undefined.
+- `value`: the `Ok` value of the safe-fn this callback is defined on.
+
+## `onError()`
+
+```ts
+  .onError(async (args) => {
+    /*
+    (parameter) args: {
+    asAction: boolean
+    input: {
+        firstName: string;
+        lastName: string;
+    } | undefined
+    unsafeRawInput: {
+        firstName: string;
+        lastName: string;
+    }
+   ctx: string | undefined;
+   error: {code: "INPUT_PARSING" ...} | ...
+    */
+  })
+```
+
+Starts execution after the first encountered `Err` return while executing your SafeFn. This can be anywhere between input parsing and output parsing. Takes in the following parameters:
+
+- `asAction`: wether the safe-fn was run as an action (`createAction()()`) or not (`run()`). This can be helpful the narrow down the type of `error`.
+- `unsafeRawInput`: the raw input passed when running your SafeFn. Keep in mind this can contain additional properties when using one SafeFn as the parent of another!
+- `input`: the results of parsing `unsafeRawInput` through your input schema if you defined one and parsing was successful, otherwise `undefined`.
+- `ctx`: the `Ok` value of your parent safe-fn if you defined one and execution was successful, otherwise undefined
+- `error`: the `Err` error that caused your safe-fn to fail.
+
+## `onComplete()`
+
+```ts
+...
+  .onComplete(async (args) => {
+    /*
+    (parameter) args: {
+    asAction: boolean
+    input: {
+        firstName: string;
+        lastName: string;
+    } | undefined
+    unsafeRawInput: {
+        firstName: string;
+        lastName: string;
+    }
+   ctx: string | undefined;
+   result: Result<string, {code: "INPUT_PARSING" ...} ...>
+    */
+  })
+```
+
+Starts execution after either `onSuccess()` or `onError()` is **called** (not finished). Takes in the following parameters:
+
+- `asAction`: wether the safe-fn was run as an action (`createAction()()`) or not (`run()`). This can be helpful the narrow down the type of `error`.
+- `unsafeRawInput`: the raw input passed when running your SafeFn. Keep in mind this can contain additional properties when using one SafeFn as the parent of another!
+- `input`: the results of parsing `unsafeRawInput` through your input schema if you defined one and parsing was successful, otherwise `undefined`.
+- `ctx`: the `Ok` value of your parent safe-fn if you defined one and execution was successful, otherwise undefined
+- `result`: a `Result<T,E>` with either the `Ok` value of the safe-fn this callback was defined on if execution was successful, or the `Err` error.
