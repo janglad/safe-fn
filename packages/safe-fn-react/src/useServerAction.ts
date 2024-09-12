@@ -8,6 +8,7 @@ import {
   type InferSafeFnActionArgs,
   type InferSafeFnActionReturn,
 } from "safe-fn";
+import type { UserServerActionCallbacks } from "./types";
 
 type UseServerActionReturn<
   TAction extends AnySafeFnAction,
@@ -26,6 +27,7 @@ type UseServerActionReturn<
 
 export const useServerAction = <TAction extends AnySafeFnAction>(
   action: TAction,
+  callbacks: UserServerActionCallbacks<TAction>,
 ): UseServerActionReturn<TAction> => {
   type ActionArgs = InferSafeFnActionArgs<TAction>;
   type THotActionActionResult = InferSafeFnActionReturn<TAction>;
