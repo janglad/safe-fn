@@ -1,5 +1,5 @@
 import { ResultAsync } from "neverthrow";
-import { useRef, useState, useTransition } from "react";
+import { useCallback, useRef, useState, useTransition } from "react";
 import {
   actionResultToResult,
   type ActionResultPromiseToResultAsync,
@@ -48,59 +48,65 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
     undefined,
   );
 
-  const _execute = async (args: ActionArgs): Promise<void> => {
-    if (callbacks.onStart !== undefined) {
-      void ResultAsync.fromThrowable(callbacks.onStart, callbackCatch)(args);
-    }
+  const _execute = useCallback(
+    async (args: ActionArgs): Promise<void> => {
+      if (callbacks.onStart !== undefined) {
+        void ResultAsync.fromThrowable(callbacks.onStart, callbackCatch)(args);
+      }
 
-    const actionResult = (await action(args)) as ActionActionResult;
-    const res = actionResultToResult(actionResult) as ActionResult;
+      const actionResult = (await action(args)) as ActionActionResult;
+      const res = actionResultToResult(actionResult) as ActionResult;
 
-    if (res.isOk() && callbacks.onSuccess !== undefined) {
-      void ResultAsync.fromThrowable(
-        callbacks.onSuccess,
-        callbackCatch,
-      )({
-        unsafeRawInput: args,
-        value: res.value as Awaited<InferSafeFnActionOkData<TAction>>,
-      });
-    } else if (res.isErr() && callbacks.onError !== undefined) {
-      void ResultAsync.fromThrowable(
-        callbacks.onError,
-        callbackCatch,
-      )({
-        unsafeRawInput: args,
-        error: res.error as Awaited<InferSafeFnActionError<TAction>>,
-      });
-    }
+      if (res.isOk() && callbacks.onSuccess !== undefined) {
+        void ResultAsync.fromThrowable(
+          callbacks.onSuccess,
+          callbackCatch,
+        )({
+          unsafeRawInput: args,
+          value: res.value as Awaited<InferSafeFnActionOkData<TAction>>,
+        });
+      } else if (res.isErr() && callbacks.onError !== undefined) {
+        void ResultAsync.fromThrowable(
+          callbacks.onError,
+          callbackCatch,
+        )({
+          unsafeRawInput: args,
+          error: res.error as Awaited<InferSafeFnActionError<TAction>>,
+        });
+      }
 
-    if (callbacks.onComplete !== undefined) {
-      void ResultAsync.fromThrowable(
-        callbacks.onComplete,
-        callbackCatch,
-      )({
-        unsafeRawInput: args,
-        result: res as Awaited<InferSafeFnActionReturn<TAction>>,
-      });
-    }
+      if (callbacks.onComplete !== undefined) {
+        void ResultAsync.fromThrowable(
+          callbacks.onComplete,
+          callbackCatch,
+        )({
+          unsafeRawInput: args,
+          result: res as Awaited<InferSafeFnActionReturn<TAction>>,
+        });
+      }
 
-    setResult(res);
-    resolveRef.current?.(res);
-    setIsExecuting(false);
-  };
+      setResult(res);
+      resolveRef.current?.(res);
+      setIsExecuting(false);
+    },
+    [action, callbacks],
+  );
 
-  const execute = (args: ActionArgs): ActionResultAsync => {
-    const promise = new Promise((resolve) => {
-      setIsExecuting(true);
-      startTransition(() => {
-        resolveRef.current = resolve;
-        void _execute(args);
-      });
-    }) as Promise<ActionResult>;
-    return ResultAsync.fromPromise(promise, (e) => {
-      console.error("Unknown error", e);
-    }).andThen((res) => res) as ActionResultAsync;
-  };
+  const execute = useCallback(
+    (args: ActionArgs): ActionResultAsync => {
+      const promise = new Promise((resolve) => {
+        setIsExecuting(true);
+        startTransition(() => {
+          resolveRef.current = resolve;
+          void _execute(args);
+        });
+      }) as Promise<ActionResult>;
+      return ResultAsync.fromPromise(promise, (e) => {
+        console.error("Unknown error", e);
+      }).andThen((res) => res) as ActionResultAsync;
+    },
+    [_execute],
+  );
 
   return {
     result,
