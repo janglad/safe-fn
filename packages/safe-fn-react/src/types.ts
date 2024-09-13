@@ -31,7 +31,8 @@ export type UseServerActionOnSuccess<TAction extends AnySafeFnAction> = (
 
 export type UseServerActionOnCompleteArgs<TAction extends AnySafeFnAction> = {
   unsafeRawInput: InferSafeFnActionArgs<TAction>;
-  result: Awaited<InferSafeFnActionReturn<TAction>>;
+  // Result can be undefined when navigating away from the page
+  result: Awaited<InferSafeFnActionReturn<TAction>> | undefined;
 };
 export type UseServerActionOnComplete<TAction extends AnySafeFnAction> = (
   args: UseServerActionOnCompleteArgs<TAction>,

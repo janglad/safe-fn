@@ -1,5 +1,5 @@
 import { ResultAsync } from "neverthrow";
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
   actionResultToResult,
   type ActionResultPromiseToResultAsync,
@@ -43,10 +43,12 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
   const [result, setResult] = useState<ActionResult | undefined>(undefined);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isTransitioning, startTransition] = useTransition();
+  const isPending = isExecuting || isTransitioning;
 
   const resolveRef = useRef<((args: ActionResult) => void) | undefined>(
     undefined,
   );
+  const argsRef = useRef<ActionArgs | undefined>(undefined);
 
   const _execute = useCallback(
     async (args: ActionArgs): Promise<void> => {
@@ -57,34 +59,6 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
       const actionResult = (await action(args)) as ActionActionResult;
       const res = actionResultToResult(actionResult) as ActionResult;
 
-      if (res.isOk() && callbacks.onSuccess !== undefined) {
-        void ResultAsync.fromThrowable(
-          callbacks.onSuccess,
-          callbackCatch,
-        )({
-          unsafeRawInput: args,
-          value: res.value as Awaited<InferSafeFnActionOkData<TAction>>,
-        });
-      } else if (res.isErr() && callbacks.onError !== undefined) {
-        void ResultAsync.fromThrowable(
-          callbacks.onError,
-          callbackCatch,
-        )({
-          unsafeRawInput: args,
-          error: res.error as Awaited<InferSafeFnActionError<TAction>>,
-        });
-      }
-
-      if (callbacks.onComplete !== undefined) {
-        void ResultAsync.fromThrowable(
-          callbacks.onComplete,
-          callbackCatch,
-        )({
-          unsafeRawInput: args,
-          result: res as Awaited<InferSafeFnActionReturn<TAction>>,
-        });
-      }
-
       setResult(res);
       resolveRef.current?.(res);
       setIsExecuting(false);
@@ -92,12 +66,56 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
     [action, callbacks],
   );
 
+  const handleCallbacks = useCallback(() => {
+    if (argsRef.current === undefined) {
+      return;
+    }
+    if (
+      result !== undefined &&
+      result.isOk() &&
+      callbacks.onSuccess !== undefined
+    ) {
+      void ResultAsync.fromThrowable(
+        callbacks.onSuccess,
+        callbackCatch,
+      )({
+        unsafeRawInput: argsRef.current,
+        value: result.value as Awaited<InferSafeFnActionOkData<TAction>>,
+      });
+    } else if (
+      result !== undefined &&
+      result.isErr() &&
+      callbacks.onError !== undefined
+    ) {
+      void ResultAsync.fromThrowable(
+        callbacks.onError,
+        callbackCatch,
+      )({
+        unsafeRawInput: argsRef.current,
+        error: result.error as Awaited<InferSafeFnActionError<TAction>>,
+      });
+    }
+
+    if (callbacks.onComplete !== undefined) {
+      void ResultAsync.fromThrowable(
+        callbacks.onComplete,
+        callbackCatch,
+      )({
+        unsafeRawInput: argsRef.current,
+        result: result as Awaited<InferSafeFnActionReturn<TAction>> | undefined,
+      });
+    }
+
+    resolveRef.current = undefined;
+  }, [result, callbacks]);
+
   const execute = useCallback(
     (args: ActionArgs): ActionResultAsync => {
       const promise = new Promise((resolve) => {
         setIsExecuting(true);
         startTransition(() => {
           resolveRef.current = resolve;
+          argsRef.current = args;
           void _execute(args);
         });
       }) as Promise<ActionResult>;
@@ -108,9 +126,23 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
     [_execute],
   );
 
+  useEffect(() => {
+    return () => {
+      handleCallbacks();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isPending || resolveRef.current === undefined) {
+      return;
+    }
+
+    handleCallbacks();
+  }, [isPending]);
+
   return {
     result,
-    isPending: isExecuting || isTransitioning,
+    isPending,
     isSuccess: !!result?.isOk(),
     execute,
   };
