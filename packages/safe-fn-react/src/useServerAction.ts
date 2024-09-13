@@ -6,23 +6,25 @@ import {
   type ActionResultToResult,
   type AnySafeFnAction,
   type InferSafeFnActionArgs,
+  type InferSafeFnActionError,
+  type InferSafeFnActionOkData,
   type InferSafeFnActionReturn,
 } from "safe-fn";
 import type { UserServerActionCallbacks } from "./types";
 
-type UseServerActionReturn<
-  TAction extends AnySafeFnAction,
-  THotActionActionResult = InferSafeFnActionReturn<TAction>,
-  // Original `ActionResult<T,E>`
-  TActionActionResult = Awaited<THotActionActionResult>,
-  // Converted `ActionResult<T,E>` -> `Result<T,E>` to be returned to the user
-  TActionResult = ActionResultToResult<TActionActionResult>,
-  TActionResultAsync = ActionResultPromiseToResultAsync<THotActionActionResult>,
-> = {
+type UseServerActionReturn<TAction extends AnySafeFnAction> = {
   isPending: boolean;
   isSuccess: boolean;
-  result: TActionResult | undefined;
-  execute: (args: InferSafeFnActionArgs<TAction>) => TActionResultAsync;
+  result:
+    | ActionResultToResult<Awaited<InferSafeFnActionReturn<TAction>>>
+    | undefined;
+  execute: (
+    args: InferSafeFnActionArgs<TAction>,
+  ) => ActionResultPromiseToResultAsync<InferSafeFnActionReturn<TAction>>;
+};
+
+const callbackCatch = (e: unknown): void => {
+  console.error(e);
 };
 
 export const useServerAction = <TAction extends AnySafeFnAction>(
@@ -30,13 +32,13 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
   callbacks: UserServerActionCallbacks<TAction>,
 ): UseServerActionReturn<TAction> => {
   type ActionArgs = InferSafeFnActionArgs<TAction>;
-  type THotActionActionResult = InferSafeFnActionReturn<TAction>;
   /** Original `ActionResult<T,E>` */
-  type ActionActionResult = Awaited<THotActionActionResult>;
+  type ActionActionResult = Awaited<InferSafeFnActionReturn<TAction>>;
   /** Converted `ActionResult<T,E>` -\> `Result<T,E>` to be returned to the user  */
   type ActionResult = ActionResultToResult<ActionActionResult>;
-  type ActionResultAsync =
-    ActionResultPromiseToResultAsync<THotActionActionResult>;
+  type ActionResultAsync = ActionResultPromiseToResultAsync<
+    InferSafeFnActionReturn<TAction>
+  >;
 
   const [result, setResult] = useState<ActionResult | undefined>(undefined);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -47,10 +49,43 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
   );
 
   const _execute = async (args: ActionArgs): Promise<void> => {
-    const res = (await action(args)) as ActionActionResult;
-    const converted = actionResultToResult(res) as ActionResult;
-    setResult(converted);
-    resolveRef.current?.(converted);
+    if (callbacks.onStart !== undefined) {
+      void ResultAsync.fromThrowable(callbacks.onStart, callbackCatch)(args);
+    }
+
+    const actionResult = (await action(args)) as ActionActionResult;
+    const res = actionResultToResult(actionResult) as ActionResult;
+
+    if (res.isOk() && callbacks.onSuccess !== undefined) {
+      void ResultAsync.fromThrowable(
+        callbacks.onSuccess,
+        callbackCatch,
+      )({
+        unsafeRawInput: args,
+        value: res.value as Awaited<InferSafeFnActionOkData<TAction>>,
+      });
+    } else if (res.isErr() && callbacks.onError !== undefined) {
+      void ResultAsync.fromThrowable(
+        callbacks.onError,
+        callbackCatch,
+      )({
+        unsafeRawInput: args,
+        error: res.error as Awaited<InferSafeFnActionError<TAction>>,
+      });
+    }
+
+    if (callbacks.onComplete !== undefined) {
+      void ResultAsync.fromThrowable(
+        callbacks.onComplete,
+        callbackCatch,
+      )({
+        unsafeRawInput: args,
+        result: res as Awaited<InferSafeFnActionReturn<TAction>>,
+      });
+    }
+
+    setResult(res);
+    resolveRef.current?.(res);
     setIsExecuting(false);
   };
 
@@ -59,20 +94,18 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
       setIsExecuting(true);
       startTransition(() => {
         resolveRef.current = resolve;
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        _execute(args);
+        void _execute(args);
       });
     }) as Promise<ActionResult>;
-    return ResultAsync.fromPromise(
-      promise,
-      () => new Error("Unknown error"),
-    ).andThen((res) => res) as ActionResultAsync;
+    return ResultAsync.fromPromise(promise, (e) => {
+      console.error("Unknown error", e);
+    }).andThen((res) => res) as ActionResultAsync;
   };
 
   return {
     result,
     isPending: isExecuting || isTransitioning,
     isSuccess: !!result?.isOk(),
-    execute: execute,
+    execute,
   };
 };
