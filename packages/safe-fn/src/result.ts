@@ -58,6 +58,9 @@ export type ResultAsyncToPromiseActionResult<T> = Promise<
   T extends ResultAsync<infer D, infer E> ? ActionResult<D, E> : never
 >;
 
+export type ActionResultPromiseToResultAsync<T> =
+  T extends Promise<ActionResult<infer D, infer E>> ? ResultAsync<D, E> : never;
+
 export type ActionResultToResult<T> =
   T extends ActionResult<infer D, infer E> ? Result<D, E> : never;
 
