@@ -130,6 +130,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
     return () => {
       handleCallbacks();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -138,6 +139,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
     }
 
     handleCallbacks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPending]);
 
   return {
