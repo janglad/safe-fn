@@ -367,8 +367,8 @@ export type InferSafeFnOkData<
   T,
   TAsAction extends boolean,
 > = TAsAction extends true
-  ? InferActionOkData<Awaited<InferSafeFnReturn<T, TAsAction>>>
-  : InferAsyncOkData<InferSafeFnReturn<T, TAsAction>>;
+  ? InferActionOkData<Awaited<InferSafeFnReturn<T, true>>>
+  : InferAsyncOkData<InferSafeFnReturn<T, false>>;
 
 /**
  * @param T the runnable safe function
@@ -378,8 +378,8 @@ export type InferSafeFnErrError<
   T extends AnyRunnableSafeFn,
   TAsAction extends boolean,
 > = TAsAction extends true
-  ? InferActionErrError<Awaited<InferSafeFnReturn<T, TAsAction>>>
-  : InferAsyncErrError<InferSafeFnReturn<T, TAsAction>>;
+  ? InferActionErrError<Awaited<InferSafeFnReturn<T, true>>>
+  : InferAsyncErrError<InferSafeFnReturn<T, false>>;
 
 /**
  * @param TOutputSchema a Zod schema or undefined
@@ -391,7 +391,7 @@ export type SafeFnReturnData<
   TOutputSchema extends SafeFnOutput,
   THandlerRes extends AnySafeFnHandlerRes,
 > =
-  Awaited<THandlerRes> extends Result<infer TData, any>
+  THandlerRes extends Result<infer TData, any>
     ? [TData] extends [never]
       ? never
       : SchemaOutputOrFallback<TOutputSchema, TData>
@@ -421,7 +421,7 @@ export type SafeFnReturnError<
   | InferErrError<THandlerRes>
   | InferErrError<TCatchHandlerRes>
   | SafeFnInputParseError<TInputSchema, TAsAction>
-  | (Awaited<THandlerRes> extends Result<never, any>
+  | (THandlerRes extends Result<never, any>
       ? never
       : SafeFnOutputParseError<TOutputSchema, TAsAction>)
   | (TParent extends AnyRunnableSafeFn
@@ -462,7 +462,7 @@ export type SafeFnReturn<
       TParent,
       TInputSchema,
       TOutputSchema,
-      Awaited<THandlerRes>,
+      THandlerRes,
       TCatchHandlerRes,
       TAsAction
     >
@@ -613,7 +613,9 @@ export type AnySafeFnAction = SafeFnAction<any, any, any, any, any, any>;
  * @param T the action created through `createAction()`
  * @returns the return value of the action after execution without throwing. This is a `Promise<ActionResult<T,E>>`.
  */
-export type InferSafeFnActionReturn<T extends AnySafeFnAction> = ReturnType<T>;
+export type InferSafeFnActionReturn<T extends AnySafeFnAction> = Awaited<
+  ReturnType<T>
+>;
 /**
  * @param T the action created through `createAction()`
  * @returns the input necessary to run the action.
@@ -625,7 +627,7 @@ export type InferSafeFnActionArgs<T extends AnySafeFnAction> = Parameters<T>[0];
  * @returns the `.value` type of the returned `ActionResult` assuming it's ok, wrapped in a `Promise`
  */
 export type InferSafeFnActionOkData<T extends AnySafeFnAction> = Promise<
-  InferActionOkData<Awaited<InferSafeFnActionReturn<T>>>
+  InferActionOkData<InferSafeFnActionReturn<T>>
 >;
 
 /**
@@ -633,7 +635,7 @@ export type InferSafeFnActionOkData<T extends AnySafeFnAction> = Promise<
  * @returns the `.error` type of the returned `ActionResult` assuming it's not ok, wrapped in a `Promise`
  */
 export type InferSafeFnActionError<T extends AnySafeFnAction> = Promise<
-  InferActionErrError<Awaited<InferSafeFnActionReturn<T>>>
+  InferActionErrError<InferSafeFnActionReturn<T>>
 >;
 
 /**
@@ -797,7 +799,7 @@ export type SafeFnOnErrorArgs<
             TParent,
             TInputSchema,
             undefined,
-            Awaited<THandlerRes>,
+            THandlerRes,
             TCatchHandlerRes,
             true
           >;
@@ -808,7 +810,7 @@ export type SafeFnOnErrorArgs<
             TParent,
             TInputSchema,
             undefined,
-            Awaited<THandlerRes>,
+            THandlerRes,
             TCatchHandlerRes,
             false
           >;
@@ -848,7 +850,7 @@ export type SafeFnOnCompleteArgs<
           TParent,
           TInputSchema,
           undefined,
-          Awaited<THandlerRes>,
+          THandlerRes,
           TThrownHandlerRes,
           true
         >
@@ -864,7 +866,7 @@ export type SafeFnOnCompleteArgs<
           TParent,
           TInputSchema,
           undefined,
-          Awaited<THandlerRes>,
+          THandlerRes,
           TThrownHandlerRes,
           false
         >

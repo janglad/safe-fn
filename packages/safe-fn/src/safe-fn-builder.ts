@@ -133,7 +133,7 @@ export class SafeFnBuilder<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    TNewHandlerResult,
+    Awaited<TNewHandlerResult>,
     SafeFnDefaultCatchHandlerErr
   > {
     return new RunnableSafeFn(
