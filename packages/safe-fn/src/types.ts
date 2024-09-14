@@ -253,18 +253,10 @@ export type SafeFnDefaultHandlerFn = () => Result<
  * @param TParent the parent safe function or undefined
  * @returns the type of the arguments available in the passed handler function.
  */
-export type SafeFnHandlerArgs<
-  TInputSchema extends SafeFnInput,
-  TUnparsedInput,
-  TParent,
-> = TParent extends AnyRunnableSafeFn
-  ? SafeFnHandlerArgsWParent<TInputSchema, TUnparsedInput, TParent>
-  : SafeFnHandlerArgsNoParent<TInputSchema, TUnparsedInput>;
-
-interface SafeFnHandlerArgsWParent<
+export interface SafeFnHandlerArgs<
   in out TInputSchema extends SafeFnInput,
   in out TUnparsedInput,
-  in out TParent extends AnyRunnableSafeFn,
+  in out TParent extends AnyRunnableSafeFn | undefined,
 > {
   input: Prettify<
     UnionIfNotT<
@@ -290,21 +282,6 @@ interface SafeFnHandlerArgsWParent<
     : never;
 
   ctx: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
-}
-
-interface SafeFnHandlerArgsNoParent<
-  in out TInputSchema extends SafeFnInput,
-  in out TUnparsedInput,
-> {
-  input: SchemaOutputOrFallback<TInputSchema, undefined>;
-  /**
-   * The raw input passed to the handler function.
-   *
-   *  **WARNING**: this can have excess values that are not in the type when you use this SafeFn as a parent for another SafeFn.
-
-   */
-  unsafeRawInput: TUnparsedInput;
-  ctx: undefined;
 }
 
 /**
@@ -374,18 +351,20 @@ export type InferSafeFnArgs<T extends AnyRunnableSafeFn> = Parameters<
  * @returns the type of the return `AsyncResult` or `Promise<ActionResult>` value of the safe function after calling run();
  */
 export type InferSafeFnReturn<
-  T extends AnyRunnableSafeFn,
+  T,
   TAsAction extends boolean,
-> = TAsAction extends true
-  ? ReturnType<T["_runAsAction"]>
-  : ReturnType<T["run"]>;
+> = T extends AnyRunnableSafeFn
+  ? TAsAction extends true
+    ? ReturnType<T["_runAsAction"]>
+    : ReturnType<T["run"]>
+  : never;
 
 /**
  * @param T the runnable safe function
  * @returns the `.value` type of the returned `AsyncResult` assuming it's an `AsyncOk`.
  */
 export type InferSafeFnOkData<
-  T extends AnyRunnableSafeFn,
+  T,
   TAsAction extends boolean,
 > = TAsAction extends true
   ? InferActionOkData<Awaited<InferSafeFnReturn<T, TAsAction>>>
@@ -768,17 +747,18 @@ export type SafeFnOnStart<in out TUnparsedInput> = (args: {
   unsafeRawInput: Prettify<TUnparsedInput>;
 }) => Promise<void>;
 
-export type SafeFnOnSuccessArgs<
+export interface SafeFnOnSuccessArgs<
   in out TParent extends AnyRunnableSafeFn | undefined,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
-> = Prettify<
-  SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> & {
-    value: SafeFnReturnData<TOutputSchema, THandlerRes>;
-  }
->;
+> extends Prettify<
+    SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> & {
+      value: SafeFnReturnData<TOutputSchema, THandlerRes>;
+    }
+  > {}
+
 export type SafeFnOnSuccess<
   in out TParent extends AnyRunnableSafeFn | undefined,
   in out TInputSchema extends SafeFnInput,
