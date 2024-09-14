@@ -17,12 +17,12 @@ import type { RunnableSafeFn } from "./runnable-safe-fn";
 ||                            ||
 ################################
 */
-export type SafeFnInternals<
+export interface SafeFnInternals<
   in out TParent extends AnyRunnableSafeFn | undefined,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnInput,
   in out TUnparsedInput,
-> = {
+> {
   parent: TParent;
   inputSchema: TInputSchema;
   outputSchema: TOutputSchema;
@@ -30,7 +30,7 @@ export type SafeFnInternals<
     input: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
   ) => SafeFnHandlerReturn<TOutputSchema>;
   uncaughtErrorHandler: (error: unknown) => Result<never, unknown>;
-};
+}
 
 /*
 ################################
@@ -261,11 +261,11 @@ export type SafeFnHandlerArgs<
   ? SafeFnHandlerArgsWParent<TInputSchema, TUnparsedInput, TParent>
   : SafeFnHandlerArgsNoParent<TInputSchema, TUnparsedInput>;
 
-type SafeFnHandlerArgsWParent<
+interface SafeFnHandlerArgsWParent<
   in out TInputSchema extends SafeFnInput,
   in out TUnparsedInput,
   in out TParent extends AnyRunnableSafeFn,
-> = {
+> {
   input: Prettify<
     UnionIfNotT<
       SchemaOutputOrFallback<TInputSchema, undefined>,
@@ -290,12 +290,12 @@ type SafeFnHandlerArgsWParent<
     : never;
 
   ctx: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
-};
+}
 
-type SafeFnHandlerArgsNoParent<
+interface SafeFnHandlerArgsNoParent<
   in out TInputSchema extends SafeFnInput,
   in out TUnparsedInput,
-> = {
+> {
   input: SchemaOutputOrFallback<TInputSchema, undefined>;
   /**
    * The raw input passed to the handler function.
@@ -305,7 +305,7 @@ type SafeFnHandlerArgsNoParent<
    */
   unsafeRawInput: TUnparsedInput;
   ctx: undefined;
-};
+}
 
 /**
  * Type used to constrain the return type of the handler function.
@@ -563,7 +563,7 @@ export type SafeFnSuperInternalRunReturn<
       >
     : never;
 
-export type SafeFnSuperInternalRunReturnData<
+export interface SafeFnSuperInternalRunReturnData<
   in out TParent extends AnyRunnableSafeFn | undefined,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
@@ -571,7 +571,7 @@ export type SafeFnSuperInternalRunReturnData<
   in out THandlerRes extends AnySafeFnHandlerRes,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   in out TAsAction extends boolean,
-> = {
+> {
   result: InferAsyncOkData<
     SafeFnReturn<
       TParent,
@@ -587,9 +587,9 @@ export type SafeFnSuperInternalRunReturnData<
     ? InferSafeFnOkData<TParent, TAsAction>
     : undefined;
   unsafeRawInput: TUnparsedInput;
-};
+}
 
-export type SafeFnSuperInternalRunReturnError<
+export interface SafeFnSuperInternalRunReturnError<
   in out TParent extends AnyRunnableSafeFn | undefined,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
@@ -597,7 +597,7 @@ export type SafeFnSuperInternalRunReturnError<
   in out THandlerRes extends AnySafeFnHandlerRes,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
   in out TAsAction extends boolean,
-> = {
+> {
   public: InferAsyncErrError<
     SafeFnReturn<
       TParent,
@@ -618,7 +618,7 @@ export type SafeFnSuperInternalRunReturnError<
     unsafeRawInput: TUnparsedInput;
     handlerRes: TODO;
   };
-};
+}
 
 /* 
 ################################
@@ -726,14 +726,14 @@ export type InferSafeFnCallbacks<T> =
       >
     : never;
 
-export type SafeFnCallBacks<
+export interface SafeFnCallBacks<
   in out TParent extends AnyRunnableSafeFn | undefined,
   in out TInputSchema extends SafeFnInput,
   in out TOutputSchema extends SafeFnOutput,
   TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
   in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
-> = {
+> {
   onStart: SafeFnOnStart<TUnparsedInput> | undefined;
   onSuccess:
     | SafeFnOnSuccess<
@@ -763,7 +763,7 @@ export type SafeFnCallBacks<
         TCatchHandlerRes
       >
     | undefined;
-};
+}
 export type SafeFnOnStart<in out TUnparsedInput> = (args: {
   unsafeRawInput: Prettify<TUnparsedInput>;
 }) => Promise<void>;
@@ -796,7 +796,7 @@ export type SafeFnOnSuccess<
 ) => Promise<void>;
 
 // Temporary, will be fixed when I fix types in general
-type ToOptionalSafeFnArgs<T extends Record<PropertyKey, unknown>> = {
+type ToOptionalSafeFnArgs<T> = {
   [K in keyof T]: K extends "unsafeRawInput" ? T[K] : T[K] | undefined;
 };
 
