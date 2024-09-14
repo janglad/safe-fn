@@ -96,7 +96,20 @@ importers:
         version: 5.5.4
 
   packages/type-tests:
+    dependencies:
+      neverthrow:
+        specifier: ^7.1.0
+        version: 7.1.0
+      safe-fn:
+        specifier: workspace:^
+        version: link:../safe-fn
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
     devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:^
+        version: link:../typescript-config
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
