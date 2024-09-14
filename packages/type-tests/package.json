@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "version": "0.0.0",
+  "name": "@repo/type-test",
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}
