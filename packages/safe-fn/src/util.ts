@@ -8,13 +8,13 @@ import type {
   TSafeFnOnSuccessArgs,
 } from "./types/callbacks";
 import type { TAnySafeFnHandlerRes } from "./types/handler";
-import type { TSafeFnSuperInternalRunReturn } from "./types/run";
 import type { TSafeFnInput, TSafeFnOutput } from "./types/schema";
 
 import type {
   TAnySafeFnCatchHandlerRes,
   TSafeFnParseError,
 } from "./types/error";
+import type { TSafeFnInternalRunReturn } from "./types/run";
 
 const NEXT_JS_ERROR_MESSAGES = ["NEXT_REDIRECT", "NEXT_NOT_FOUND"];
 
@@ -44,7 +44,7 @@ export const runCallbacks = <
   THandlerRes extends TAnySafeFnHandlerRes,
   TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
-  TRes extends TSafeFnSuperInternalRunReturn<
+  TRes extends TSafeFnInternalRunReturn<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -52,7 +52,7 @@ export const runCallbacks = <
     THandlerRes,
     TCatchHandlerRes,
     NoInfer<TAsAction>
-  > = TSafeFnSuperInternalRunReturn<
+  > = TSafeFnInternalRunReturn<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -64,7 +64,6 @@ export const runCallbacks = <
 >(args: {
   resultAsync: TRes;
   asAction: TAsAction;
-  unsafeRawInput: TUnparsedInput;
   callbacks: TSafeFnCallBacks<
     TParent,
     TInputSchema,
@@ -109,7 +108,7 @@ export const runCallbacks = <
         error: res.error.public as any,
         ctx: res.error.private.ctx,
         input: res.error.private.input,
-        unsafeRawInput: args.unsafeRawInput,
+        unsafeRawInput: res.error.private.unsafeRawInput,
       } as TSafeFnOnErrorArgs<
         TParent,
         TInputSchema,
@@ -138,7 +137,10 @@ export const runCallbacks = <
           (value) => value.input,
           (err) => err.private.input,
         ),
-        unsafeRawInput: args.unsafeRawInput,
+        unsafeRawInput: res.match(
+          (value) => value.unsafeRawInput,
+          (err) => err.private.unsafeRawInput,
+        ),
       } as TSafeFnOnCompleteArgs<
         TParent,
         TInputSchema,

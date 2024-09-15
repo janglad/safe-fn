@@ -12,7 +12,6 @@ import type {
   TSafeFnInternalRunReturn,
   TSafeFnReturn,
   TSafeFnRunArgs,
-  TSafeFnSuperInternalRunReturn,
   TSafeFnSuperInternalRunReturnData,
   TSafeFnSuperInternalRunReturnError,
 } from "./types/run";
@@ -200,14 +199,9 @@ export class RunnableSafeFn<
     TThrownHandlerRes,
     false
   > {
-    return this._run(args[0], false, false) as TSafeFnReturn<
-      TParent,
-      TInputSchema,
-      TOutputSchema,
-      THandlerRes,
-      TThrownHandlerRes,
-      false
-    >;
+    return this._run(args[0], false)
+      .map((res) => res.result)
+      .mapErr((e) => e.public);
   }
 
   /*
@@ -284,10 +278,9 @@ export class RunnableSafeFn<
     );
   }
 
-  _run<TAsAction extends boolean, TAsProcedure extends boolean>(
+  _run<TAsAction extends boolean>(
     args: TSafeFnRunArgs<TUnparsedInput>[0],
     tAsAction: TAsAction,
-    tAsProcedure: TAsProcedure,
   ): TSafeFnInternalRunReturn<
     TParent,
     TInputSchema,
@@ -295,8 +288,7 @@ export class RunnableSafeFn<
     TUnparsedInput,
     THandlerRes,
     TThrownHandlerRes,
-    TAsAction,
-    TAsProcedure
+    TAsAction
   > {
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;
@@ -341,11 +333,11 @@ export class RunnableSafeFn<
           parent === undefined
             ? { result: undefined, input: undefined }
             : yield* parent
-                ._run(args, tAsAction, true)
+                ._run(args, tAsAction)
                 .mapErr(
                   (e) =>
                     ({
-                      public: e as TODO,
+                      public: e.public as TODO,
                       private: {
                         unsafeRawInput: args as TUnparsedInput,
                         input: undefined,
@@ -428,7 +420,7 @@ export class RunnableSafeFn<
       },
     );
 
-    const internalRes: TSafeFnSuperInternalRunReturn<
+    const internalRes: TSafeFnInternalRunReturn<
       TParent,
       TInputSchema,
       TOutputSchema,
@@ -455,40 +447,25 @@ export class RunnableSafeFn<
           handlerRes: undefined,
         },
       };
-    })
-      .andThen((res) => {
-        return res;
-      })
-      .map((res) => ({
-        ...res,
-        unsafeRawInput: args as TUnparsedInput,
-      }));
+    }).andThen((res) => {
+      return res;
+    });
 
     const withCallbacks = runCallbacks({
       resultAsync: internalRes,
       asAction: tAsAction,
       callbacks: _callBacks,
       hotOnStartCallback: onStartCallback,
-      unsafeRawInput: args as TUnparsedInput,
     });
 
-    return withCallbacks
-      .mapErr((e) => e.public)
-      .map((res) => {
-        if (tAsProcedure) {
-          return res;
-        } else {
-          return res.result;
-        }
-      }) as TSafeFnInternalRunReturn<
+    return withCallbacks as TSafeFnInternalRunReturn<
       TParent,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes,
-      TAsAction,
-      TAsProcedure
+      TAsAction
     >;
   }
 
@@ -501,14 +478,9 @@ export class RunnableSafeFn<
     THandlerRes,
     TThrownHandlerRes
   > {
-    const res = await (this._run(args[0], true, false) as TSafeFnReturn<
-      TParent,
-      TInputSchema,
-      TOutputSchema,
-      THandlerRes,
-      TThrownHandlerRes,
-      true
-    >);
+    const res = await this._run(args[0], true)
+      .map((res) => res.result)
+      .mapErr((e) => e.public);
 
     if (res.isOk()) {
       return actionOk(res.value) as Awaited<
