@@ -757,11 +757,9 @@ export interface SafeFnOnSuccessArgs<
   in out TOutputSchema extends SafeFnOutput,
   in out TUnparsedInput,
   in out THandlerRes extends AnySafeFnHandlerRes,
-> extends Prettify<
-    SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> & {
-      value: SafeFnReturnData<TOutputSchema, THandlerRes>;
-    }
-  > {}
+> extends SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> {
+  value: SafeFnReturnData<TOutputSchema, THandlerRes>;
+}
 
 export type SafeFnOnSuccess<
   in out TParent extends AnyRunnableSafeFn | undefined,
@@ -790,35 +788,60 @@ export type SafeFnOnErrorArgs<
   TUnparsedInput,
   THandlerRes extends AnySafeFnHandlerRes,
   TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
-> = Prettify<
-  ToOptionalSafeFnArgs<
+> =
+  | SafeFnOnErrorActionArgs<
+      TParent,
+      TInputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TCatchHandlerRes
+    >
+  | SafeFnOnErrorNonActionArgs<
+      TParent,
+      TInputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TCatchHandlerRes
+    >;
+interface SafeFnOnErrorActionArgs<
+  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TInputSchema extends SafeFnInput,
+  in out TUnparsedInput,
+  in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+> extends ToOptionalSafeFnArgs<
     SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
-  > &
-    (
-      | {
-          asAction: true;
-          error: SafeFnReturnError<
-            TParent,
-            TInputSchema,
-            undefined,
-            THandlerRes,
-            TCatchHandlerRes,
-            true
-          >;
-        }
-      | {
-          asAction: false;
-          error: SafeFnReturnError<
-            TParent,
-            TInputSchema,
-            undefined,
-            THandlerRes,
-            TCatchHandlerRes,
-            false
-          >;
-        }
-    )
->;
+  > {
+  asAction: true;
+  error: SafeFnReturnError<
+    TParent,
+    TInputSchema,
+    undefined,
+    THandlerRes,
+    TCatchHandlerRes,
+    true
+  >;
+}
+
+interface SafeFnOnErrorNonActionArgs<
+  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TInputSchema extends SafeFnInput,
+  in out TUnparsedInput,
+  in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+> extends ToOptionalSafeFnArgs<
+    SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+  > {
+  asAction: false;
+  error: SafeFnReturnError<
+    TParent,
+    TInputSchema,
+    undefined,
+    THandlerRes,
+    TCatchHandlerRes,
+    false
+  >;
+}
 
 export type SafeFnOnError<
   in out TParent extends AnyRunnableSafeFn | undefined,
@@ -843,44 +866,106 @@ export type SafeFnOnCompleteArgs<
   TUnparsedInput,
   THandlerRes extends AnySafeFnHandlerRes,
   TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
-> = Prettify<
-  | ({
-      asAction: true;
-      result: Err<
-        never,
-        SafeFnReturnError<
-          TParent,
-          TInputSchema,
-          undefined,
-          THandlerRes,
-          TThrownHandlerRes,
-          true
-        >
-      >;
-    } & ToOptionalSafeFnArgs<
-      SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
-    >)
-  | ({
-      asAction: false;
-      result: Err<
-        never,
-        SafeFnReturnError<
-          TParent,
-          TInputSchema,
-          undefined,
-          THandlerRes,
-          TThrownHandlerRes,
-          false
-        >
-      >;
-    } & ToOptionalSafeFnArgs<
-      SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
-    >)
-  | ({
-      asAction: boolean;
-      result: Ok<SafeFnReturnData<TOutputSchema, THandlerRes>, never>;
-    } & SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>)
->;
+> =
+  | SafeFnOnCompleteErrorArgs<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes
+    >
+  | SafeFnOnCompleteSuccessArgs<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes
+    >;
+
+type SafeFnOnCompleteErrorArgs<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TInputSchema extends SafeFnInput,
+  TOutputSchema extends SafeFnInput,
+  TUnparsedInput,
+  THandlerRes extends AnySafeFnHandlerRes,
+  TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
+> =
+  | SafeFnOnCompleteErrorActionArgs<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes
+    >
+  | SafeFnOnCompleteErrorNonActionArgs<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput,
+      THandlerRes,
+      TThrownHandlerRes
+    >;
+
+interface SafeFnOnCompleteSuccessArgs<
+  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TInputSchema extends SafeFnInput,
+  in out TOutputSchema extends SafeFnInput,
+  in out TUnparsedInput,
+  in out THandlerRes extends AnySafeFnHandlerRes,
+> extends SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> {
+  asAction: boolean;
+  result: Ok<SafeFnReturnData<TOutputSchema, THandlerRes>, never>;
+}
+
+interface SafeFnOnCompleteErrorActionArgs<
+  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TInputSchema extends SafeFnInput,
+  in out TOutputSchema extends SafeFnInput,
+  in out TUnparsedInput,
+  in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
+> extends ToOptionalSafeFnArgs<
+    SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+  > {
+  asAction: true;
+  result: Err<
+    never,
+    SafeFnReturnError<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      THandlerRes,
+      TThrownHandlerRes,
+      true
+    >
+  >;
+}
+
+interface SafeFnOnCompleteErrorNonActionArgs<
+  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TInputSchema extends SafeFnInput,
+  in out TOutputSchema extends SafeFnInput,
+  in out TUnparsedInput,
+  in out THandlerRes extends AnySafeFnHandlerRes,
+  in out TThrownHandlerRes extends AnySafeFnCatchHandlerRes,
+> extends ToOptionalSafeFnArgs<
+    SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+  > {
+  asAction: false;
+  result: Err<
+    never,
+    SafeFnReturnError<
+      TParent,
+      TInputSchema,
+      TOutputSchema,
+      THandlerRes,
+      TThrownHandlerRes,
+      false
+    >
+  >;
+}
 
 export type SafeFnOnComplete<
   in out TParent extends AnyRunnableSafeFn | undefined,
