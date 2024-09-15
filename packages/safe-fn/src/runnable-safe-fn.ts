@@ -10,10 +10,10 @@ import type {
 import type { TSafeFnInternals } from "./types/internals";
 import type {
   TSafeFnInternalRunReturn,
+  TSafeFnInternalRunReturnData,
+  TSafeFnInternalRunReturnError,
   TSafeFnReturn,
   TSafeFnRunArgs,
-  TSafeFnSuperInternalRunReturnData,
-  TSafeFnSuperInternalRunReturnError,
 } from "./types/run";
 import type { TSafeFnInput, TSchemaOutputOrFallback } from "./types/schema";
 
@@ -308,7 +308,7 @@ export class RunnableSafeFn<
             unsafeRawInput: args as TUnparsedInput,
           });
 
-    type InternalOk = TSafeFnSuperInternalRunReturnData<
+    type InternalOk = TSafeFnInternalRunReturnData<
       TParent,
       TInputSchema,
       TOutputSchema,
@@ -317,7 +317,7 @@ export class RunnableSafeFn<
       TThrownHandlerRes,
       TAsAction
     >;
-    type InternalErr = TSafeFnSuperInternalRunReturnError<
+    type InternalErr = TSafeFnInternalRunReturnError<
       TParent,
       TInputSchema,
       TOutputSchema,
