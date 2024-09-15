@@ -1,8 +1,10 @@
 import { err, ok, type Result } from "neverthrow";
 import { assert, describe, expect, test, vi, type Mock } from "vitest";
 import { z, ZodError } from "zod";
+import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
 import { SafeFnBuilder } from "./safe-fn-builder";
-import type { AnyRunnableSafeFn, InferSafeFnCallbacks, TODO } from "./types";
+import type { InferSafeFnCallbacks } from "./types/callbacks";
+import type { TODO } from "./types/util";
 
 // TODO: this does not belong here
 expect.extend({

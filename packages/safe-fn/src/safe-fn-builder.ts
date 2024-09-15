@@ -2,22 +2,25 @@ import { z } from "zod";
 
 import { err, Result } from "neverthrow";
 import type { MergeResults } from "./result";
-import { RunnableSafeFn } from "./runnable-safe-fn";
+import { RunnableSafeFn, type AnyRunnableSafeFn } from "./runnable-safe-fn";
+
 import type {
-  AnyRunnableSafeFn,
-  InferUnparsedInput,
-  MaybePromise,
-  Prettify,
   SafeFnDefaultCatchHandler,
   SafeFnDefaultCatchHandlerErr,
+} from "./types/error";
+import type {
   SafeFnDefaultHandlerFn,
   SafeFnHandlerArgs,
   SafeFnHandlerReturn,
+} from "./types/handler";
+import type { SafeFnInternals } from "./types/internals";
+import type {
+  InferUnparsedInput,
   SafeFnInput,
-  SafeFnInternals,
   SchemaInputOrFallback,
-  UnionIfNotT,
-} from "./types";
+} from "./types/schema";
+
+import type { MaybePromise, Prettify, UnionIfNotT } from "./types/util";
 
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,

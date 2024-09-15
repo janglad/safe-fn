@@ -1,32 +1,37 @@
 import { ok, Result, ResultAsync, safeTry } from "neverthrow";
 
 import { actionErr, actionOk, type InferErrError } from "./result";
+
 import type {
-  AnyRunnableSafeFn,
   AnySafeFnCatchHandlerRes,
-  AnySafeFnHandlerRes,
-  SafeFnAction,
-  SafeFnActionArgs,
-  SafeFnActionReturn,
-  SafeFnCallBacks,
-  SafeFnHandlerArgs,
-  SafeFnInput,
   SafeFnInputParseError,
-  SafeFnInternalRunReturn,
-  SafeFnInternals,
-  SafeFnOnComplete,
-  SafeFnOnError,
-  SafeFnOnStart,
-  SafeFnOnSuccess,
   SafeFnOutputParseError,
+} from "./types/error";
+import type { SafeFnInternals } from "./types/internals";
+import type {
+  SafeFnInternalRunReturn,
   SafeFnReturn,
   SafeFnRunArgs,
   SafeFnSuperInternalRunReturn,
   SafeFnSuperInternalRunReturnData,
   SafeFnSuperInternalRunReturnError,
-  SchemaOutputOrFallback,
-  TODO,
-} from "./types";
+} from "./types/run";
+import type { SafeFnInput, SchemaOutputOrFallback } from "./types/schema";
+
+import type {
+  SafeFnAction,
+  SafeFnActionArgs,
+  SafeFnActionReturn,
+} from "./types/action";
+import type {
+  SafeFnCallBacks,
+  SafeFnOnComplete,
+  SafeFnOnError,
+  SafeFnOnStart,
+  SafeFnOnSuccess,
+} from "./types/callbacks";
+import type { AnySafeFnHandlerRes, SafeFnHandlerArgs } from "./types/handler";
+import type { TODO } from "./types/util";
 import {
   isFrameworkError,
   mapZodError,
@@ -35,6 +40,9 @@ import {
   throwFrameworkErrorOrVoid,
 } from "./util";
 
+export type AnyRunnableSafeFn =
+  | RunnableSafeFn<any, any, any, any, any, any>
+  | RunnableSafeFn<any, any, any, never, any, any>;
 export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends SafeFnInput,

@@ -4,11 +4,11 @@ import { z } from "zod";
 import { type ActionResult } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
-  Prettify,
   SafeFnDefaultCatchHandlerErr,
   SafeFnInputParseError,
   SafeFnOutputParseError,
-} from "./types";
+} from "./types/error";
+import type { Prettify } from "./types/util";
 
 const schemaPrimitive = z.string();
 type SchemaPrimitiveInput = z.input<typeof schemaPrimitive>;
