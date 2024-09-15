@@ -6,6 +6,7 @@ import { RunnableSafeFn } from "./runnable-safe-fn";
 import type {
   AnyRunnableSafeFn,
   InferUnparsedInput,
+  MaybePromise,
   Prettify,
   SafeFnDefaultCatchHandler,
   SafeFnDefaultCatchHandlerErr,
@@ -127,7 +128,7 @@ export class SafeFnBuilder<
   handler<TNewHandlerResult extends SafeFnHandlerReturn<TOutputSchema>>(
     handler: (
       args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
-    ) => TNewHandlerResult,
+    ) => MaybePromise<TNewHandlerResult>,
   ): RunnableSafeFn<
     TParent,
     TInputSchema,
