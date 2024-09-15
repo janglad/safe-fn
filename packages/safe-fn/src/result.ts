@@ -52,13 +52,12 @@ export const actionErr = <E>(error: E): ActionErr<E> => ({ ok: false, error });
 export type InferActionErrError<T> =
   T extends ActionErr<infer TError> ? TError : never;
 /**
- * Converts a `ResultAsync<T,E>` to a `Promise<ActionResult<T,E>>`.
+ * Converts a `ResultAsync<T,E>` to a `<ActionResult<T,E>`.
  */
-export type ResultAsyncToPromiseActionResult<T> = Promise<
-  T extends ResultAsync<infer D, infer E> ? ActionResult<D, E> : never
->;
+export type ResultAsyncToActionResult<T> =
+  T extends ResultAsync<infer D, infer E> ? ActionResult<D, E> : never;
 
-export type ActionResultPromiseToResultAsync<T> =
+export type ActionResultToResultAsync<T> =
   T extends Promise<ActionResult<infer D, infer E>> ? ResultAsync<D, E> : never;
 
 export type ActionResultToResult<T> =

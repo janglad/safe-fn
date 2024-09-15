@@ -1,18 +1,20 @@
 import { ResultAsync, err, ok } from "neverthrow";
 import { z } from "zod";
+import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
 import type {
-  AnyRunnableSafeFn,
-  AnySafeFnCatchHandlerRes,
-  AnySafeFnHandlerRes,
-  SafeFnCallBacks,
-  SafeFnInput,
-  SafeFnOnCompleteArgs,
-  SafeFnOnErrorArgs,
-  SafeFnOnSuccessArgs,
-  SafeFnOutput,
-  SafeFnParseError,
-  SafeFnSuperInternalRunReturn,
-} from "./types";
+  TSafeFnCallBacks,
+  TSafeFnOnCompleteArgs,
+  TSafeFnOnErrorArgs,
+  TSafeFnOnSuccessArgs,
+} from "./types/callbacks";
+import type { TAnySafeFnHandlerRes } from "./types/handler";
+import type { TSafeFnInput, TSafeFnOutput } from "./types/schema";
+
+import type {
+  TAnySafeFnCatchHandlerRes,
+  TSafeFnParseError,
+} from "./types/error";
+import type { TSafeFnInternalRunReturn } from "./types/run";
 
 const NEXT_JS_ERROR_MESSAGES = ["NEXT_REDIRECT", "NEXT_NOT_FOUND"];
 
@@ -36,13 +38,13 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 
 export const runCallbacks = <
   TParent extends AnyRunnableSafeFn | undefined,
-  TInputSchema extends SafeFnInput,
-  TOutputSchema extends SafeFnOutput,
+  TInputSchema extends TSafeFnInput,
+  TOutputSchema extends TSafeFnOutput,
   TUnparsedInput,
-  THandlerRes extends AnySafeFnHandlerRes,
-  TCatchHandlerRes extends AnySafeFnCatchHandlerRes,
+  THandlerRes extends TAnySafeFnHandlerRes,
+  TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
-  TRes extends SafeFnSuperInternalRunReturn<
+  TRes extends TSafeFnInternalRunReturn<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -50,7 +52,7 @@ export const runCallbacks = <
     THandlerRes,
     TCatchHandlerRes,
     NoInfer<TAsAction>
-  > = SafeFnSuperInternalRunReturn<
+  > = TSafeFnInternalRunReturn<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -62,8 +64,7 @@ export const runCallbacks = <
 >(args: {
   resultAsync: TRes;
   asAction: TAsAction;
-  unsafeRawInput: TUnparsedInput;
-  callbacks: SafeFnCallBacks<
+  callbacks: TSafeFnCallBacks<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -90,7 +91,7 @@ export const runCallbacks = <
         input: res.value.input,
         ctx: res.value.ctx,
         value: res.value.result,
-      } as SafeFnOnSuccessArgs<
+      } as TSafeFnOnSuccessArgs<
         TParent,
         TInputSchema,
         TOutputSchema,
@@ -103,12 +104,12 @@ export const runCallbacks = <
         args.callbacks.onError,
         throwFrameworkErrorOrVoid,
       )({
-        asAction: args.asAction as any,
-        error: res.error.public as any,
+        asAction: args.asAction,
+        error: res.error.public,
         ctx: res.error.private.ctx,
         input: res.error.private.input,
-        unsafeRawInput: args.unsafeRawInput,
-      } as SafeFnOnErrorArgs<
+        unsafeRawInput: res.error.private.unsafeRawInput,
+      } as TSafeFnOnErrorArgs<
         TParent,
         TInputSchema,
         TUnparsedInput,
@@ -136,8 +137,11 @@ export const runCallbacks = <
           (value) => value.input,
           (err) => err.private.input,
         ),
-        unsafeRawInput: args.unsafeRawInput,
-      } as SafeFnOnCompleteArgs<
+        unsafeRawInput: res.match(
+          (value) => value.unsafeRawInput,
+          (err) => err.private.unsafeRawInput,
+        ),
+      } as TSafeFnOnCompleteArgs<
         TParent,
         TInputSchema,
         TOutputSchema,
@@ -151,7 +155,9 @@ export const runCallbacks = <
     return res;
   };
 
-  return ResultAsync.fromSafePromise(exec()).andThen((res) => res) as any;
+  return ResultAsync.fromSafePromise(exec()).andThen(
+    (res) => res,
+  ) as unknown as TRes;
 };
 
 type SafeZodAsyncParseReturn<T extends z.ZodTypeAny> = ResultAsync<
@@ -162,7 +168,7 @@ type SafeZodAsyncParseReturn<T extends z.ZodTypeAny> = ResultAsync<
     }
   | {
       code: "PARSING";
-      cause: z.SafeParseReturnType<z.input<T>, z.output<T>>["error"];
+      cause: z.ZodError<z.input<T>>;
     }
 >;
 
@@ -192,9 +198,14 @@ export const safeZodAsyncParse = <T extends z.ZodTypeAny>(
   });
 };
 
-export const mapZodError = <T extends z.ZodError>(err: T) => {
+export const mapZodError = <T>(
+  err: z.ZodError<T>,
+): {
+  formattedError: z.ZodFormattedError<T>;
+  flattenedError: z.typeToFlattenedError<T>;
+} => {
   return {
     formattedError: err.format(),
     flattenedError: err.flatten(),
-  } satisfies SafeFnParseError<any, true>;
+  } satisfies TSafeFnParseError<any, true>;
 };

@@ -2,8 +2,8 @@ import { ResultAsync } from "neverthrow";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
   actionResultToResult,
-  type ActionResultPromiseToResultAsync,
   type ActionResultToResult,
+  type ActionResultToResultAsync,
   type AnySafeFnAction,
   type InferSafeFnActionArgs,
   type InferSafeFnActionError,
@@ -15,12 +15,10 @@ import type { UserServerActionCallbacks } from "./types";
 type UseServerActionReturn<TAction extends AnySafeFnAction> = {
   isPending: boolean;
   isSuccess: boolean;
-  result:
-    | ActionResultToResult<Awaited<InferSafeFnActionReturn<TAction>>>
-    | undefined;
+  result: ActionResultToResult<InferSafeFnActionReturn<TAction>> | undefined;
   execute: (
     args: InferSafeFnActionArgs<TAction>,
-  ) => ActionResultPromiseToResultAsync<InferSafeFnActionReturn<TAction>>;
+  ) => ActionResultToResultAsync<InferSafeFnActionReturn<TAction>>;
 };
 
 const callbackCatch = (e: unknown): void => {
@@ -33,19 +31,21 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
 ): UseServerActionReturn<TAction> => {
   type ActionArgs = InferSafeFnActionArgs<TAction>;
   /** Original `ActionResult<T,E>` */
-  type ActionActionResult = Awaited<InferSafeFnActionReturn<TAction>>;
+  type ActionReturnActionResult = InferSafeFnActionReturn<TAction>;
   /** Converted `ActionResult<T,E>` -\> `Result<T,E>` to be returned to the user  */
-  type ActionResult = ActionResultToResult<ActionActionResult>;
-  type ActionResultAsync = ActionResultPromiseToResultAsync<
+  type ActionReturnResult = ActionResultToResult<ActionReturnActionResult>;
+  type ActionReturnResultAsync = ActionResultToResultAsync<
     InferSafeFnActionReturn<TAction>
   >;
 
-  const [result, setResult] = useState<ActionResult | undefined>(undefined);
+  const [result, setResult] = useState<ActionReturnResult | undefined>(
+    undefined,
+  );
   const [isExecuting, setIsExecuting] = useState(false);
   const [isTransitioning, startTransition] = useTransition();
   const isPending = isExecuting || isTransitioning;
 
-  const resolveRef = useRef<((args: ActionResult) => void) | undefined>(
+  const resolveRef = useRef<((args: ActionReturnResult) => void) | undefined>(
     undefined,
   );
   const argsRef = useRef<ActionArgs | undefined>(undefined);
@@ -56,8 +56,8 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
         void ResultAsync.fromThrowable(callbacks.onStart, callbackCatch)(args);
       }
 
-      const actionResult = (await action(args)) as ActionActionResult;
-      const res = actionResultToResult(actionResult) as ActionResult;
+      const actionResult = (await action(args)) as ActionReturnActionResult;
+      const res = actionResultToResult(actionResult) as ActionReturnResult;
 
       setResult(res);
       resolveRef.current?.(res);
@@ -92,7 +92,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
         callbackCatch,
       )({
         unsafeRawInput: argsRef.current,
-        error: result.error as Awaited<InferSafeFnActionError<TAction>>,
+        error: result.error as InferSafeFnActionError<TAction>,
       });
     }
 
@@ -110,7 +110,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
   }, [result, callbacks]);
 
   const execute = useCallback(
-    (args: ActionArgs): ActionResultAsync => {
+    (args: ActionArgs): ActionReturnResultAsync => {
       const promise = new Promise((resolve) => {
         setIsExecuting(true);
         startTransition(() => {
@@ -118,10 +118,10 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
           argsRef.current = args;
           void _execute(args);
         });
-      }) as Promise<ActionResult>;
+      }) as Promise<ActionReturnResult>;
       return ResultAsync.fromPromise(promise, (e) => {
         console.error("Unknown error", e);
-      }).andThen((res) => res) as ActionResultAsync;
+      }).andThen((res) => res) as ActionReturnResultAsync;
     },
     [_execute],
   );

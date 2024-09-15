@@ -15,7 +15,7 @@ export type UseServerActionOnStart<TAction extends AnySafeFnAction> = (
 
 export type UseServerActionOnErrorArgs<TAction extends AnySafeFnAction> = {
   unsafeRawInput: InferSafeFnActionArgs<TAction>;
-  error: Awaited<InferSafeFnActionError<TAction>>;
+  error: InferSafeFnActionError<TAction>;
 };
 export type UseServerActionOnError<TAction extends AnySafeFnAction> = (
   args: UseServerActionOnErrorArgs<TAction>,
@@ -23,7 +23,7 @@ export type UseServerActionOnError<TAction extends AnySafeFnAction> = (
 
 export type UseServerActionOnSuccessArgs<TAction extends AnySafeFnAction> = {
   unsafeRawInput: InferSafeFnActionArgs<TAction>;
-  value: Awaited<InferSafeFnActionOkData<TAction>>;
+  value: InferSafeFnActionOkData<TAction>;
 };
 export type UseServerActionOnSuccess<TAction extends AnySafeFnAction> = (
   args: UseServerActionOnSuccessArgs<TAction>,
@@ -32,7 +32,7 @@ export type UseServerActionOnSuccess<TAction extends AnySafeFnAction> = (
 export type UseServerActionOnCompleteArgs<TAction extends AnySafeFnAction> = {
   unsafeRawInput: InferSafeFnActionArgs<TAction>;
   // Result can be undefined when navigating away from the page
-  result: Awaited<InferSafeFnActionReturn<TAction>> | undefined;
+  result: InferSafeFnActionReturn<TAction> | undefined;
 };
 export type UseServerActionOnComplete<TAction extends AnySafeFnAction> = (
   args: UseServerActionOnCompleteArgs<TAction>,

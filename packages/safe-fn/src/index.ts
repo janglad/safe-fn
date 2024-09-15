@@ -3,49 +3,43 @@ import {
   type ActionErr,
   type ActionOk,
   type ActionResult,
-  type ActionResultPromiseToResultAsync,
   type ActionResultToResult,
+  type ActionResultToResultAsync,
   type InferActionErrError,
   type InferActionOkData,
 } from "./result";
 import { SafeFnBuilder } from "./safe-fn-builder";
 
+import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
+
 import type {
-  AnyRunnableSafeFn,
-  AnySafeFnAction,
-  AnySafeFnCatchHandler,
-  InferInputSchema,
-  InferOutputSchema,
   InferSafeFnActionArgs,
   InferSafeFnActionError,
   InferSafeFnActionOkData,
   InferSafeFnActionReturn,
+  TAnySafeFnAction,
+} from "./types/action";
+import type {
   InferSafeFnArgs,
   InferSafeFnErrError,
   InferSafeFnOkData,
   InferSafeFnReturn,
+} from "./types/run";
+import type {
+  InferInputSchema,
+  InferOutputSchema,
   InferUnparsedInput,
-  SafeFnAction,
-  SafeFnActionArgs,
-  SafeFnActionReturn,
-  SafeFnAsyncGeneratorHandlerFn,
-  SafeFnRegularHandlerFn,
-  SafeFnReturn,
-  SafeFnReturnData,
-  SafeFnReturnError,
-  SafeFnRunArgs,
-} from "./types";
+} from "./types/schema";
 
 export { actionResultToResult, SafeFnBuilder as SafeFn };
 export type {
   ActionErr,
   ActionOk,
   ActionResult,
-  ActionResultPromiseToResultAsync,
   ActionResultToResult,
+  ActionResultToResultAsync,
   AnyRunnableSafeFn,
-  AnySafeFnAction,
-  AnySafeFnCatchHandler,
+  TAnySafeFnAction as AnySafeFnAction,
   InferActionErrError,
   InferActionOkData,
   InferInputSchema,
@@ -59,13 +53,4 @@ export type {
   InferSafeFnOkData,
   InferSafeFnReturn,
   InferUnparsedInput,
-  SafeFnAction,
-  SafeFnActionArgs,
-  SafeFnActionReturn,
-  SafeFnAsyncGeneratorHandlerFn,
-  SafeFnRegularHandlerFn,
-  SafeFnReturn,
-  SafeFnReturnData,
-  SafeFnReturnError,
-  SafeFnRunArgs,
 };
