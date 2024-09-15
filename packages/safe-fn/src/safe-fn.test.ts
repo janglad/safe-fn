@@ -3,7 +3,7 @@ import { assert, describe, expect, test, vi, type Mock } from "vitest";
 import { z, ZodError } from "zod";
 import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
 import { SafeFnBuilder } from "./safe-fn-builder";
-import type { InferSafeFnCallbacks } from "./types/callbacks";
+import type { TInferSafeFnCallbacks } from "./types/callbacks";
 import type { TODO } from "./types/util";
 
 // TODO: this does not belong here
@@ -546,7 +546,7 @@ describe("runnable-safe-fn", () => {
 
         await safeFn.run({ name: "John", age: 100 });
 
-        type Callbacks = InferSafeFnCallbacks<typeof safeFn>;
+        type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
         type CallbackArgs = {
           [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
             args: infer Args,
@@ -610,7 +610,7 @@ describe("runnable-safe-fn", () => {
           .onError(callbackMocks.onError)
           .onComplete(callbackMocks.onComplete);
 
-        type Callbacks = InferSafeFnCallbacks<typeof safeFn>;
+        type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
         type CallbackArgs = {
           [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
             args: infer Args,
@@ -677,7 +677,7 @@ describe("runnable-safe-fn", () => {
           .onError(callbackMocks.onError)
           .onComplete(callbackMocks.onComplete);
 
-        type Callbacks = InferSafeFnCallbacks<typeof safeFn>;
+        type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
         type CallbackArgs = {
           [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
             args: infer Args,
@@ -744,7 +744,7 @@ describe("runnable-safe-fn", () => {
           .onError(callbackMocks.onError)
           .onComplete(callbackMocks.onComplete);
 
-        type Callbacks = InferSafeFnCallbacks<typeof safeFn>;
+        type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
         type CallbackArgs = {
           [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
             args: infer Args,

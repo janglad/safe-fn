@@ -1,27 +1,35 @@
 import type { Err, Result } from "neverthrow";
 import type { z } from "zod";
-import type { SafeFnInput, SafeFnOutput } from "./schema";
+import type { TSafeFnInput, TSafeFnOutput } from "./schema";
+
+/*
+################################
+||                            ||
+||          Internal          ||
+||                            ||
+################################
+*/
 
 /**
  * Convenience type for any catch handler result.
  */
-export type AnySafeFnCatchHandlerRes = Result<never, any>;
+export type TAnySafeFnCatchHandlerRes = Result<never, any>;
 
 /**
  * Convenience type for any catch handler function.
  */
-export type AnySafeFnCatchHandler = (
+export type TAnySafeFnCatchHandler = (
   error: unknown,
-) => AnySafeFnCatchHandlerRes;
+) => TAnySafeFnCatchHandlerRes;
 
 /**
  * Default catch handler function. Overridden by `catch()`
  */
-export type SafeFnDefaultCatchHandler = (
+export type TSafeFnDefaultCatchHandler = (
   error: unknown,
-) => SafeFnDefaultCatchHandlerErr;
+) => TSafeFnDefaultCatchHandlerErr;
 
-export type SafeFnDefaultCatchHandlerErr = Err<
+export type TSafeFnDefaultCatchHandlerErr = Err<
   never,
   {
     code: "UNCAUGHT_ERROR";
@@ -34,7 +42,7 @@ export type SafeFnDefaultCatchHandlerErr = Err<
  * @param TAsAction indicates weather the error will be returned in an error.
  * These types need to be differentiated by `TAsAction` as `Error` classes can not be sent over the wire in server actions.
  */
-export type SafeFnParseError<
+export type TSafeFnParseError<
   TSchema extends z.ZodTypeAny,
   TAsAction extends boolean,
 > = TAsAction extends true
@@ -44,22 +52,22 @@ export type SafeFnParseError<
     }
   : z.ZodError<z.input<TSchema>>;
 
-export type SafeFnInputParseError<
-  TInputSchema extends SafeFnInput,
+export type TSafeFnInputParseError<
+  TInputSchema extends TSafeFnInput,
   TAsAction extends boolean,
 > = TInputSchema extends z.ZodTypeAny
   ? {
       code: "INPUT_PARSING";
-      cause: SafeFnParseError<TInputSchema, TAsAction>;
+      cause: TSafeFnParseError<TInputSchema, TAsAction>;
     }
   : never;
 
-export type SafeFnOutputParseError<
-  TOutputSchema extends SafeFnOutput,
+export type TSafeFnOutputParseError<
+  TOutputSchema extends TSafeFnOutput,
   TAsAction extends boolean,
 > = TOutputSchema extends z.ZodTypeAny
   ? {
       code: "OUTPUT_PARSING";
-      cause: SafeFnParseError<TOutputSchema, TAsAction>;
+      cause: TSafeFnParseError<TOutputSchema, TAsAction>;
     }
   : never;

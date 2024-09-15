@@ -13,24 +13,16 @@ import { SafeFnBuilder } from "./safe-fn-builder";
 import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
 
 import type {
-  AnySafeFnAction,
   InferSafeFnActionArgs,
   InferSafeFnActionError,
   InferSafeFnActionOkData,
   InferSafeFnActionReturn,
-  SafeFnAction,
-  SafeFnActionArgs,
-  SafeFnActionReturn,
 } from "./types/action";
 import type {
   InferSafeFnArgs,
   InferSafeFnErrError,
   InferSafeFnOkData,
   InferSafeFnReturn,
-  SafeFnReturn,
-  SafeFnReturnData,
-  SafeFnReturnError,
-  SafeFnRunArgs,
 } from "./types/run";
 import type {
   InferInputSchema,
@@ -46,7 +38,6 @@ export type {
   ActionResultToResult,
   ActionResultToResultAsync,
   AnyRunnableSafeFn,
-  AnySafeFnAction,
   InferActionErrError,
   InferActionOkData,
   InferInputSchema,
@@ -60,11 +51,4 @@ export type {
   InferSafeFnOkData,
   InferSafeFnReturn,
   InferUnparsedInput,
-  SafeFnAction,
-  SafeFnActionArgs,
-  SafeFnActionReturn,
-  SafeFnReturn,
-  SafeFnReturnData,
-  SafeFnReturnError,
-  SafeFnRunArgs,
 };

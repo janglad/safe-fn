@@ -4,28 +4,36 @@ import type { InferSafeFnOkData } from "./run";
 import type {
   InferInputSchema,
   InferUnparsedInput,
-  SafeFnInput,
-  SafeFnOutput,
-  SchemaInputOrFallback,
-  SchemaOutputOrFallback,
+  TSafeFnInput,
+  TSafeFnOutput,
+  TSchemaInputOrFallback,
+  TSchemaOutputOrFallback,
 } from "./schema";
 import type {
-  IsUnknown,
-  MaybePromise,
-  Prettify,
+  TIsUnknown,
+  TMaybePromise,
   TOrFallback,
-  UnionIfNotT,
+  TPrettify,
+  TUnionIfNotT,
 } from "./util";
+
+/*
+################################
+||                            ||
+||          Internal          ||
+||                            ||
+################################
+*/
 
 /**
  * Convenience type for any handler result.
  */
-export type AnySafeFnHandlerRes = MaybePromise<Result<any, any>>;
+export type TAnySafeFnHandlerRes = TMaybePromise<Result<any, any>>;
 
 /**
  * Default handler function. Overridden by `handler()`
  */
-export type SafeFnDefaultHandlerFn = () => Result<
+export type TSafeFnDefaultHandlerFn = () => Result<
   never,
   {
     code: "NO_HANDLER";
@@ -38,15 +46,15 @@ export type SafeFnDefaultHandlerFn = () => Result<
  * @param TParent the parent safe function or undefined
  * @returns the type of the arguments available in the passed handler function.
  */
-export interface SafeFnHandlerArgs<
-  in out TInputSchema extends SafeFnInput,
+export interface TSafeFnHandlerArgs<
+  in out TInputSchema extends TSafeFnInput,
   in out TUnparsedInput,
   in out TParent extends AnyRunnableSafeFn | undefined,
 > {
-  input: Prettify<
-    UnionIfNotT<
-      SchemaOutputOrFallback<TInputSchema, undefined>,
-      SchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
+  input: TPrettify<
+    TUnionIfNotT<
+      TSchemaOutputOrFallback<TInputSchema, undefined>,
+      TSchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
       undefined
     >
   >;
@@ -56,14 +64,14 @@ export interface SafeFnHandlerArgs<
    *
    *  **WARNING**: this can have excess values that are not in the type when you use this SafeFn as a parent for another SafeFn.
    */
-  unsafeRawInput: UnionIfNotT<
+  unsafeRawInput: TUnionIfNotT<
     TUnparsedInput,
     InferUnparsedInput<TParent>,
     never
   > extends infer Merged
-    ? IsUnknown<Merged> extends true
+    ? TIsUnknown<Merged> extends true
       ? unknown
-      : Prettify<Merged>
+      : TPrettify<Merged>
     : never;
 
   ctx: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
@@ -74,8 +82,8 @@ export interface SafeFnHandlerArgs<
  * @param TOutputSchema a Zod schema or undefined
  * @returns the output type expected for the handler function. If the schema is undefined, this is `any`. Otherwise this is the input (`z.infer<typeof outputSchema`) of the output schema.
  */
-export type SafeFnHandlerReturn<TOutputSchema extends SafeFnOutput> = Result<
-  SchemaInputOrFallback<TOutputSchema, any>,
+export type TSafeFnHandlerReturn<TOutputSchema extends TSafeFnOutput> = Result<
+  TSchemaInputOrFallback<TOutputSchema, any>,
   any
 >;
 
@@ -87,14 +95,14 @@ export type SafeFnHandlerReturn<TOutputSchema extends SafeFnOutput> = Result<
  *
  * @returns the type of a handler function for a safe function passed to `handler()`. See `SafeFnHandlerArgs` and `SafeFnHandlerReturn` for more information.
  */
-export type SafeFnRegularHandlerFn<
-  in out TInputSchema extends SafeFnInput,
-  in out TOutputSchema extends SafeFnOutput,
+type TSafeFnRegularHandlerFn<
+  in out TInputSchema extends TSafeFnInput,
+  in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput,
   in out TParent extends AnyRunnableSafeFn | undefined,
 > = (
-  args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
-) => MaybePromise<SafeFnHandlerReturn<TOutputSchema>>;
+  args: TPrettify<TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+) => TMaybePromise<TSafeFnHandlerReturn<TOutputSchema>>;
 
 /**
  * @param TInputSchema a Zod schema or undefined
@@ -104,14 +112,14 @@ export type SafeFnRegularHandlerFn<
  *
  * @returns the type of a safe handler function for a safe function passed to `safeHandler()`. See `SafeFnHandlerArgs` and `SafeFnHandlerReturn` for more information.
  */
-export type SafeFnAsyncGeneratorHandlerFn<
-  in out TInputSchema extends SafeFnInput,
-  in out TOutputSchema extends SafeFnOutput,
+type TSafeFnAsyncGeneratorHandlerFn<
+  in out TInputSchema extends TSafeFnInput,
+  in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput,
   in out TParent extends AnyRunnableSafeFn | undefined,
 > = (
-  args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+  args: TPrettify<TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
 ) => AsyncGenerator<
   Err<never, unknown>,
-  Result<SchemaInputOrFallback<TOutputSchema, any>, any>
+  Result<TSchemaInputOrFallback<TOutputSchema, any>, any>
 >;

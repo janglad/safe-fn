@@ -5,30 +5,30 @@ import type { MergeResults } from "./result";
 import { RunnableSafeFn, type AnyRunnableSafeFn } from "./runnable-safe-fn";
 
 import type {
-  SafeFnDefaultCatchHandler,
-  SafeFnDefaultCatchHandlerErr,
+  TSafeFnDefaultCatchHandler,
+  TSafeFnDefaultCatchHandlerErr,
 } from "./types/error";
 import type {
-  SafeFnDefaultHandlerFn,
-  SafeFnHandlerArgs,
-  SafeFnHandlerReturn,
+  TSafeFnDefaultHandlerFn,
+  TSafeFnHandlerArgs,
+  TSafeFnHandlerReturn,
 } from "./types/handler";
-import type { SafeFnInternals } from "./types/internals";
+import type { TSafeFnInternals } from "./types/internals";
 import type {
   InferUnparsedInput,
-  SafeFnInput,
-  SchemaInputOrFallback,
+  TSafeFnInput,
+  TSchemaInputOrFallback,
 } from "./types/schema";
 
-import type { MaybePromise, Prettify, UnionIfNotT } from "./types/util";
+import type { TMaybePromise, TPrettify, TUnionIfNotT } from "./types/util";
 
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
-  TInputSchema extends SafeFnInput,
-  TOutputSchema extends SafeFnInput,
+  TInputSchema extends TSafeFnInput,
+  TOutputSchema extends TSafeFnInput,
   TUnparsedInput,
 > {
-  readonly _internals: SafeFnInternals<
+  readonly _internals: TSafeFnInternals<
     TParent,
     TInputSchema,
     TOutputSchema,
@@ -36,7 +36,7 @@ export class SafeFnBuilder<
   >;
 
   protected constructor(
-    internals: SafeFnInternals<
+    internals: TSafeFnInternals<
       TParent,
       TInputSchema,
       TOutputSchema,
@@ -68,7 +68,7 @@ export class SafeFnBuilder<
       handler: (() =>
         err({
           code: "NO_HANDLER",
-        } as const)) satisfies SafeFnDefaultHandlerFn,
+        } as const)) satisfies TSafeFnDefaultHandlerFn,
       uncaughtErrorHandler: ((error: unknown) => {
         // TODO: Keep track of asAction both at compile and run time, switch error input based on that.
         console.error(error);
@@ -77,7 +77,7 @@ export class SafeFnBuilder<
           cause:
             "An uncaught error occurred. You can implement a custom error handler by using `catch()`",
         } as const);
-      }) satisfies SafeFnDefaultCatchHandler,
+      }) satisfies TSafeFnDefaultCatchHandler,
     }) as any;
   }
 
@@ -88,7 +88,7 @@ export class SafeFnBuilder<
       TParent,
       TNewInputSchema,
       TOutputSchema,
-      UnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>
+      TUnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>
     >,
     "input" | "unparsedInput"
   > {
@@ -104,7 +104,7 @@ export class SafeFnBuilder<
       TParent,
       TInputSchema,
       TOutputSchema,
-      UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
+      TUnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
     >,
     "input" | "unparsedInput"
   > {
@@ -112,7 +112,7 @@ export class SafeFnBuilder<
       TParent,
       TInputSchema,
       TOutputSchema,
-      UnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
+      TUnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
     >;
   }
 
@@ -128,17 +128,19 @@ export class SafeFnBuilder<
     } as any);
   }
 
-  handler<TNewHandlerResult extends SafeFnHandlerReturn<TOutputSchema>>(
+  handler<TNewHandlerResult extends TSafeFnHandlerReturn<TOutputSchema>>(
     handler: (
-      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
-    ) => MaybePromise<TNewHandlerResult>,
+      args: TPrettify<
+        TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+      >,
+    ) => TMaybePromise<TNewHandlerResult>,
   ): RunnableSafeFn<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
     Awaited<TNewHandlerResult>,
-    SafeFnDefaultCatchHandlerErr
+    TSafeFnDefaultCatchHandlerErr
   > {
     return new RunnableSafeFn(
       {
@@ -157,12 +159,14 @@ export class SafeFnBuilder<
   safeHandler<
     YieldErr extends Result<never, unknown>,
     GeneratorResult extends Result<
-      SchemaInputOrFallback<TOutputSchema, any>,
+      TSchemaInputOrFallback<TOutputSchema, any>,
       unknown
     >,
   >(
     fn: (
-      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+      args: TPrettify<
+        TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+      >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): RunnableSafeFn<
     TParent,
@@ -173,10 +177,12 @@ export class SafeFnBuilder<
     [YieldErr] extends [never]
       ? GeneratorResult
       : MergeResults<GeneratorResult, YieldErr>,
-    SafeFnDefaultCatchHandlerErr
+    TSafeFnDefaultCatchHandlerErr
   > {
     const handler = async (
-      args: Prettify<SafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+      args: TPrettify<
+        TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+      >,
     ) => {
       return (await fn(args).next()).value;
     };
