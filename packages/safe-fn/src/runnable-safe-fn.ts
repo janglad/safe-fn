@@ -1,6 +1,6 @@
 import { ok, Result, ResultAsync, safeTry } from "neverthrow";
 
-import { actionErr, actionOk, type InferErrError } from "./result";
+import { actionErr, actionOk, type InferAsyncErrError } from "./result";
 
 import type {
   TAnySafeFnCatchHandlerRes,
@@ -30,7 +30,6 @@ import type {
   TSafeFnOnSuccess,
 } from "./types/callbacks";
 import type { TAnySafeFnHandlerRes, TSafeFnHandlerArgs } from "./types/handler";
-import type { TODO } from "./types/util";
 import {
   isFrameworkError,
   mapZodError,
@@ -54,7 +53,8 @@ export class RunnableSafeFn<
     TParent,
     TInputSchema,
     TOutputSchema,
-    TUnparsedInput
+    TUnparsedInput,
+    TThrownHandlerRes
   >;
 
   readonly _callBacks: TSafeFnCallBacks<
@@ -71,7 +71,8 @@ export class RunnableSafeFn<
       TParent,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput
+      TUnparsedInput,
+      TThrownHandlerRes
     >,
     callBacks: TSafeFnCallBacks<
       TParent,
@@ -230,7 +231,7 @@ export class RunnableSafeFn<
         }
 
         if (asAction) {
-          const cause = mapZodError(error.cause as any);
+          const cause = mapZodError(error.cause);
           return {
             code: "INPUT_PARSING",
             cause,
@@ -263,7 +264,7 @@ export class RunnableSafeFn<
         }
 
         if (asAction) {
-          const cause = mapZodError(error.cause as any);
+          const cause = mapZodError(error.cause);
           return {
             code: "OUTPUT_PARSING",
             cause,
@@ -337,7 +338,16 @@ export class RunnableSafeFn<
                 .mapErr(
                   (e) =>
                     ({
-                      public: e.public as TODO,
+                      public: e.public as InferAsyncErrError<
+                        TSafeFnReturn<
+                          TParent,
+                          TInputSchema,
+                          TOutputSchema,
+                          THandlerRes,
+                          TThrownHandlerRes,
+                          TAsAction
+                        >
+                      >,
                       private: {
                         unsafeRawInput: args as TUnparsedInput,
                         input: undefined,
@@ -398,7 +408,9 @@ export class RunnableSafeFn<
                 .mapErr(
                   (e) =>
                     ({
-                      public: e as TODO,
+                      public: e as THandlerRes extends Result<never, any>
+                        ? never
+                        : TSafeFnOutputParseError<TOutputSchema, TAsAction>,
                       private: {
                         ctx: parentHandlerRes,
                         input: parsedInput,
@@ -432,9 +444,7 @@ export class RunnableSafeFn<
       if (isFrameworkError(error)) {
         throw error;
       }
-      const handledErr = uncaughtErrorHandler(
-        error,
-      ) as InferErrError<TThrownHandlerRes>;
+      const handledErr = uncaughtErrorHandler(error);
       if (handledErr.isOk()) {
         throw new Error("uncaught error handler returned ok");
       }
@@ -458,15 +468,7 @@ export class RunnableSafeFn<
       hotOnStartCallback: onStartCallback,
     });
 
-    return withCallbacks as TSafeFnInternalRunReturn<
-      TParent,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes,
-      TAsAction
-    >;
+    return withCallbacks;
   }
 
   async _runAsAction(
@@ -483,24 +485,8 @@ export class RunnableSafeFn<
       .mapErr((e) => e.public);
 
     if (res.isOk()) {
-      return actionOk(res.value) as Awaited<
-        TSafeFnActionReturn<
-          TParent,
-          TInputSchema,
-          TOutputSchema,
-          THandlerRes,
-          TThrownHandlerRes
-        >
-      >;
+      return actionOk(res.value);
     }
-    return actionErr(res.error) as Awaited<
-      TSafeFnActionReturn<
-        TParent,
-        TInputSchema,
-        TOutputSchema,
-        THandlerRes,
-        TThrownHandlerRes
-      >
-    >;
+    return actionErr(res.error);
   }
 }

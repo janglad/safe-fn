@@ -104,8 +104,8 @@ export const runCallbacks = <
         args.callbacks.onError,
         throwFrameworkErrorOrVoid,
       )({
-        asAction: args.asAction as any,
-        error: res.error.public as any,
+        asAction: args.asAction,
+        error: res.error.public,
         ctx: res.error.private.ctx,
         input: res.error.private.input,
         unsafeRawInput: res.error.private.unsafeRawInput,
@@ -155,7 +155,9 @@ export const runCallbacks = <
     return res;
   };
 
-  return ResultAsync.fromSafePromise(exec()).andThen((res) => res) as any;
+  return ResultAsync.fromSafePromise(exec()).andThen(
+    (res) => res,
+  ) as unknown as TRes;
 };
 
 type SafeZodAsyncParseReturn<T extends z.ZodTypeAny> = ResultAsync<
@@ -166,7 +168,7 @@ type SafeZodAsyncParseReturn<T extends z.ZodTypeAny> = ResultAsync<
     }
   | {
       code: "PARSING";
-      cause: z.SafeParseReturnType<z.input<T>, z.output<T>>["error"];
+      cause: z.ZodError<z.input<T>>;
     }
 >;
 
@@ -196,7 +198,12 @@ export const safeZodAsyncParse = <T extends z.ZodTypeAny>(
   });
 };
 
-export const mapZodError = <T extends z.ZodError>(err: T) => {
+export const mapZodError = <T>(
+  err: z.ZodError<T>,
+): {
+  formattedError: z.ZodFormattedError<T>;
+  flattenedError: z.typeToFlattenedError<T>;
+} => {
   return {
     formattedError: err.format(),
     flattenedError: err.flatten(),

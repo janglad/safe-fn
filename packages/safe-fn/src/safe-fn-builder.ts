@@ -32,7 +32,8 @@ export class SafeFnBuilder<
     TParent,
     TInputSchema,
     TOutputSchema,
-    TUnparsedInput
+    TUnparsedInput,
+    TSafeFnDefaultCatchHandlerErr
   >;
 
   protected constructor(
@@ -40,7 +41,8 @@ export class SafeFnBuilder<
       TParent,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput
+      TUnparsedInput,
+      TSafeFnDefaultCatchHandlerErr
     >,
   ) {
     this._internals = internals;
