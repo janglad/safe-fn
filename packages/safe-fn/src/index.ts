@@ -17,6 +17,7 @@ import type {
   InferSafeFnActionError,
   InferSafeFnActionOkData,
   InferSafeFnActionReturn,
+  TAnySafeFnAction,
 } from "./types/action";
 import type {
   InferSafeFnArgs,
@@ -38,6 +39,7 @@ export type {
   ActionResultToResult,
   ActionResultToResultAsync,
   AnyRunnableSafeFn,
+  TAnySafeFnAction as AnySafeFnAction,
   InferActionErrError,
   InferActionOkData,
   InferInputSchema,
