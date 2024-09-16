@@ -1,0 +1,144 @@
+---
+title: Typescript
+---
+
+{/* TODO: look into which ones should be added */}
+
+SafeFn exposes a few type that could be useful when working with it.
+
+## Action Result
+
+These are the types related to the result of calling an action created with `.createAction()` directly from the client.
+When using the `useServerAction` hook, this is automatically converted into NeverThrow's types.
+
+### ActionErr
+
+Used for constructing an action error. Takes in the error type.
+
+```ts
+type MyActionErr = ActionErr<{
+  code: "DB_ERROR";
+  cause: string;
+}>;
+```
+
+### ActionOk
+
+Used for constructing an action ok. Takes in the data type.
+
+```ts
+type MyActionOk = ActionOk<{
+  name: string;
+  age: number;
+}>;
+```
+
+### ActionResult
+
+Used for creating an action result. Takes in the possible Ok and Err types.
+
+```ts
+type MyActionResult = ActionResult<MyActionOk, MyActionErr>;
+```
+
+## SafeFn
+
+### InferSafeFnActionArgsArgs
+
+Infers the arguments that need to be passed to the function returned by `createAction()`.
+
+```ts
+const myAction = SafeFn.new()
+  .input(z.object({ name: z.string() }))
+  .handler(...)
+  .createAction();
+type MyActionArgs = InferSafeFnActionArgs<typeof myAction>;
+//   ^ {name: string}
+```
+
+### InferSafeFnActionError
+
+Infers the error type of an action.
+
+```ts
+const myAction = SafeFn.new()
+  .handler(...)
+  .catch(() => err("ooh no" as const))
+  .createAction();
+type MyActionError = InferSafeFnActionError<typeof myAction>;
+//   ^ "ooh no"
+```
+
+### InferSafeFnActionOkData
+
+Infers the ok type of an action.
+
+```ts
+const myAction = SafeFn.new().handler(() => ok("Yay!" as const));
+type MyActionOk = InferSafeFnActionOkData<typeof myAction>;
+//   ^ "Yay!"
+```
+
+### InferSafeFnActionReturn
+
+Infers the return type of an action when calling it directly.
+When using the `useServerAction` hook, this is automatically converted into NeverThrow's types.
+
+```ts
+const myAction = SafeFn.new()
+  .handler(() => "Yay!" as const)
+  .catch(() => "ooh no" as const);
+type MyActionReturn = InferSafeFnActionReturn<typeof myAction>;
+//   ^ ActionResult<"Yay!", "ooh no">
+```
+
+Infers the return type of an action.
+
+### InferSafeFnArgs
+
+Infers the arguments that need to be passed into `.run()`
+
+```ts
+const mySafeFn = SafeFn.new()
+  .input(z.object({ name: z.string() }))
+  .handler(...)
+type MySafeFnArgs = InferSafeFnArgs<typeof mySafeFn>;
+//   ^ {name: string}
+```
+
+### InferSafeFnErrError
+
+Infers the error type of a SafeFn when using `.run()`.
+
+```ts
+const mySafeFn = SafeFn.new()
+  .handler(...)
+  .catch(() => "ooh no" as const);
+type MySafeFnError = InferSafeFnErrError<typeof mySafeFn>;
+//   ^ "ooh no"
+```
+
+### InferSafeFnOkData
+
+Infers the ok type of a SafeFn when using `.run()`.
+
+```ts
+const mySafeFn = SafeFn.new().handler(() => ok("Yay!" as const));
+type MySafeFnOk = InferSafeFnOkData<typeof mySafeFn>;
+//   ^ "Yay!"
+```
+
+### InferSafeFnReturn
+
+Infers the return type of a SafeFn when using `.run()`.
+This is the `ResultAsync` type, this can be converted into a `Result` type by wrapping it in `Await`
+
+```ts
+const mySafeFn = SafeFn.new()
+  .handler(() => "Yay!" as const)
+  .catch(() => "ooh no" as const);
+type MySafeFnReturn = InferSafeFnReturn<typeof mySafeFn>;
+//   ^ ResultAsync<"Yay!", "ooh no">
+type MyAwaitedSafeFnReturn = Awaited<MySafeFnReturn>;
+//   ^ Result<"Yay!", "ooh no">
+```
