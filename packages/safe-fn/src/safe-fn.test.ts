@@ -2,7 +2,7 @@ import { err, ok, type Result } from "neverthrow";
 import { assert, describe, expect, test, vi, type Mock } from "vitest";
 import { z, ZodError } from "zod";
 import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
-import { SafeFnBuilder } from "./safe-fn-builder";
+import { createSafeFn, SafeFnBuilder } from "./safe-fn-builder";
 import type { TInferSafeFnCallbacks } from "./types/callbacks";
 import type { TODO } from "./types/util";
 
@@ -39,22 +39,22 @@ declare module "vitest" {
 describe("safe-fn-builder", () => {
   describe("new", () => {
     test("should return a builder", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       expect(builder).toBeInstanceOf(SafeFnBuilder);
     });
 
     test("should set the input schema as undefined", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       expect(builder._internals.inputSchema).toBeUndefined();
     });
 
     test("should set the output schema as undefined", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       expect(builder._internals.outputSchema).toBeUndefined();
     });
 
     test("should set the correct default action", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const res = builder._internals.handler(undefined as TODO);
       expect(res).toBeErr();
       // @ts-expect-error - Return not defined in builder type as .run can not be called anyway
@@ -64,7 +64,7 @@ describe("safe-fn-builder", () => {
     });
 
     test("should set the correct default catch handler", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const returnedError = builder._internals.uncaughtErrorHandler(
         undefined as TODO,
       );
@@ -76,22 +76,22 @@ describe("safe-fn-builder", () => {
     });
 
     test("should set the parent safe-fn", () => {
-      const parent = SafeFnBuilder.new().handler(() => ok(""));
-      const child = SafeFnBuilder.new(parent);
+      const parent = createSafeFn().handler(() => ok(""));
+      const child = createSafeFn().use(parent);
       expect(child._internals.parent).toBe(parent);
     });
   });
 
   describe("input", () => {
     test("should set the input schema", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const inputSchema = z.string();
       const safeFn = builder.input(inputSchema);
       expect(safeFn._internals.inputSchema).toEqual(inputSchema);
     });
 
     test("should be new instance", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const safeFn = builder.input(z.string());
       const safeFn2 = builder.input(z.string());
       expect(safeFn2).not.toBe(safeFn);
@@ -100,7 +100,7 @@ describe("safe-fn-builder", () => {
 
   describe("unsafeRawInput", () => {
     test("should return the same instance", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const builder2 = builder.unparsedInput<string>();
       expect(builder2).toBe(builder);
     });
@@ -108,14 +108,14 @@ describe("safe-fn-builder", () => {
 
   describe("output", () => {
     test("should set the output schema", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const outputSchema = z.string();
       const safeFn = builder.output(outputSchema);
       expect(safeFn._internals.outputSchema).toEqual(outputSchema);
     });
 
     test("should be new instance", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const safeFn = builder.output(z.string());
       const safeFn2 = builder.output(z.string());
       expect(safeFn2).not.toBe(safeFn);
@@ -124,14 +124,14 @@ describe("safe-fn-builder", () => {
 
   describe("handler", () => {
     test("should set the handler function", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const handlerFn = () => ok("data");
       const safeFn = builder.handler(handlerFn);
       expect(safeFn._internals.handler).toBe(handlerFn);
     });
 
     test("should be new instance", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const safeFn = builder.handler(() => ok("data"));
       const safeFn2 = builder.handler(() => ok("data"));
       expect(safeFn2).not.toBe(safeFn);
@@ -140,7 +140,7 @@ describe("safe-fn-builder", () => {
 
   describe("safeHandler", () => {
     test("should set the safe handler function", async () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const safeHandlerFn = async function* () {
         return ok("data");
       };
@@ -157,7 +157,7 @@ describe("runnable-safe-fn", () => {
   describe("catch", () => {
     test("should set the catch handler", () => {
       const errorHandler = () => err("error");
-      const safeFn = SafeFnBuilder.new()
+      const safeFn = createSafeFn()
         .handler(() => ok(""))
         .catch(errorHandler);
       expect(safeFn._internals.uncaughtErrorHandler).toEqual(errorHandler);
@@ -176,21 +176,21 @@ describe("runnable-safe-fn", () => {
         {
           name: "regular",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .input(inputSchema)
               .handler((args) => ok(args)),
         },
         {
           name: "async",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .input(inputSchema)
               .handler(async (args) => ok(args)),
         },
         {
           name: "generator",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .input(inputSchema)
               .safeHandler(async function* (args) {
                 return ok(args);
@@ -202,21 +202,21 @@ describe("runnable-safe-fn", () => {
         {
           name: "regular",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .unparsedInput<unknown>()
               .handler((args) => ok(args)),
         },
         {
           name: "async",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .unparsedInput<unknown>()
               .handler(async (args) => ok(args)),
         },
         {
           name: "generator",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .unparsedInput<unknown>()
               .safeHandler(async function* (args) {
                 return ok(args);
@@ -298,7 +298,7 @@ describe("runnable-safe-fn", () => {
         {
           name: "regular",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .unparsedInput<{ name: string; lastName: string }>()
               .output(outputSchema)
               .handler((args) => ok(args.unsafeRawInput)),
@@ -306,7 +306,7 @@ describe("runnable-safe-fn", () => {
         {
           name: "async",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .unparsedInput<{ name: string; lastName: string }>()
               .output(outputSchema)
               .handler(async (args) => ok(args.unsafeRawInput)),
@@ -314,7 +314,7 @@ describe("runnable-safe-fn", () => {
         {
           name: "generator",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .unparsedInput<{ name: string; lastName: string }>()
               .output(outputSchema)
               .safeHandler(async function* (args) {
@@ -327,21 +327,21 @@ describe("runnable-safe-fn", () => {
         {
           name: "regular",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .unparsedInput<{ name: string; lastName: string }>()
               .handler((args) => ok(args.unsafeRawInput)),
         },
         {
           name: "async",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .unparsedInput<{ name: string; lastName: string }>()
               .handler(async (args) => ok(args.unsafeRawInput)),
         },
         {
           name: "generator",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .unparsedInput<{ name: string; lastName: string }>()
               .safeHandler(async function* (args) {
                 return ok(args.unsafeRawInput);
@@ -392,7 +392,7 @@ describe("runnable-safe-fn", () => {
         {
           name: "regular",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .handler(() => {
                 throw new Error("error");
               })
@@ -406,7 +406,7 @@ describe("runnable-safe-fn", () => {
         {
           name: "async",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .handler(async () => {
                 throw new Error("error");
               })
@@ -420,7 +420,7 @@ describe("runnable-safe-fn", () => {
         {
           name: "generator",
           createSafeFn: () =>
-            SafeFnBuilder.new()
+            createSafeFn()
               .safeHandler(async function* () {
                 throw new Error("error");
               })
@@ -456,7 +456,7 @@ describe("runnable-safe-fn", () => {
         {
           name: "regular",
           createSafeFn: () => {
-            const builder = SafeFnBuilder.new().handler(() => err("Ooh no!"));
+            const builder = createSafeFn().handler(() => err("Ooh no!"));
             builder._parseOutput = outputParseMock;
             return builder;
           },
@@ -464,9 +464,7 @@ describe("runnable-safe-fn", () => {
         {
           name: "async",
           createSafeFn: () => {
-            const builder = SafeFnBuilder.new().handler(async () =>
-              err("Ooh no!"),
-            );
+            const builder = createSafeFn().handler(async () => err("Ooh no!"));
             builder._parseOutput = outputParseMock;
             return builder;
           },
@@ -474,7 +472,7 @@ describe("runnable-safe-fn", () => {
         {
           name: "generator - return error",
           createSafeFn: () => {
-            const builder = SafeFnBuilder.new().safeHandler(async function* () {
+            const builder = createSafeFn().safeHandler(async function* () {
               return err("Ooh no!");
             });
             builder._parseOutput = outputParseMock;
@@ -484,7 +482,7 @@ describe("runnable-safe-fn", () => {
         {
           name: "generator - yield error",
           createSafeFn: () => {
-            const builder = SafeFnBuilder.new().safeHandler(async function* () {
+            const builder = createSafeFn().safeHandler(async function* () {
               yield* err("Ooh no!").safeUnwrap();
               postYieldMock();
               return ok("Ooh yes!");
@@ -531,12 +529,13 @@ describe("runnable-safe-fn", () => {
         };
 
         const parentInputSchema = z.object({ age: z.number() });
-        const parent = SafeFnBuilder.new()
+        const parent = createSafeFn()
           .input(parentInputSchema)
           .handler(() => ok("Parent!" as const));
 
         const childInputSchema = z.object({ name: z.string() });
-        const safeFn = SafeFnBuilder.new(parent)
+        const safeFn = createSafeFn()
+          .use(parent)
           .input(childInputSchema)
           .handler(() => ok("Ok!" as const))
           .onStart(callbackMocks.onStart)
@@ -596,11 +595,12 @@ describe("runnable-safe-fn", () => {
         const parentInputSchema = z.object({ age: z.number() });
         const childInputSchema = z.object({ name: z.string() });
 
-        const parent = SafeFnBuilder.new()
+        const parent = createSafeFn()
           .input(parentInputSchema)
           .handler(() => ok("Parent!" as const));
 
-        const safeFn = SafeFnBuilder.new(parent)
+        const safeFn = createSafeFn()
+          .use(parent)
           .input(childInputSchema)
           .handler((args) => {
             return err("Woops!");
@@ -663,11 +663,12 @@ describe("runnable-safe-fn", () => {
         const parentInputSchema = z.object({ age: z.number() });
         const childInputSchema = z.object({ name: z.string() });
 
-        const parent = SafeFnBuilder.new()
+        const parent = createSafeFn()
           .input(parentInputSchema)
           .handler(() => err("Parent!" as const));
 
-        const safeFn = SafeFnBuilder.new(parent)
+        const safeFn = createSafeFn()
+          .use(parent)
           .input(childInputSchema)
           .handler((args) => {
             return ok("Child");
@@ -730,11 +731,12 @@ describe("runnable-safe-fn", () => {
         const parentInputSchema = z.object({ age: z.number() });
         const childInputSchema = z.object({ name: z.string() });
 
-        const parent = SafeFnBuilder.new()
+        const parent = createSafeFn()
           .input(parentInputSchema)
           .handler(() => ok("Parent!" as const));
 
-        const safeFn = SafeFnBuilder.new(parent)
+        const safeFn = createSafeFn()
+          .use(parent)
           .input(childInputSchema)
           .handler((args) => {
             return ok("Child");
@@ -801,17 +803,16 @@ describe("runnable-safe-fn", () => {
     const parents = [
       {
         name: "regular",
-        createSafeFn: () => SafeFnBuilder.new().handler((args) => ok("Ok!")),
+        createSafeFn: () => createSafeFn().handler((args) => ok("Ok!")),
       },
       {
         name: "async",
-        createSafeFn: () =>
-          SafeFnBuilder.new().handler(async (args) => ok("Ok!")),
+        createSafeFn: () => createSafeFn().handler(async (args) => ok("Ok!")),
       },
       {
         name: "generator",
         createSafeFn: () =>
-          SafeFnBuilder.new().safeHandler(async function* (args) {
+          createSafeFn().safeHandler(async function* (args) {
             return ok("Ok!");
           }),
       },
@@ -821,19 +822,25 @@ describe("runnable-safe-fn", () => {
       {
         name: "regular",
         createSafeFn: (parent: AnyRunnableSafeFn) =>
-          SafeFnBuilder.new(parent).handler((args) => ok(args.ctx)),
+          createSafeFn()
+            .use(parent)
+            .handler((args) => ok(args.ctx)),
       },
       {
         name: "async",
         createSafeFn: (parent: AnyRunnableSafeFn) =>
-          SafeFnBuilder.new(parent).handler(async (args) => ok(args.ctx)),
+          createSafeFn()
+            .use(parent)
+            .handler(async (args) => ok(args.ctx)),
       },
       {
         name: "generator",
         createSafeFn: (parent: AnyRunnableSafeFn) =>
-          SafeFnBuilder.new(parent).safeHandler(async function* (args) {
-            return ok(args.ctx);
-          }),
+          createSafeFn()
+            .use(parent)
+            .safeHandler(async function* (args) {
+              return ok(args.ctx);
+            }),
       },
     ];
 
@@ -858,25 +865,24 @@ describe("runnable-safe-fn", () => {
     const parentsWithError = [
       {
         name: "regular",
-        createSafeFn: () =>
-          SafeFnBuilder.new().handler((args) => err("Not ok!")),
+        createSafeFn: () => createSafeFn().handler((args) => err("Not ok!")),
       },
       {
         name: "async",
         createSafeFn: () =>
-          SafeFnBuilder.new().handler(async (args) => err("Not ok!")),
+          createSafeFn().handler(async (args) => err("Not ok!")),
       },
       {
         name: "generator - return error",
         createSafeFn: () =>
-          SafeFnBuilder.new().safeHandler(async function* (args) {
+          createSafeFn().safeHandler(async function* (args) {
             return err("Not ok!");
           }),
       },
       {
         name: "generator - yield error",
         createSafeFn: () =>
-          SafeFnBuilder.new().safeHandler(async function* (args) {
+          createSafeFn().safeHandler(async function* (args) {
             yield* err("Not ok!").safeUnwrap();
             return ok("Ok!");
           }),
@@ -887,19 +893,23 @@ describe("runnable-safe-fn", () => {
       {
         name: "regular",
         createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
-          SafeFnBuilder.new(parent).handler(mockHandler),
+          createSafeFn().use(parent).handler(mockHandler),
       },
       {
         name: "async",
         createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
-          SafeFnBuilder.new(parent).handler(async () => mockHandler()),
+          createSafeFn()
+            .use(parent)
+            .handler(async () => mockHandler()),
       },
       {
         name: "generator",
         createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
-          SafeFnBuilder.new(parent).safeHandler(async function* () {
-            return mockHandler();
-          }),
+          createSafeFn()
+            .use(parent)
+            .safeHandler(async function* () {
+              return mockHandler();
+            }),
       },
     ];
     parentsWithError.forEach(
@@ -930,7 +940,7 @@ describe("runnable-safe-fn", () => {
 
     test("should pass parsed and unparsed input from parent to child", async () => {
       // TODO: also do for other types of handlers
-      const fn1 = SafeFnBuilder.new()
+      const fn1 = createSafeFn()
         .input(
           z.object({
             parsed1: z.string(),
@@ -938,10 +948,12 @@ describe("runnable-safe-fn", () => {
         )
         .handler(() => ok(""));
 
-      const fn2 = SafeFnBuilder.new(fn1)
+      const fn2 = createSafeFn()
+        .use(fn1)
         .unparsedInput<{ unparsed2: string }>()
         .handler(() => ok("ctx"));
-      const fn3 = SafeFnBuilder.new(fn2)
+      const fn3 = createSafeFn()
+        .use(fn2)
         .input(
           z.object({
             parsed3: z.string(),
@@ -975,7 +987,7 @@ describe("runnable-safe-fn", () => {
   describe("createAction", () => {
     describe("input", async () => {
       test("should transform input error", async () => {
-        const action = SafeFnBuilder.new()
+        const action = createSafeFn()
           .input(z.object({ name: z.string() }))
           .handler((args) => ok(args))
           .createAction();
@@ -992,10 +1004,11 @@ describe("runnable-safe-fn", () => {
       });
 
       test("should transform input error from parent", async () => {
-        const parent = SafeFnBuilder.new()
+        const parent = createSafeFn()
           .input(z.object({ name: z.string() }))
           .handler((args) => ok(args));
-        const child = SafeFnBuilder.new(parent)
+        const child = createSafeFn()
+          .use(parent)
           .input(z.object({ age: z.number() }))
           .handler((args) => ok(args))
           .createAction();
@@ -1014,7 +1027,7 @@ describe("runnable-safe-fn", () => {
 
     describe("output", () => {
       test("should transform output error", async () => {
-        const action = SafeFnBuilder.new()
+        const action = createSafeFn()
           .output(z.object({ name: z.string() }))
           // @ts-expect-error - passing wrong input on purpose
           .handler((args) => {
@@ -1033,13 +1046,14 @@ describe("runnable-safe-fn", () => {
       });
 
       test("should transform output error from parent", async () => {
-        const parent = SafeFnBuilder.new()
+        const parent = createSafeFn()
           .output(z.object({ name: z.string() }))
           //@ts-expect-error - passing wrong input on purpose
           .handler((args) => {
             return ok({});
           });
-        const child = SafeFnBuilder.new(parent)
+        const child = createSafeFn()
+          .use(parent)
           .handler((args) => ok(args))
           .createAction();
 
@@ -1054,13 +1068,15 @@ describe("runnable-safe-fn", () => {
         expect(res.error.cause.formattedError).toHaveProperty(["name"]);
         expect(res.error.cause).toHaveProperty(["flattenedError"]);
 
-        const child2 = SafeFnBuilder.new(parent)
+        const child2 = createSafeFn()
+          .use(parent)
           .output(z.object({ age: z.number() }))
           .handler(() => {
             return ok({ age: 100 });
           });
 
-        const child3 = SafeFnBuilder.new(child2)
+        const child3 = createSafeFn()
+          .use(child2)
           .handler(() => ok({}))
           .createAction();
 

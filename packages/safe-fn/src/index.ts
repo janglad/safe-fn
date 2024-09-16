@@ -8,7 +8,7 @@ import {
   type InferActionErrError,
   type InferActionOkData,
 } from "./result";
-import { SafeFnBuilder } from "./safe-fn-builder";
+import { createSafeFn } from "./safe-fn-builder";
 
 import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
 
@@ -31,7 +31,7 @@ import type {
   InferUnparsedInput,
 } from "./types/schema";
 
-export { actionResultToResult, SafeFnBuilder as SafeFn };
+export { actionResultToResult, createSafeFn };
 export type {
   ActionErr,
   ActionOk,
