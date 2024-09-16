@@ -161,7 +161,7 @@ describe("SafeFnBuilder", () => {
         });
         const parent = safeFnTransformedInput.handler(() => ok(""));
 
-        const child = SafeFnBuilder.new(parent).input(input2);
+        const child = SafeFnBuilder.new().use(parent).input(input2);
 
         type ExpectedUnparsedInput = TPrettify<
           SchemaTransformedInput & z.input<typeof input2>
@@ -203,7 +203,7 @@ describe("SafeFnBuilder", () => {
           }>()
           .handler(() => ok(""));
 
-        const child = SafeFnBuilder.new(parent).input(schemaTransformed);
+        const child = SafeFnBuilder.new().use(parent).input(schemaTransformed);
 
         type ExpectedUnparsedInput = TPrettify<
           SchemaTransformedInput & {
@@ -246,7 +246,7 @@ describe("SafeFnBuilder", () => {
           }>()
           .handler(() => ok(""));
 
-        const child = SafeFnBuilder.new(parent).unparsedInput<{
+        const child = SafeFnBuilder.new().use(parent).unparsedInput<{
           superNew: string;
           supertest: number[];
         }>();
@@ -286,7 +286,7 @@ describe("SafeFnBuilder", () => {
 
       test("should type unparsedInput as never and parsedInput as undefined when no input schema is provided", () => {
         const parent = SafeFnBuilder.new().handler(() => ok(""));
-        const child = SafeFnBuilder.new(parent);
+        const child = SafeFnBuilder.new().use(parent);
 
         type ExpectedUnparsedInput = never;
         type ExpectedParsedInput = undefined;
@@ -350,7 +350,7 @@ describe("SafeFnBuilder", () => {
             return ok("hello");
           });
 
-        const safeFnSyncParent = SafeFnBuilder.new(syncParent);
+        const safeFnSyncParent = SafeFnBuilder.new().use(syncParent);
         safeFnSyncParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
           return ok(input);
@@ -366,7 +366,7 @@ describe("SafeFnBuilder", () => {
           return ok(input);
         });
 
-        const safeFnAsyncParent = SafeFnBuilder.new(asyncParent);
+        const safeFnAsyncParent = SafeFnBuilder.new().use(asyncParent);
         safeFnAsyncParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
           return ok(input);
@@ -377,7 +377,7 @@ describe("SafeFnBuilder", () => {
           return ok(input);
         });
 
-        const safeFnSafeParent = SafeFnBuilder.new(safeParent);
+        const safeFnSafeParent = SafeFnBuilder.new().use(safeParent);
         safeFnSafeParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<SchemaPrimitiveOutput>();
           return ok(input);
@@ -407,7 +407,7 @@ describe("SafeFnBuilder", () => {
             return ok({ test: "hello", nested: { value: 1 } });
           });
 
-        const safeFnSyncParent = SafeFnBuilder.new(syncParent);
+        const safeFnSyncParent = SafeFnBuilder.new().use(syncParent);
         safeFnSyncParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
           return ok(input);
@@ -423,7 +423,7 @@ describe("SafeFnBuilder", () => {
           return ok(input);
         });
 
-        const safeFnAsyncParent = SafeFnBuilder.new(asyncParent);
+        const safeFnAsyncParent = SafeFnBuilder.new().use(asyncParent);
         safeFnAsyncParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
           return ok(input);
@@ -438,7 +438,7 @@ describe("SafeFnBuilder", () => {
           return ok(input);
         });
 
-        const safeFnSafeParent = SafeFnBuilder.new(safeParent);
+        const safeFnSafeParent = SafeFnBuilder.new().use(safeParent);
         safeFnSafeParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<SchemaObjectOutput>();
           return ok(input);
@@ -468,7 +468,7 @@ describe("SafeFnBuilder", () => {
             return ok({ test: "hello", nested: { value: 1 } });
           });
 
-        const safeFnSyncParent = SafeFnBuilder.new(syncParent);
+        const safeFnSyncParent = SafeFnBuilder.new().use(syncParent);
         safeFnSyncParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
           return ok(input);
@@ -484,7 +484,7 @@ describe("SafeFnBuilder", () => {
           return ok(input);
         });
 
-        const safeFnAsyncParent = SafeFnBuilder.new(asyncParent);
+        const safeFnAsyncParent = SafeFnBuilder.new().use(asyncParent);
         safeFnAsyncParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
           return ok(input);
@@ -499,7 +499,7 @@ describe("SafeFnBuilder", () => {
           return ok(input);
         });
 
-        const safeFnSafeParent = SafeFnBuilder.new(safeParent);
+        const safeFnSafeParent = SafeFnBuilder.new().use(safeParent);
         safeFnSafeParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<SchemaTransformedOutput>();
           return ok(input);
@@ -528,7 +528,7 @@ describe("SafeFnBuilder", () => {
           return expectedOutput;
         });
 
-        const safeFnSyncParent = SafeFnBuilder.new(syncParent);
+        const safeFnSyncParent = SafeFnBuilder.new().use(syncParent);
         safeFnSyncParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
           return ok(input);
@@ -542,7 +542,7 @@ describe("SafeFnBuilder", () => {
           return ok(input);
         });
 
-        const safeFnAsyncParent = SafeFnBuilder.new(asyncParent);
+        const safeFnAsyncParent = SafeFnBuilder.new().use(asyncParent);
         safeFnAsyncParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
           return ok(input);
@@ -556,7 +556,7 @@ describe("SafeFnBuilder", () => {
           return ok(input);
         });
 
-        const safeFnSafeParent = SafeFnBuilder.new(safeParent);
+        const safeFnSafeParent = SafeFnBuilder.new().use(safeParent);
         safeFnSafeParent.handler((input) => {
           expectTypeOf(input.ctx).toEqualTypeOf<ExpectedCtx>();
           return ok(input);
@@ -595,9 +595,9 @@ describe("runnableSafeFn", () => {
         const parent = SafeFnBuilder.new()
           .input(schemaTransformed)
           .handler(() => ok("hello" as const));
-        const child = SafeFnBuilder.new(parent).handler(() =>
-          ok("hello" as const),
-        );
+        const child = SafeFnBuilder.new()
+          .use(parent)
+          .handler(() => ok("hello" as const));
 
         expectTypeOf(child.run).parameters.toEqualTypeOf<
           [SchemaTransformedInput]
@@ -848,17 +848,17 @@ describe("runnableSafeFn", () => {
           })
           .catch(() => err("world" as const));
 
-        const safeFnSyncParentSync = SafeFnBuilder.new(parentSync).handler(() =>
-          ok("ok" as const),
-        );
-        const safeFnAsyncParentSync = SafeFnBuilder.new(parentAsync).handler(
-          async () => ok("ok" as const),
-        );
-        const safeFnSafeParentSync = SafeFnBuilder.new(parentSafe).safeHandler(
-          async function* () {
+        const safeFnSyncParentSync = SafeFnBuilder.new()
+          .use(parentSync)
+          .handler(() => ok("ok" as const));
+        const safeFnAsyncParentSync = SafeFnBuilder.new()
+          .use(parentAsync)
+          .handler(async () => ok("ok" as const));
+        const safeFnSafeParentSync = SafeFnBuilder.new()
+          .use(parentSafe)
+          .safeHandler(async function* () {
             return ok("ok" as const);
-          },
-        );
+          });
 
         const resSync = await safeFnSyncParentSync.run();
         const resAsync = await safeFnAsyncParentSync.run();
@@ -893,17 +893,17 @@ describe("runnableSafeFn", () => {
             return ok("hi" as const);
           });
 
-        const safeFnSyncParent = SafeFnBuilder.new(parentSync).handler(() =>
-          ok("ok" as const),
-        );
-        const safeFnAsyncParent = SafeFnBuilder.new(parentAsync).handler(
-          async () => ok("ok" as const),
-        );
-        const safeFnSafeParent = SafeFnBuilder.new(parentSafe).safeHandler(
-          async function* () {
+        const safeFnSyncParent = SafeFnBuilder.new()
+          .use(parentSync)
+          .handler(() => ok("ok" as const));
+        const safeFnAsyncParent = SafeFnBuilder.new()
+          .use(parentAsync)
+          .handler(async () => ok("ok" as const));
+        const safeFnSafeParent = SafeFnBuilder.new()
+          .use(parentSafe)
+          .safeHandler(async function* () {
             return ok("ok" as const);
-          },
-        );
+          });
 
         // @ts-expect-error - input is not compatible
         const resSync = await safeFnSyncParent.run();
@@ -938,9 +938,9 @@ describe("runnableSafeFn", () => {
             }
         >();
 
-        const nestedChild = SafeFnBuilder.new(safeFnSafeParent).handler(() =>
-          ok("ok" as const),
-        );
+        const nestedChild = SafeFnBuilder.new()
+          .use(safeFnSafeParent)
+          .handler(() => ok("ok" as const));
         // @ts-expect-error
         const resNestedChildSync = await nestedChild.run();
 
@@ -962,7 +962,8 @@ describe("runnableSafeFn", () => {
         .handler(() => ok("hello" as const));
       const childSchema = z.object({ child: z.string() });
       type ChildSchemaInput = z.input<typeof childSchema>;
-      const child = SafeFnBuilder.new(safeFn)
+      const child = SafeFnBuilder.new()
+        .use(safeFn)
         .input(childSchema)
         .handler(() => ok("world" as const));
 
@@ -1306,17 +1307,17 @@ describe("runnableSafeFn", () => {
             return ok("hi" as const);
           });
 
-        const safeFnSyncParent = SafeFnBuilder.new(parentSync).handler(() =>
-          ok("ok" as const),
-        );
-        const safeFnAsyncParent = SafeFnBuilder.new(parentAsync).handler(
-          async () => ok("ok" as const),
-        );
-        const safeFnSafeParent = SafeFnBuilder.new(parentSafe).safeHandler(
-          async function* () {
+        const safeFnSyncParent = SafeFnBuilder.new()
+          .use(parentSync)
+          .handler(() => ok("ok" as const));
+        const safeFnAsyncParent = SafeFnBuilder.new()
+          .use(parentAsync)
+          .handler(async () => ok("ok" as const));
+        const safeFnSafeParent = SafeFnBuilder.new()
+          .use(parentSafe)
+          .safeHandler(async function* () {
             return ok("ok" as const);
-          },
-        );
+          });
 
         // @ts-expect-error - input is not compatible
         const resSync = await safeFnSyncParent.createAction()();
@@ -1369,9 +1370,9 @@ describe("runnableSafeFn", () => {
             }
         >();
 
-        const nestedChild = SafeFnBuilder.new(safeFnSafeParent).handler(() =>
-          ok("ok" as const),
-        );
+        const nestedChild = SafeFnBuilder.new()
+          .use(safeFnSafeParent)
+          .handler(() => ok("ok" as const));
         // @ts-expect-error
         const resNestedChildSync = await nestedChild.run();
 
