@@ -1,0 +1,63 @@
+---
+title: useServerAction hook
+---
+
+The `useServerAction()` hook makes calling a SafeFn from the client easy.
+It handles transitioning, exposes loading states and converts the `ActionResult` object back into a `Result`.
+
+```ts title="server/... .ts"
+const mySafeFn = SafeFn.new().handler(() => {
+  return ok("Success");
+});
+```
+
+```ts title="server/... .ts"
+const myAction = mySafeFn.createAction();
+```
+
+```tsx title="client/... .tsx"
+const { execute, result, isPending, isSuccess } = useServerAction(
+  action,
+  callbacks,
+);
+```
+
+## Returns
+
+An object with the following properties:
+
+- `execute()`: A function that takes in the arguments to run the action (same as `run()`,
+  the type either inferred through setting an input schema or passing it through `unparsedInput<T>()`) and return a `ResultAsync` of the action's return type.
+- `result`: the `Result` of running `execute()`.
+- `isPending`: a boolean representing if the action is currently executing or transitioning.
+- `isSuccess`: a boolean representing if the action completed successfully.
+  {/* - TODO: update this when adding the other properties */}
+
+## Arguments
+
+### SafeFn Action
+
+The `action` argument is the resulting function from calling `createAction()` on a SafeFn.
+
+### Callbacks
+
+The `useServerAction()` hook optionally takes in the following callbacks functions that will run on the client:
+
+- `onStart()` - Called when `execute()` is called.
+  - Takes in the raw input passed into `execute()`.
+- `onSuccess()` - Called when the `execute()` returns an `Ok`.
+  - Takes in the raw input passed into `execute()` and the value returned from the action.
+- `onError()` - Called when the `execute()` returns an `Err`.
+  - Takes in the raw input passed into `execute()` and the error returned from the action.
+- `onComplete()` - Called when the `execute()` returns.
+  - Takes in the raw input passed into `execute()` and the result returned from the action.
+
+<Callout type="info">
+  These callbacks are not awaited. This means `onStart()` does not block the
+  action from running, and the other callbacks do not block hook from returning
+  the result from the action.
+</Callout>
+
+{/* Explain impacts of redirecting on callbacks */}
+
+## Returns

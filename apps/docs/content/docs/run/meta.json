@@ -1,4 +1,4 @@
 {
   "title": "Running a SafeFn",
-  "pages": ["run", "action"]
+  "pages": ["run", "action", "hook"]
 }
