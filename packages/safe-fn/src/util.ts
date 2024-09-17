@@ -1,12 +1,7 @@
 import { ResultAsync, err, ok } from "neverthrow";
 import { z } from "zod";
 import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
-import type {
-  TSafeFnCallBacks,
-  TSafeFnOnCompleteArgs,
-  TSafeFnOnErrorArgs,
-  TSafeFnOnSuccessArgs,
-} from "./types/callbacks";
+import type { TSafeFnCallBacks } from "./types/callbacks";
 import type { TAnySafeFnHandlerRes } from "./types/handler";
 import type { TSafeFnInput, TSafeFnOutput } from "./types/schema";
 
@@ -15,6 +10,7 @@ import type {
   TSafeFnParseError,
 } from "./types/error";
 import type { TSafeFnInternalRunReturn } from "./types/run";
+import type { TODO } from "./types/util";
 
 const NEXT_JS_ERROR_MESSAGES = ["NEXT_REDIRECT", "NEXT_NOT_FOUND"];
 
@@ -87,17 +83,12 @@ export const runCallbacks = <
         args.callbacks.onSuccess,
         throwFrameworkErrorOrVoid,
       )({
-        unsafeRawInput: res.value.unsafeRawInput,
+        unsafeRawInput: res.value.unsafeRawInput as TODO,
         input: res.value.input,
-        ctx: res.value.ctx,
-        value: res.value.result,
-      } as TSafeFnOnSuccessArgs<
-        TParent,
-        TInputSchema,
-        TOutputSchema,
-        TUnparsedInput,
-        THandlerRes
-      >);
+        ctx: res.value.ctx as TODO,
+        ctxInput: res.value.ctxInput,
+        value: res.value.value,
+      });
       callbackPromises.push(onSuccessPromise);
     } else if (res.isErr() && args.callbacks.onError !== undefined) {
       const onErrorPromise = ResultAsync.fromThrowable(
@@ -105,17 +96,12 @@ export const runCallbacks = <
         throwFrameworkErrorOrVoid,
       )({
         asAction: args.asAction,
-        error: res.error.public,
+        error: res.error.public as TODO,
         ctx: res.error.private.ctx,
+        ctxInput: res.error.private.ctxInput,
         input: res.error.private.input,
-        unsafeRawInput: res.error.private.unsafeRawInput,
-      } as TSafeFnOnErrorArgs<
-        TParent,
-        TInputSchema,
-        TUnparsedInput,
-        THandlerRes,
-        TCatchHandlerRes
-      >);
+        unsafeRawInput: res.error.private.unsafeRawInput as TODO,
+      });
       callbackPromises.push(onErrorPromise);
     }
 
@@ -126,29 +112,26 @@ export const runCallbacks = <
       )({
         asAction: args.asAction,
         result: res.match(
-          (value) => ok(value.result),
+          (value) => ok(value.value),
           (error) => err(error.public),
-        ),
+        ) as TODO,
         ctx: res.match(
           (value) => value.ctx,
           (err) => err.private.ctx,
-        ),
+        ) as TODO,
         input: res.match(
           (value) => value.input,
           (err) => err.private.input,
-        ),
+        ) as TODO,
         unsafeRawInput: res.match(
           (value) => value.unsafeRawInput,
           (err) => err.private.unsafeRawInput,
-        ),
-      } as TSafeFnOnCompleteArgs<
-        TParent,
-        TInputSchema,
-        TOutputSchema,
-        TUnparsedInput,
-        THandlerRes,
-        TCatchHandlerRes
-      >);
+        ) as TODO,
+        ctxInput: res.match(
+          (value) => value.ctxInput,
+          (err) => err.private.ctxInput,
+        ) as TODO,
+      });
       callbackPromises.push(onCompletePromise);
     }
     await ResultAsync.combineWithAllErrors(callbackPromises);

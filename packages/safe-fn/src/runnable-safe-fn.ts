@@ -36,12 +36,8 @@ import type {
   TSafeFnOnStart,
   TSafeFnOnSuccess,
 } from "./types/callbacks";
-import type {
-  TAnySafeFnHandlerRes,
-  TCtx,
-  TCtxInput,
-  TSafeFnHandlerArgs,
-} from "./types/handler";
+import type { TAnySafeFnHandlerRes } from "./types/handler";
+import type { TODO } from "./types/util";
 import {
   isFrameworkError,
   mapZodError,
@@ -213,7 +209,7 @@ export class RunnableSafeFn<
     false
   > {
     return this._run(args[0], false)
-      .map((res) => res.result)
+      .map((res) => res.value)
       .mapErr((e) => e.public);
   }
 
@@ -306,7 +302,6 @@ export class RunnableSafeFn<
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;
     const handler = this._internals.handler;
-    const internals = this._internals;
     const parent = this._internals.parent;
     const uncaughtErrorHandler = this._internals.uncaughtErrorHandler;
     const _parseOutput = this._parseOutput.bind(this);
@@ -346,10 +341,14 @@ export class RunnableSafeFn<
         const parentRes:
           | TInferSafeFnInternalRunReturnData<TParent, TAsAction>
           | undefined =
-          internals.parent === undefined
+          parent === undefined
             ? undefined
-            : ((yield* internals.parent
+            : ((yield* parent
                 ._run(args, tAsAction)
+                .map((res) => ({
+                  ...res,
+                  ctxInput: [...res.ctxInput, res.input],
+                }))
                 .mapErr(
                   (e) =>
                     ({
@@ -367,6 +366,10 @@ export class RunnableSafeFn<
                         unsafeRawInput: args as TUnparsedInput,
                         input: undefined,
                         ctx: undefined,
+                        ctxInput: [
+                          ...e.private.ctxInput,
+                          e.private.input,
+                        ] as TODO,
                         handlerRes: undefined,
                       },
                     }) satisfies InternalErr,
@@ -375,17 +378,6 @@ export class RunnableSafeFn<
                 TParent,
                 TAsAction
               >);
-
-        const ctx =
-          parentRes === undefined
-            ? {
-                value: undefined,
-                input: [],
-              }
-            : {
-                value: parentRes.result,
-                input: [...parentRes.ctx.input, parentRes.input],
-              };
 
         const parsedInput: TSchemaOutputOrFallback<TInputSchema, undefined> =
           inputSchema === undefined
@@ -396,10 +388,8 @@ export class RunnableSafeFn<
                     ({
                       public: e,
                       private: {
-                        ctx: {
-                          value: ctx.value,
-                          input: ctx.input as TCtxInput<TParent>,
-                        } satisfies TCtx<TParent>,
+                        ctx: parentRes?.value,
+                        ctxInput: parentRes?.ctxInput || [],
                         unsafeRawInput: args as TUnparsedInput,
                         input: undefined,
                         handlerRes: undefined,
@@ -411,10 +401,11 @@ export class RunnableSafeFn<
         const handlerRes: InferOkData<THandlerRes> = yield* (
           await (async () => {
             const res = await handler({
-              input: parsedInput as any,
-              unsafeRawInput: args as any,
-              ctx,
-            } as TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>);
+              input: parsedInput,
+              unsafeRawInput: args as TODO,
+              ctx: parentRes?.value,
+              ctxInput: parentRes?.ctxInput || [],
+            });
             if (!res) {
               // This should never happen, will cause Typescript to error out.
               throw new Error("Handler did not return a result");
@@ -427,10 +418,8 @@ export class RunnableSafeFn<
               ({
                 public: e,
                 private: {
-                  ctx: {
-                    value: ctx.value,
-                    input: ctx.input as TCtxInput<TParent>,
-                  } satisfies TCtx<TParent>,
+                  ctx: parentRes?.value,
+                  ctxInput: parentRes?.ctxInput || [],
                   input: parsedInput,
                   unsafeRawInput: args as TUnparsedInput,
                   handlerRes: undefined,
@@ -448,10 +437,8 @@ export class RunnableSafeFn<
                     ({
                       public: e as any,
                       private: {
-                        ctx: {
-                          value: ctx.value,
-                          input: ctx.input as TCtxInput<TParent>,
-                        } satisfies TCtx<TParent>,
+                        ctx: parentRes?.value,
+                        ctxInput: parentRes?.ctxInput || [],
                         input: parsedInput,
                         handlerRes,
                         unsafeRawInput: args as TUnparsedInput,
@@ -460,17 +447,15 @@ export class RunnableSafeFn<
                 )
                 .safeUnwrap();
 
-        const result: TSafeFnReturnData<TOutputSchema, THandlerRes> =
+        const value: TSafeFnReturnData<TOutputSchema, THandlerRes> =
           parsedOutput === undefined
             ? (handlerRes as TSafeFnReturnData<TOutputSchema, THandlerRes>)
             : (parsedOutput as TSafeFnReturnData<TOutputSchema, THandlerRes>);
         return ok({
-          result,
+          value,
           input: parsedInput,
-          ctx: {
-            value: ctx.value,
-            input: ctx.input as TCtxInput<TParent>,
-          },
+          ctx: parentRes?.value,
+          ctxInput: parentRes?.ctxInput || [],
           unsafeRawInput: args as TUnparsedInput,
         } satisfies InternalOk);
       },
@@ -498,6 +483,7 @@ export class RunnableSafeFn<
           unsafeRawInput: args as TUnparsedInput,
           input: undefined,
           ctx: undefined,
+          ctxInput: undefined,
           handlerRes: undefined,
         },
       };
@@ -525,7 +511,7 @@ export class RunnableSafeFn<
     TThrownHandlerRes
   > {
     const res = await this._run(args[0], true)
-      .map((res) => res.result)
+      .map((res) => res.value)
       .mapErr((e) => e.public);
 
     if (res.isOk()) {

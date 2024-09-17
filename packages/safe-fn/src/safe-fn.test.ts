@@ -273,7 +273,7 @@ describe("runnable-safe-fn", () => {
 
           const args = handlerMock.mock.calls[0]![0];
 
-          expect(args.ctx.input).toEqual([
+          expect(args.ctxInput).toEqual([
             {
               fullName: "John Doe",
             },
@@ -588,10 +588,8 @@ describe("runnable-safe-fn", () => {
         expect(callbackMocks.onSuccess).toHaveBeenCalledWith({
           input: { name: "John" },
           unsafeRawInput: { name: "John", age: 100 },
-          ctx: {
-            value: "Parent!",
-            input: [{ age: 100 }],
-          },
+          ctx: "Parent!",
+          ctxInput: [{ age: 100 }],
           value: "Ok!",
         } satisfies CallbackArgs["onSuccess"]);
       });
@@ -601,10 +599,8 @@ describe("runnable-safe-fn", () => {
           asAction: false,
           input: { name: "John" },
           unsafeRawInput: { name: "John", age: 100 },
-          ctx: {
-            value: "Parent!",
-            input: [{ age: 100 }],
-          },
+          ctx: "Parent!",
+          ctxInput: [{ age: 100 }],
           result: ok("Ok!"),
         } satisfies CallbackArgs["onComplete"]);
       });
@@ -661,10 +657,8 @@ describe("runnable-safe-fn", () => {
         expect(callbackMocks.onError).toHaveBeenCalledWith({
           asAction: false,
           error: "Woops!",
-          ctx: {
-            value: "Parent!",
-            input: [{ age: 100 }],
-          },
+          ctx: "Parent!",
+          ctxInput: [{ age: 100 }],
           input: { name: "John" },
           unsafeRawInput: { name: "John", age: 100 },
         } satisfies CallbackArgs["onError"]);
@@ -675,10 +669,8 @@ describe("runnable-safe-fn", () => {
           asAction: false,
           input: { name: "John" },
           unsafeRawInput: { name: "John", age: 100 },
-          ctx: {
-            value: "Parent!",
-            input: [{ age: 100 }],
-          },
+          ctx: "Parent!",
+          ctxInput: [{ age: 100 }],
           result: err("Woops!"),
         } satisfies CallbackArgs["onComplete"]);
       });
@@ -736,6 +728,7 @@ describe("runnable-safe-fn", () => {
           asAction: false,
           error: "Parent!",
           ctx: undefined,
+          ctxInput: [{ age: 100 }],
           input: undefined,
           unsafeRawInput: { name: "John", age: 100 },
         } satisfies CallbackArgs["onError"]);
@@ -747,6 +740,7 @@ describe("runnable-safe-fn", () => {
           input: undefined,
           unsafeRawInput: { name: "John", age: 100 },
           ctx: undefined,
+          ctxInput: [{ age: 100 }],
           result: err("Parent!"),
         } satisfies CallbackArgs["onComplete"]);
       });
@@ -885,10 +879,8 @@ describe("parent", () => {
         const res = await child.run();
 
         const args = handlerMock.mock.calls[0]![0];
-        expect(args.ctx).toEqual({
-          value: "Parent!",
-          input: [undefined],
-        });
+        expect(args.ctx).toEqual("Parent!");
+        expect(args.ctxInput).toEqual([undefined]);
       });
     });
   });
@@ -983,6 +975,8 @@ describe("parent", () => {
       .use(fn1)
       .unparsedInput<{ unparsed2: string }>()
       .handler(() => ok("ctx"));
+    const mockHandler = vi.fn().mockResolvedValue(ok(""));
+
     const fn3 = createSafeFn()
       .use(fn2)
       .input(
@@ -990,7 +984,7 @@ describe("parent", () => {
           parsed3: z.string(),
         }),
       )
-      .handler((args) => ok(args));
+      .handler(mockHandler);
 
     const res = await fn3.run({
       parsed1: "parsed1",
@@ -998,21 +992,17 @@ describe("parent", () => {
       parsed3: "parsed3",
     });
 
+    const args = mockHandler.mock.calls[0]![0];
+
     expect(res).toBeOk();
-    assert(res.isOk());
-    expect(res.value).toEqual({
-      ctx: {
-        value: "ctx",
-        input: [{ parsed1: "parsed1" }, undefined],
-      },
-      input: {
-        parsed3: "parsed3",
-      },
-      unsafeRawInput: {
-        parsed1: "parsed1",
-        unparsed2: "unparsed2",
-        parsed3: "parsed3",
-      },
+
+    expect(args.ctx).toEqual("ctx");
+    expect(args.ctxInput).toEqual([{ parsed1: "parsed1" }, undefined]);
+    expect(args.input).toEqual({ parsed3: "parsed3" });
+    expect(args.unsafeRawInput).toEqual({
+      parsed1: "parsed1",
+      unparsed2: "unparsed2",
+      parsed3: "parsed3",
     });
   });
 });

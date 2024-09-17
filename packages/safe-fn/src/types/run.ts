@@ -226,7 +226,7 @@ export interface TSafeFnInternalRunReturnData<
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
   in out TAsAction extends boolean,
 > {
-  result: InferAsyncOkData<
+  value: InferAsyncOkData<
     TSafeFnReturn<
       TParent,
       TInputSchema,
@@ -237,12 +237,10 @@ export interface TSafeFnInternalRunReturnData<
     >
   >;
   input: TSchemaOutputOrFallback<TInputSchema, undefined>;
-  ctx: {
-    value: TParent extends AnyRunnableSafeFn
-      ? InferSafeFnOkData<TParent, TAsAction>
-      : undefined;
-    input: TCtxInput<TParent>;
-  };
+  ctx: TParent extends AnyRunnableSafeFn
+    ? InferSafeFnOkData<TParent, TAsAction>
+    : undefined;
+  ctxInput: TCtxInput<TParent>;
   unsafeRawInput: TUnparsedInput;
 }
 
@@ -268,13 +266,11 @@ export interface TSafeFnInternalRunReturnError<
   private: {
     input: TSchemaInputOrFallback<TInputSchema, undefined> | undefined;
     ctx:
-      | {
-          value: TParent extends AnyRunnableSafeFn
-            ? InferSafeFnOkData<TParent, TAsAction>
-            : undefined;
-          input: TCtxInput<TParent>;
-        }
+      | (TParent extends AnyRunnableSafeFn
+          ? InferSafeFnOkData<TParent, TAsAction>
+          : undefined)
       | undefined;
+    ctxInput: TCtxInput<TParent> | undefined;
     unsafeRawInput: TUnparsedInput;
     handlerRes: TODO;
   };
