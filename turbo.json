@@ -15,6 +15,9 @@
       "persistent": true,
       "cache": false
     },
+    "bench-types": {
+      "dependsOn": ["^build"]
+    },
     "test": {},
     "test:coverage": {},
     "test:watch": {
