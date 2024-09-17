@@ -69,7 +69,7 @@ export interface TSafeFnHandlerArgs<
       : TPrettify<Merged>
     : never;
 
-  ctx: TCtx<TParent>;
+  ctx: TPrettify<TCtx<TParent>>;
 }
 
 /**
@@ -119,7 +119,7 @@ type TSafeFnAsyncGeneratorHandlerFn<
   Result<TSchemaInputOrFallback<TOutputSchema, any>, any>
 >;
 
-export interface TCtx<TParent extends AnyRunnableSafeFn | undefined> {
+export interface TCtx<in out TParent extends AnyRunnableSafeFn | undefined> {
   value: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
   input: TCtxInput<TParent>;
 }

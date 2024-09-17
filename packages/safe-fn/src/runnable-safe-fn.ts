@@ -446,9 +446,7 @@ export class RunnableSafeFn<
                 .mapErr(
                   (e) =>
                     ({
-                      public: e as THandlerRes extends Result<never, any>
-                        ? never
-                        : TSafeFnOutputParseError<TOutputSchema, TAsAction>,
+                      public: e as any,
                       private: {
                         ctx: {
                           value: ctx.value,
