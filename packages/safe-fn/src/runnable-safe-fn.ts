@@ -466,22 +466,6 @@ export class RunnableSafeFn<
           parsedOutput === undefined
             ? (handlerRes as TSafeFnReturnData<TOutputSchema, THandlerRes>)
             : (parsedOutput as TSafeFnReturnData<TOutputSchema, THandlerRes>);
-
-        // console.log(
-        //   JSON.stringify(
-        //     {
-        //       result,
-        //       input: parsedInput,
-        //       ctx: {
-        //         value: ctx.value,
-        //         input: ctx.input as TCtxInput<TParent>,
-        //       },
-        //       unsafeRawInput: args as TUnparsedInput,
-        //     },
-        //     null,
-        //     2,
-        //   ),
-        // );
         return ok({
           result,
           input: parsedInput,

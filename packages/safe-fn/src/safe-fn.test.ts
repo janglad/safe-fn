@@ -273,8 +273,6 @@ describe("runnable-safe-fn", () => {
 
           const args = handlerMock.mock.calls[0]![0];
 
-          console.log(JSON.stringify(args, null, 2));
-
           expect(args.ctx.input).toEqual([
             {
               fullName: "John Doe",
