@@ -1,5 +1,6 @@
-import type { Err, Result } from "neverthrow";
+import { type Err, type Result } from "neverthrow";
 import type { AnyRunnableSafeFn } from "../runnable-safe-fn";
+import type { TInferSafeFnParent } from "./internals";
 import type { InferSafeFnOkData } from "./run";
 import type {
   InferInputSchema,
@@ -51,13 +52,7 @@ export interface TSafeFnHandlerArgs<
   in out TUnparsedInput,
   in out TParent extends AnyRunnableSafeFn | undefined,
 > {
-  input: TPrettify<
-    TUnionIfNotT<
-      TSchemaOutputOrFallback<TInputSchema, undefined>,
-      TSchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
-      undefined
-    >
-  >;
+  input: TPrettify<TSchemaOutputOrFallback<TInputSchema, undefined>>;
   // Prettify<unknown> results in {}
   /**
    * The raw input passed to the handler function.
@@ -74,7 +69,10 @@ export interface TSafeFnHandlerArgs<
       : TPrettify<Merged>
     : never;
 
-  ctx: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
+  ctx: {
+    value: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
+    input: TCtxInput<TParent>;
+  };
 }
 
 /**
@@ -123,3 +121,12 @@ type TSafeFnAsyncGeneratorHandlerFn<
   Err<never, unknown>,
   Result<TSchemaInputOrFallback<TOutputSchema, any>, any>
 >;
+
+export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
+  TParent extends AnyRunnableSafeFn
+    ? [
+        ...TCtxInput<TInferSafeFnParent<TParent>>,
+
+        TSchemaInputOrFallback<InferInputSchema<TParent>, undefined>,
+      ]
+    : [];

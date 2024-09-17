@@ -25,3 +25,7 @@ export interface TSafeFnInternals<
   ) => TMaybePromise<TSafeFnHandlerReturn<TOutputSchema>>;
   uncaughtErrorHandler: (error: unknown) => TThrownHandlerRes;
 }
+
+export type TInferSafeFnParent<T> = T extends AnyRunnableSafeFn
+  ? T["_internals"]["parent"]
+  : never;
