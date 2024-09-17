@@ -127,6 +127,6 @@ export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
     ? [
         ...TCtxInput<TInferSafeFnParent<TParent>>,
 
-        TSchemaInputOrFallback<InferInputSchema<TParent>, undefined>,
+        TSchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
       ]
     : [];
