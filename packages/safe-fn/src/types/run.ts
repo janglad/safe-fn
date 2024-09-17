@@ -6,25 +6,20 @@ import type {
   InferAsyncOkData,
   InferErrError,
 } from "../result";
-import type { AnyRunnableSafeFn } from "../runnable-safe-fn";
+import type { AnyRunnableSafeFn, RunnableSafeFn } from "../runnable-safe-fn";
 import type {
   TAnySafeFnCatchHandlerRes,
   TSafeFnInputParseError,
   TSafeFnOutputParseError,
 } from "../types/error";
-import type { TAnySafeFnHandlerRes } from "../types/handler";
+import type { TAnySafeFnHandlerRes, TCtxInput } from "../types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
 } from "../types/schema";
-import type {
-  TDistributeUnion,
-  TODO,
-  TOrFallback,
-  TToTuple,
-} from "../types/util";
+import type { TDistributeUnion, TODO, TToTuple } from "../types/util";
 
 /*
 ################################
@@ -54,6 +49,26 @@ export type InferSafeFnReturn<
     ? ReturnType<T["_runAsAction"]>
     : ReturnType<T["run"]>
   : never;
+
+export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
+  T extends RunnableSafeFn<
+    infer TParent,
+    infer TInputSchema,
+    infer TOutputSchema,
+    infer TUnparsedInput,
+    infer THandlerRes,
+    infer TThrownHandlerRes
+  >
+    ? TSafeFnInternalRunReturnData<
+        TParent,
+        TInputSchema,
+        TOutputSchema,
+        TUnparsedInput,
+        THandlerRes,
+        TThrownHandlerRes,
+        TAsAction
+      >
+    : never;
 
 /**
  * @param T the runnable safe function
@@ -211,7 +226,7 @@ export interface TSafeFnInternalRunReturnData<
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
   in out TAsAction extends boolean,
 > {
-  result: InferAsyncOkData<
+  value: InferAsyncOkData<
     TSafeFnReturn<
       TParent,
       TInputSchema,
@@ -225,6 +240,7 @@ export interface TSafeFnInternalRunReturnData<
   ctx: TParent extends AnyRunnableSafeFn
     ? InferSafeFnOkData<TParent, TAsAction>
     : undefined;
+  ctxInput: TCtxInput<TParent>;
   unsafeRawInput: TUnparsedInput;
 }
 
@@ -250,8 +266,11 @@ export interface TSafeFnInternalRunReturnError<
   private: {
     input: TSchemaInputOrFallback<TInputSchema, undefined> | undefined;
     ctx:
-      | TOrFallback<InferSafeFnOkData<TParent, TAsAction>, undefined>
+      | (TParent extends AnyRunnableSafeFn
+          ? InferSafeFnOkData<TParent, TAsAction>
+          : undefined)
       | undefined;
+    ctxInput: TCtxInput<TParent> | undefined;
     unsafeRawInput: TUnparsedInput;
     handlerRes: TODO;
   };

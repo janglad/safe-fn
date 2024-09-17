@@ -1,8 +1,8 @@
 import { ok } from "neverthrow";
-import { SafeFn } from "safe-fn";
+import { createSafeFn } from "safe-fn";
 import { z } from "zod";
 
-const safeFn1 = SafeFn.new()
+const safeFn1 = createSafeFn()
   .input(
     z.object({
       firstName: z.string(),
@@ -29,7 +29,8 @@ const safeFn1 = SafeFn.new()
 
 const res = safeFn1.run({ firstName: "John", lastName: "Doe" });
 
-const safeFn2 = SafeFn.new(safeFn1)
+const safeFn2 = createSafeFn()
+  .use(safeFn1)
   .input(
     z
       .object({
@@ -47,7 +48,7 @@ const safeFn2 = SafeFn.new(safeFn1)
   )
   .safeHandler(async function* (args) {
     const age = new Date().getFullYear() - args.input.birthday.getFullYear();
-    return ok({ fullName: args.input.firstName, age });
+    return ok({ fullName: args.ctxInput[0].firstName, age });
   });
 
 const res2 = safeFn2.run({
