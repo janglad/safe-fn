@@ -6,6 +6,10 @@
     "@repo/typescript-config": "workspace:^",
     "typescript": "^5.5.4"
   },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "bench-types": "tsc --noEmit --diagnostics"
+  },
   "dependencies": {
     "neverthrow": "^7.1.0",
     "safe-fn": "workspace:^",

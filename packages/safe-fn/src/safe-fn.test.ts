@@ -2,7 +2,7 @@ import { err, ok, type Result } from "neverthrow";
 import { assert, describe, expect, test, vi, type Mock } from "vitest";
 import { z, ZodError } from "zod";
 import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
-import { SafeFnBuilder } from "./safe-fn-builder";
+import { createSafeFn, SafeFnBuilder } from "./safe-fn-builder";
 import type { TInferSafeFnCallbacks } from "./types/callbacks";
 import type { TODO } from "./types/util";
 
@@ -39,22 +39,22 @@ declare module "vitest" {
 describe("safe-fn-builder", () => {
   describe("new", () => {
     test("should return a builder", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       expect(builder).toBeInstanceOf(SafeFnBuilder);
     });
 
     test("should set the input schema as undefined", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       expect(builder._internals.inputSchema).toBeUndefined();
     });
 
     test("should set the output schema as undefined", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       expect(builder._internals.outputSchema).toBeUndefined();
     });
 
     test("should set the correct default action", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const res = builder._internals.handler(undefined as TODO);
       expect(res).toBeErr();
       // @ts-expect-error - Return not defined in builder type as .run can not be called anyway
@@ -64,7 +64,7 @@ describe("safe-fn-builder", () => {
     });
 
     test("should set the correct default catch handler", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const returnedError = builder._internals.uncaughtErrorHandler(
         undefined as TODO,
       );
@@ -76,22 +76,22 @@ describe("safe-fn-builder", () => {
     });
 
     test("should set the parent safe-fn", () => {
-      const parent = SafeFnBuilder.new().handler(() => ok(""));
-      const child = SafeFnBuilder.new(parent);
+      const parent = createSafeFn().handler(() => ok(""));
+      const child = createSafeFn().use(parent);
       expect(child._internals.parent).toBe(parent);
     });
   });
 
   describe("input", () => {
     test("should set the input schema", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const inputSchema = z.string();
       const safeFn = builder.input(inputSchema);
       expect(safeFn._internals.inputSchema).toEqual(inputSchema);
     });
 
     test("should be new instance", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const safeFn = builder.input(z.string());
       const safeFn2 = builder.input(z.string());
       expect(safeFn2).not.toBe(safeFn);
@@ -100,7 +100,7 @@ describe("safe-fn-builder", () => {
 
   describe("unsafeRawInput", () => {
     test("should return the same instance", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const builder2 = builder.unparsedInput<string>();
       expect(builder2).toBe(builder);
     });
@@ -108,14 +108,14 @@ describe("safe-fn-builder", () => {
 
   describe("output", () => {
     test("should set the output schema", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const outputSchema = z.string();
       const safeFn = builder.output(outputSchema);
       expect(safeFn._internals.outputSchema).toEqual(outputSchema);
     });
 
     test("should be new instance", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const safeFn = builder.output(z.string());
       const safeFn2 = builder.output(z.string());
       expect(safeFn2).not.toBe(safeFn);
@@ -124,14 +124,14 @@ describe("safe-fn-builder", () => {
 
   describe("handler", () => {
     test("should set the handler function", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const handlerFn = () => ok("data");
       const safeFn = builder.handler(handlerFn);
       expect(safeFn._internals.handler).toBe(handlerFn);
     });
 
     test("should be new instance", () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const safeFn = builder.handler(() => ok("data"));
       const safeFn2 = builder.handler(() => ok("data"));
       expect(safeFn2).not.toBe(safeFn);
@@ -140,7 +140,7 @@ describe("safe-fn-builder", () => {
 
   describe("safeHandler", () => {
     test("should set the safe handler function", async () => {
-      const builder = SafeFnBuilder.new();
+      const builder = createSafeFn();
       const safeHandlerFn = async function* () {
         return ok("data");
       };
@@ -157,7 +157,7 @@ describe("runnable-safe-fn", () => {
   describe("catch", () => {
     test("should set the catch handler", () => {
       const errorHandler = () => err("error");
-      const safeFn = SafeFnBuilder.new()
+      const safeFn = createSafeFn()
         .handler(() => ok(""))
         .catch(errorHandler);
       expect(safeFn._internals.uncaughtErrorHandler).toEqual(errorHandler);
@@ -175,25 +175,23 @@ describe("runnable-safe-fn", () => {
       const testCasesWithInputSchema = [
         {
           name: "regular",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .input(inputSchema)
-              .handler((args) => ok(args)),
+          createMockFn: (mockAction: Mock) =>
+            createSafeFn().input(inputSchema).handler(mockAction),
         },
         {
           name: "async",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
+          createMockFn: (mockAction: Mock) =>
+            createSafeFn()
               .input(inputSchema)
-              .handler(async (args) => ok(args)),
+              .handler(async (args) => mockAction(args)),
         },
         {
           name: "generator",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
+          createMockFn: (mockAction: Mock) =>
+            createSafeFn()
               .input(inputSchema)
               .safeHandler(async function* (args) {
-                return ok(args);
+                return mockAction(args);
               }),
         },
       ];
@@ -201,59 +199,61 @@ describe("runnable-safe-fn", () => {
       const testCasesWithoutInputSchema = [
         {
           name: "regular",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .unparsedInput<unknown>()
-              .handler((args) => ok(args)),
+          createMockFn: (mockAction: Mock) =>
+            createSafeFn().unparsedInput<unknown>().handler(mockAction),
         },
         {
           name: "async",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .unparsedInput<unknown>()
-              .handler(async (args) => ok(args)),
+          createMockFn: (mockAction: Mock) =>
+            createSafeFn().unparsedInput<unknown>().handler(mockAction),
         },
         {
           name: "generator",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
+          createMockFn: (mockAction: Mock) =>
+            createSafeFn()
               .unparsedInput<unknown>()
               .safeHandler(async function* (args) {
-                return ok(args);
+                return mockAction(args);
               }),
         },
       ];
 
-      testCasesWithInputSchema.forEach(({ name, createSafeFn }) => {
+      testCasesWithInputSchema.forEach(({ name, createMockFn }) => {
         test(`should parse input and pass it to ${name} handler when input schema is defined`, async () => {
-          const safeFn = createSafeFn();
+          const mock = vi.fn().mockResolvedValue(ok(""));
+          const safeFn = createMockFn(mock);
           const res = await safeFn.run({ name: "John", lastName: "Doe" });
           expect(res).toBeOk();
-          assert(res.isOk());
-          expect(res.value).toMatchObject({
-            input: {
-              fullName: "John Doe",
-            },
+          const args = mock.mock.calls[0]![0];
+          expect(args.input).toEqual({
+            fullName: "John Doe",
+          });
+          expect(args.unsafeRawInput).toEqual({
+            name: "John",
+            lastName: "Doe",
           });
         });
         test("should pass unparsed input to handler when input schema is defined", async () => {
-          const safeFn = createSafeFn();
+          const mock = vi.fn().mockResolvedValue(ok(""));
+          const safeFn = createMockFn(mock);
           const res = await safeFn.run({ name: "John", lastName: "Doe" });
           expect(res).toBeOk();
-          assert(res.isOk());
-          expect(res.value).toMatchObject({
-            unsafeRawInput: {
-              name: "John",
-              lastName: "Doe",
-            },
+          const args = mock.mock.calls[0]![0];
+          expect(args.input).toEqual({
+            fullName: "John Doe",
+          });
+          expect(args.unsafeRawInput).toEqual({
+            name: "John",
+            lastName: "Doe",
           });
         });
 
         test(`should return Err if input is not valid for ${name} handler`, async () => {
-          const safeFn = createSafeFn();
+          const mock = vi.fn().mockResolvedValue(ok(""));
+          const safeFn = createMockFn(mock);
 
           // @ts-expect-error - Wrong input type
-          const res = await safeFn.run({});
+          const res = (await safeFn.run({})) as any;
           expect(res).toBeErr();
           assert(res.isErr());
           expect(res.error.code).toBe("INPUT_PARSING");
@@ -262,817 +262,855 @@ describe("runnable-safe-fn", () => {
           expect(res.error.cause.format().lastName).toBeDefined();
           expect(res.error.cause.format().name).toBeDefined();
         });
+
+        test("should pass parent input in array", async () => {
+          const mock = vi.fn().mockResolvedValue(ok(""));
+          const parent = createMockFn(mock);
+          const handlerMock = vi.fn().mockResolvedValue(ok(""));
+          const child = createSafeFn().use(parent).handler(handlerMock);
+
+          await child.run({ name: "John", lastName: "Doe" });
+
+          const args = handlerMock.mock.calls[0]![0];
+
+          expect(args.ctxInput).toEqual([
+            {
+              fullName: "John Doe",
+            },
+          ]);
+        });
       });
 
-      testCasesWithoutInputSchema.forEach(({ name, createSafeFn }) => {
+      testCasesWithoutInputSchema.forEach(({ name, createMockFn }) => {
         test(`should pass unparsed input to handler when input schema is not defined for ${name} handler`, async () => {
-          const safeFn = createSafeFn();
+          const mock = vi.fn().mockResolvedValue(ok(""));
+          const safeFn = createMockFn(mock);
           const res = await safeFn.run({ name: "John", lastName: "Doe" });
           expect(res).toBeOk();
-          assert(res.isOk());
-          expect(res.value).toEqual({
-            unsafeRawInput: { name: "John", lastName: "Doe" },
-          });
-        });
-
-        test("should pass undefined as parsed input if input is undefined", async () => {
-          const safeFn = createSafeFn();
-          const res = await safeFn.run(undefined as TODO);
-          expect(res).toBeOk();
-          assert(res.isOk());
-          expect(res.value).toEqual({
-            parsedInput: undefined,
-          });
-        });
-      });
-    });
-
-    describe("output", () => {
-      const outputSchema = z
-        .object({ name: z.string(), lastName: z.string() })
-        .transform((input) => ({
-          fullName: `${input.name} ${input.lastName}`,
-        }));
-
-      const testCasesWithOutputSchema = [
-        {
-          name: "regular",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .unparsedInput<{ name: string; lastName: string }>()
-              .output(outputSchema)
-              .handler((args) => ok(args.unsafeRawInput)),
-        },
-        {
-          name: "async",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .unparsedInput<{ name: string; lastName: string }>()
-              .output(outputSchema)
-              .handler(async (args) => ok(args.unsafeRawInput)),
-        },
-        {
-          name: "generator",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .unparsedInput<{ name: string; lastName: string }>()
-              .output(outputSchema)
-              .safeHandler(async function* (args) {
-                return ok(args.unsafeRawInput);
-              }),
-        },
-      ];
-
-      const testCasesWithoutOutputSchema = [
-        {
-          name: "regular",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .unparsedInput<{ name: string; lastName: string }>()
-              .handler((args) => ok(args.unsafeRawInput)),
-        },
-        {
-          name: "async",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .unparsedInput<{ name: string; lastName: string }>()
-              .handler(async (args) => ok(args.unsafeRawInput)),
-        },
-        {
-          name: "generator",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .unparsedInput<{ name: string; lastName: string }>()
-              .safeHandler(async function* (args) {
-                return ok(args.unsafeRawInput);
-              }),
-        },
-      ];
-
-      testCasesWithOutputSchema.forEach(({ name, createSafeFn }) => {
-        test(`should return Ok with parsed output for ${name} handler`, async () => {
-          const safeFn = createSafeFn();
-          const res = await safeFn.run({ name: "John", lastName: "Doe" });
-          expect(res).toBeOk();
-          assert(res.isOk());
-          expect(res.value).toEqual({
-            fullName: "John Doe",
-          });
-        });
-        test(`should return Err if output is not valid for ${name} handler`, async () => {
-          const safeFn = createSafeFn();
-          // @ts-expect-error
-          const res = await safeFn.run({});
-          expect(res).toBeErr();
-          assert(res.isErr());
-          expect(res.error.code).toBe("OUTPUT_PARSING");
-          assert(res.error.code === "OUTPUT_PARSING");
-          expect(res.error.cause).toBeInstanceOf(ZodError);
-          expect(res.error.cause.format().lastName).toBeDefined();
-          expect(res.error.cause.format().name).toBeDefined();
-        });
-      });
-
-      testCasesWithoutOutputSchema.forEach(({ name, createSafeFn }) => {
-        test(`should pass through output from handler if output schema is not defined for ${name} handler`, async () => {
-          const safeFn = createSafeFn();
-          const res = await safeFn.run({ name: "John", lastName: "Doe" });
-          expect(res).toBeOk();
-          assert(res.isOk());
-          expect(res.value).toEqual({
+          const args = mock.mock.calls[0]![0];
+          expect(args.unsafeRawInput).toEqual({
             name: "John",
             lastName: "Doe",
           });
         });
-      });
-    });
 
-    describe("uncaught error", () => {
-      const testCases = [
-        {
-          name: "regular",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .handler(() => {
-                throw new Error("error");
-              })
-              .catch((e) =>
-                err({
-                  code: "TEST_ERROR",
-                  cause: e,
-                }),
-              ),
-        },
-        {
-          name: "async",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .handler(async () => {
-                throw new Error("error");
-              })
-              .catch((e) =>
-                err({
-                  code: "TEST_ERROR",
-                  cause: e,
-                }),
-              ),
-        },
-        {
-          name: "generator",
-          createSafeFn: () =>
-            SafeFnBuilder.new()
-              .safeHandler(async function* () {
-                throw new Error("error");
-              })
-              .catch((e) =>
-                err({
-                  code: "TEST_ERROR",
-                  cause: e,
-                }),
-              ),
-        },
-      ];
-
-      testCases.forEach(({ name, createSafeFn }) => {
-        test(`should run catch handler for ${name} handler`, async () => {
-          const safeFn = createSafeFn();
+        test("should pass undefined as parsed input if input is undefined", async () => {
+          const mock = vi.fn().mockResolvedValue(ok(""));
+          const safeFn = createMockFn(mock);
+          // @ts-expect-error - Wrong input type
           const res = await safeFn.run();
-          expect(res).toBeErr();
-          assert(res.isErr());
-          expect(res.error.code).toBe("TEST_ERROR");
-          assert(res.error.code === "TEST_ERROR");
-          expect(res.error.cause).toBeInstanceOf(Error);
-          assert(res.error.cause instanceof Error);
-          expect(res.error.cause.message).toBe("error");
+          expect(res).toBeOk();
+          const args = mock.mock.calls[0]![0];
+          expect(args.input).toEqual(undefined);
         });
       });
     });
+  });
 
-    describe("return error", async () => {
-      const outputParseMock = vi.fn();
-      const postYieldMock = vi.fn();
+  describe("output", () => {
+    const outputSchema = z
+      .object({ name: z.string(), lastName: z.string() })
+      .transform((input) => ({
+        fullName: `${input.name} ${input.lastName}`,
+      }));
 
-      const testCases = [
-        {
-          name: "regular",
-          createSafeFn: () => {
-            const builder = SafeFnBuilder.new().handler(() => err("Ooh no!"));
-            builder._parseOutput = outputParseMock;
-            return builder;
-          },
-        },
-        {
-          name: "async",
-          createSafeFn: () => {
-            const builder = SafeFnBuilder.new().handler(async () =>
-              err("Ooh no!"),
-            );
-            builder._parseOutput = outputParseMock;
-            return builder;
-          },
-        },
-        {
-          name: "generator - return error",
-          createSafeFn: () => {
-            const builder = SafeFnBuilder.new().safeHandler(async function* () {
-              return err("Ooh no!");
-            });
-            builder._parseOutput = outputParseMock;
-            return builder;
-          },
-        },
-        {
-          name: "generator - yield error",
-          createSafeFn: () => {
-            const builder = SafeFnBuilder.new().safeHandler(async function* () {
-              yield* err("Ooh no!").safeUnwrap();
-              postYieldMock();
-              return ok("Ooh yes!");
-            });
-            builder._parseOutput = outputParseMock;
-            return builder;
-          },
-        },
-      ] as const;
+    const testCasesWithOutputSchema = [
+      {
+        name: "regular",
+        createSafeFn: () =>
+          createSafeFn()
+            .unparsedInput<{ name: string; lastName: string }>()
+            .output(outputSchema)
+            .handler((args) => ok(args.unsafeRawInput)),
+      },
+      {
+        name: "async",
+        createSafeFn: () =>
+          createSafeFn()
+            .unparsedInput<{ name: string; lastName: string }>()
+            .output(outputSchema)
+            .handler(async (args) => ok(args.unsafeRawInput)),
+      },
+      {
+        name: "generator",
+        createSafeFn: () =>
+          createSafeFn()
+            .unparsedInput<{ name: string; lastName: string }>()
+            .output(outputSchema)
+            .safeHandler(async function* (args) {
+              return ok(args.unsafeRawInput);
+            }),
+      },
+    ];
 
-      testCases.forEach(({ name, createSafeFn }) => {
-        test(`should return error from ${name} handler`, async () => {
-          const safeFn = createSafeFn();
-          const res = await safeFn.run();
-          expect(res).toBeErr();
-          assert(res.isErr());
-          expect(res.error).toBe("Ooh no!");
-        });
-        test("should not run output parse if handler returned error", async () => {
-          const safeFn = createSafeFn();
-          const res = await safeFn.run();
-          expect(res).toBeErr();
-          assert(res.isErr());
-          expect(outputParseMock).not.toHaveBeenCalled();
+    const testCasesWithoutOutputSchema = [
+      {
+        name: "regular",
+        createSafeFn: () =>
+          createSafeFn()
+            .unparsedInput<{ name: string; lastName: string }>()
+            .handler((args) => ok(args.unsafeRawInput)),
+      },
+      {
+        name: "async",
+        createSafeFn: () =>
+          createSafeFn()
+            .unparsedInput<{ name: string; lastName: string }>()
+            .handler(async (args) => ok(args.unsafeRawInput)),
+      },
+      {
+        name: "generator",
+        createSafeFn: () =>
+          createSafeFn()
+            .unparsedInput<{ name: string; lastName: string }>()
+            .safeHandler(async function* (args) {
+              return ok(args.unsafeRawInput);
+            }),
+      },
+    ];
+
+    testCasesWithOutputSchema.forEach(({ name, createSafeFn }) => {
+      test(`should return Ok with parsed output for ${name} handler`, async () => {
+        const safeFn = createSafeFn();
+        const res = await safeFn.run({ name: "John", lastName: "Doe" });
+        expect(res).toBeOk();
+        assert(res.isOk());
+        expect(res.value).toEqual({
+          fullName: "John Doe",
         });
       });
+      test(`should return Err if output is not valid for ${name} handler`, async () => {
+        const safeFn = createSafeFn();
+        // @ts-expect-error
+        const res = await safeFn.run({});
+        expect(res).toBeErr();
+        assert(res.isErr());
+        expect(res.error.code).toBe("OUTPUT_PARSING");
+        assert(res.error.code === "OUTPUT_PARSING");
+        expect(res.error.cause).toBeInstanceOf(ZodError);
+        expect(res.error.cause.format().lastName).toBeDefined();
+        expect(res.error.cause.format().name).toBeDefined();
+      });
+    });
 
-      test("should escape early out of generator if it yields an error", async () => {
-        const safeFn = testCases[3].createSafeFn();
+    testCasesWithoutOutputSchema.forEach(({ name, createSafeFn }) => {
+      test(`should pass through output from handler if output schema is not defined for ${name} handler`, async () => {
+        const safeFn = createSafeFn();
+        const res = await safeFn.run({ name: "John", lastName: "Doe" });
+        expect(res).toBeOk();
+        assert(res.isOk());
+        expect(res.value).toEqual({
+          name: "John",
+          lastName: "Doe",
+        });
+      });
+    });
+  });
+
+  describe("uncaught error", () => {
+    const testCases = [
+      {
+        name: "regular",
+        createSafeFn: () =>
+          createSafeFn()
+            .handler(() => {
+              throw new Error("error");
+            })
+            .catch((e) =>
+              err({
+                code: "TEST_ERROR",
+                cause: e,
+              }),
+            ),
+      },
+      {
+        name: "async",
+        createSafeFn: () =>
+          createSafeFn()
+            .handler(async () => {
+              throw new Error("error");
+            })
+            .catch((e) =>
+              err({
+                code: "TEST_ERROR",
+                cause: e,
+              }),
+            ),
+      },
+      {
+        name: "generator",
+        createSafeFn: () =>
+          createSafeFn()
+            .safeHandler(async function* () {
+              throw new Error("error");
+            })
+            .catch((e) =>
+              err({
+                code: "TEST_ERROR",
+                cause: e,
+              }),
+            ),
+      },
+    ];
+
+    testCases.forEach(({ name, createSafeFn }) => {
+      test(`should run catch handler for ${name} handler`, async () => {
+        const safeFn = createSafeFn();
         const res = await safeFn.run();
         expect(res).toBeErr();
         assert(res.isErr());
-        expect(postYieldMock).not.toHaveBeenCalled();
-      });
-    });
-
-    describe("callbacks", () => {
-      describe("should run callbacks with right args in success case", async () => {
-        const callbackMocks = {
-          onStart: vi.fn(),
-          onSuccess: vi.fn(),
-          onError: vi.fn(),
-          onComplete: vi.fn(),
-        };
-
-        const parentInputSchema = z.object({ age: z.number() });
-        const parent = SafeFnBuilder.new()
-          .input(parentInputSchema)
-          .handler(() => ok("Parent!" as const));
-
-        const childInputSchema = z.object({ name: z.string() });
-        const safeFn = SafeFnBuilder.new(parent)
-          .input(childInputSchema)
-          .handler(() => ok("Ok!" as const))
-          .onStart(callbackMocks.onStart)
-          .onSuccess(callbackMocks.onSuccess)
-          .onError(callbackMocks.onError)
-          .onComplete(callbackMocks.onComplete);
-
-        await safeFn.run({ name: "John", age: 100 });
-
-        type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
-        type CallbackArgs = {
-          [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
-            args: infer Args,
-          ) => void
-            ? Args
-            : never;
-        };
-
-        test("onError", () => {
-          expect(callbackMocks.onError).not.toHaveBeenCalled();
-        });
-
-        test("onStart", () => {
-          expect(callbackMocks.onStart).toHaveBeenCalledWith({
-            unsafeRawInput: { name: "John", age: 100 },
-          } satisfies CallbackArgs["onStart"]);
-        });
-
-        test("onSuccess", () => {
-          expect(callbackMocks.onSuccess).toHaveBeenCalledWith({
-            input: { name: "John", age: 100 },
-            unsafeRawInput: { name: "John", age: 100 },
-            ctx: "Parent!",
-            value: "Ok!",
-          } satisfies CallbackArgs["onSuccess"]);
-        });
-
-        test("onComplete", () => {
-          expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-            asAction: false,
-            input: { name: "John", age: 100 },
-            unsafeRawInput: { name: "John", age: 100 },
-            ctx: "Parent!",
-            result: ok("Ok!"),
-          } satisfies CallbackArgs["onComplete"]);
-        });
-      });
-
-      describe("should run callbacks with right args when child returns Err", async () => {
-        const callbackMocks = {
-          onStart: vi.fn(),
-          onSuccess: vi.fn(),
-          onError: vi.fn(),
-          onComplete: vi.fn(),
-        };
-
-        const parentInputSchema = z.object({ age: z.number() });
-        const childInputSchema = z.object({ name: z.string() });
-
-        const parent = SafeFnBuilder.new()
-          .input(parentInputSchema)
-          .handler(() => ok("Parent!" as const));
-
-        const safeFn = SafeFnBuilder.new(parent)
-          .input(childInputSchema)
-          .handler((args) => {
-            return err("Woops!");
-          })
-          .onStart(callbackMocks.onStart)
-          .onSuccess(callbackMocks.onSuccess)
-          .onError(callbackMocks.onError)
-          .onComplete(callbackMocks.onComplete);
-
-        type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
-        type CallbackArgs = {
-          [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
-            args: infer Args,
-          ) => void
-            ? Args
-            : never;
-        };
-
-        await safeFn.run({ name: "John", age: 100 });
-
-        test("onStart", () => {
-          expect(callbackMocks.onStart).toHaveBeenCalledWith({
-            unsafeRawInput: { name: "John", age: 100 },
-          } satisfies CallbackArgs["onStart"]);
-        });
-
-        test("onSuccess", () => {
-          expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
-        });
-
-        test("onError", () => {
-          expect(callbackMocks.onError).toHaveBeenCalledWith({
-            asAction: false,
-            error: "Woops!",
-            ctx: "Parent!",
-            input: { name: "John", age: 100 },
-            unsafeRawInput: { name: "John", age: 100 },
-          } satisfies CallbackArgs["onError"]);
-        });
-
-        test("onComplete", () => {
-          expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-            asAction: false,
-            input: { name: "John", age: 100 },
-            unsafeRawInput: { name: "John", age: 100 },
-            ctx: "Parent!",
-            result: err("Woops!"),
-          } satisfies CallbackArgs["onComplete"]);
-        });
-      });
-
-      describe("should run callbacks with right args when parent returns Err", async () => {
-        const callbackMocks = {
-          onStart: vi.fn(),
-          onSuccess: vi.fn(),
-          onError: vi.fn(),
-          onComplete: vi.fn(),
-        };
-
-        const parentInputSchema = z.object({ age: z.number() });
-        const childInputSchema = z.object({ name: z.string() });
-
-        const parent = SafeFnBuilder.new()
-          .input(parentInputSchema)
-          .handler(() => err("Parent!" as const));
-
-        const safeFn = SafeFnBuilder.new(parent)
-          .input(childInputSchema)
-          .handler((args) => {
-            return ok("Child");
-          })
-          .onStart(callbackMocks.onStart)
-          .onSuccess(callbackMocks.onSuccess)
-          .onError(callbackMocks.onError)
-          .onComplete(callbackMocks.onComplete);
-
-        type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
-        type CallbackArgs = {
-          [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
-            args: infer Args,
-          ) => void
-            ? Args
-            : never;
-        };
-
-        await safeFn.run({ name: "John", age: 100 });
-
-        test("onStart", () => {
-          expect(callbackMocks.onStart).toHaveBeenCalledWith({
-            unsafeRawInput: { name: "John", age: 100 },
-          } satisfies CallbackArgs["onStart"]);
-        });
-
-        test("onSuccess", () => {
-          expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
-        });
-
-        test("onError", () => {
-          expect(callbackMocks.onError).toHaveBeenCalledWith({
-            asAction: false,
-            error: "Parent!",
-            ctx: undefined,
-            input: undefined,
-            unsafeRawInput: { name: "John", age: 100 },
-          } satisfies CallbackArgs["onError"]);
-        });
-
-        test("onComplete", () => {
-          expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-            asAction: false,
-            input: undefined,
-            unsafeRawInput: { name: "John", age: 100 },
-            ctx: undefined,
-            result: err("Parent!"),
-          } satisfies CallbackArgs["onComplete"]);
-        });
-      });
-
-      describe("should run callbacks with right args when parent fails parsing", async () => {
-        const callbackMocks = {
-          onStart: vi.fn(),
-          onSuccess: vi.fn(),
-          onError: vi.fn(),
-          onComplete: vi.fn(),
-        };
-
-        const parentInputSchema = z.object({ age: z.number() });
-        const childInputSchema = z.object({ name: z.string() });
-
-        const parent = SafeFnBuilder.new()
-          .input(parentInputSchema)
-          .handler(() => ok("Parent!" as const));
-
-        const safeFn = SafeFnBuilder.new(parent)
-          .input(childInputSchema)
-          .handler((args) => {
-            return ok("Child");
-          })
-          .onStart(callbackMocks.onStart)
-          .onSuccess(callbackMocks.onSuccess)
-          .onError(callbackMocks.onError)
-          .onComplete(callbackMocks.onComplete);
-
-        type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
-        type CallbackArgs = {
-          [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
-            args: infer Args,
-          ) => void
-            ? Args
-            : never;
-        };
-
-        // @ts-expect-error - passing wrong inputs on purpose
-        await safeFn.run({ fake: "fake", data: "data" });
-
-        test("onStart", () => {
-          expect(callbackMocks.onStart).toHaveBeenCalledWith({
-            unsafeRawInput: { fake: "fake", data: "data" },
-          });
-        });
-
-        test("onSuccess", () => {
-          expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
-        });
-
-        test("onError", () => {
-          expect(callbackMocks.onError).toHaveBeenCalled();
-
-          const args = callbackMocks.onError.mock
-            .calls[0]![0] as CallbackArgs["onError"];
-
-          assert(args.asAction === false);
-          assert(args.ctx === undefined);
-          assert(args.input === undefined);
-          assert(args.error.code === "INPUT_PARSING");
-          assert(args.error.cause instanceof ZodError);
-          expect(args.error.cause.format()).toHaveProperty(["age"]);
-        });
-
-        test("onComplete", () => {
-          expect(callbackMocks.onComplete).toHaveBeenCalled();
-          const args = callbackMocks.onComplete.mock
-            .calls[0]![0] as CallbackArgs["onComplete"];
-
-          assert(args.asAction === false);
-          assert(args.ctx === undefined);
-          assert(args.input === undefined);
-          assert(args.result.isErr());
-          assert(args.result.error.code === "INPUT_PARSING");
-          assert(args.result.error.cause instanceof ZodError);
-          expect(args.result.error.cause.format()).toHaveProperty(["age"]);
-        });
+        expect(res.error.code).toBe("TEST_ERROR");
+        assert(res.error.code === "TEST_ERROR");
+        expect(res.error.cause).toBeInstanceOf(Error);
+        assert(res.error.cause instanceof Error);
+        expect(res.error.cause.message).toBe("error");
       });
     });
   });
 
-  describe("parent", () => {
-    const parents = [
+  describe("return error", async () => {
+    const outputParseMock = vi.fn().mockResolvedValue(ok(""));
+    const postYieldMock = vi.fn().mockResolvedValue(ok(""));
+
+    const testCases = [
       {
         name: "regular",
-        createSafeFn: () => SafeFnBuilder.new().handler((args) => ok("Ok!")),
+        createSafeFn: () => {
+          const builder = createSafeFn().handler(() => err("Ooh no!"));
+          builder._parseOutput = outputParseMock;
+          return builder;
+        },
       },
       {
         name: "async",
-        createSafeFn: () =>
-          SafeFnBuilder.new().handler(async (args) => ok("Ok!")),
-      },
-      {
-        name: "generator",
-        createSafeFn: () =>
-          SafeFnBuilder.new().safeHandler(async function* (args) {
-            return ok("Ok!");
-          }),
-      },
-    ];
-
-    const children = [
-      {
-        name: "regular",
-        createSafeFn: (parent: AnyRunnableSafeFn) =>
-          SafeFnBuilder.new(parent).handler((args) => ok(args.ctx)),
-      },
-      {
-        name: "async",
-        createSafeFn: (parent: AnyRunnableSafeFn) =>
-          SafeFnBuilder.new(parent).handler(async (args) => ok(args.ctx)),
-      },
-      {
-        name: "generator",
-        createSafeFn: (parent: AnyRunnableSafeFn) =>
-          SafeFnBuilder.new(parent).safeHandler(async function* (args) {
-            return ok(args.ctx);
-          }),
-      },
-    ];
-
-    parents.forEach(
-      ({ name: parentName, createSafeFn: createParentSafeFn }) => {
-        children.forEach(
-          ({ name: childName, createSafeFn: createChildSafeFn }) => {
-            test(`should pass parent result from ${parentName} to ${childName}`, async () => {
-              const parent = createParentSafeFn();
-              const child = createChildSafeFn(parent as AnyRunnableSafeFn);
-              // @ts-expect-error - cast to any so input is not compatible
-              const res = await child.run();
-              expect(res).toBeOk();
-              assert(res.isOk());
-              expect(res.value).toBe("Ok!");
-            });
-          },
-        );
-      },
-    );
-
-    const parentsWithError = [
-      {
-        name: "regular",
-        createSafeFn: () =>
-          SafeFnBuilder.new().handler((args) => err("Not ok!")),
-      },
-      {
-        name: "async",
-        createSafeFn: () =>
-          SafeFnBuilder.new().handler(async (args) => err("Not ok!")),
+        createSafeFn: () => {
+          const builder = createSafeFn().handler(async () => err("Ooh no!"));
+          builder._parseOutput = outputParseMock;
+          return builder;
+        },
       },
       {
         name: "generator - return error",
-        createSafeFn: () =>
-          SafeFnBuilder.new().safeHandler(async function* (args) {
-            return err("Not ok!");
-          }),
+        createSafeFn: () => {
+          const builder = createSafeFn().safeHandler(async function* () {
+            return err("Ooh no!");
+          });
+          builder._parseOutput = outputParseMock;
+          return builder;
+        },
       },
       {
         name: "generator - yield error",
-        createSafeFn: () =>
-          SafeFnBuilder.new().safeHandler(async function* (args) {
-            yield* err("Not ok!").safeUnwrap();
-            return ok("Ok!");
-          }),
+        createSafeFn: () => {
+          const builder = createSafeFn().safeHandler(async function* () {
+            yield* err("Ooh no!").safeUnwrap();
+            postYieldMock();
+            return ok("Ooh yes!");
+          });
+          builder._parseOutput = outputParseMock;
+          return builder;
+        },
       },
-    ];
+    ] as const;
 
-    const childrenWithMocks = [
-      {
-        name: "regular",
-        createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
-          SafeFnBuilder.new(parent).handler(mockHandler),
-      },
-      {
-        name: "async",
-        createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
-          SafeFnBuilder.new(parent).handler(async () => mockHandler()),
-      },
-      {
-        name: "generator",
-        createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
-          SafeFnBuilder.new(parent).safeHandler(async function* () {
-            return mockHandler();
-          }),
-      },
-    ];
-    parentsWithError.forEach(
-      ({ name: parentName, createSafeFn: createParentSafeFn }) => {
-        childrenWithMocks.forEach(
-          async ({ name: childName, createSafeFn: createChildSafeFn }) => {
-            const mockHandler = vi.fn();
-            const parent = createParentSafeFn();
-            const child = createChildSafeFn(
-              parent as AnyRunnableSafeFn,
-              mockHandler,
-            );
+    testCases.forEach(({ name, createSafeFn }) => {
+      test(`should return error from ${name} handler`, async () => {
+        const safeFn = createSafeFn();
+        const res = await safeFn.run();
+        expect(res).toBeErr();
+        assert(res.isErr());
+        expect(res.error).toBe("Ooh no!");
+      });
+      test("should not run output parse if handler returned error", async () => {
+        const safeFn = createSafeFn();
+        const res = await safeFn.run();
+        expect(res).toBeErr();
+        assert(res.isErr());
+        expect(outputParseMock).not.toHaveBeenCalled();
+      });
+    });
 
-            // @ts-expect-error - cast to any so input is not compatible
-            const res = await child.run();
-            test(`should pass error from ${parentName} to ${childName}`, () => {
-              expect(res).toBeErr();
-              assert(res.isErr());
-              expect(res.error).toBe("Not ok!");
-            });
-            test(`should not call ${childName} handler for error in ${parentName}`, () => {
-              expect(mockHandler).not.toHaveBeenCalled();
-            });
-          },
-        );
-      },
-    );
+    test("should escape early out of generator if it yields an error", async () => {
+      const safeFn = testCases[3].createSafeFn();
+      const res = await safeFn.run();
+      expect(res).toBeErr();
+      assert(res.isErr());
+      expect(postYieldMock).not.toHaveBeenCalled();
+    });
+  });
 
-    test("should pass parsed and unparsed input from parent to child", async () => {
-      // TODO: also do for other types of handlers
-      const fn1 = SafeFnBuilder.new()
-        .input(
-          z.object({
-            parsed1: z.string(),
-          }),
-        )
-        .handler(() => ok(""));
+  describe("callbacks", () => {
+    describe("should run callbacks with right args in success case", async () => {
+      const callbackMocks = {
+        onStart: vi.fn(),
+        onSuccess: vi.fn(),
+        onError: vi.fn(),
+        onComplete: vi.fn(),
+      };
 
-      const fn2 = SafeFnBuilder.new(fn1)
-        .unparsedInput<{ unparsed2: string }>()
-        .handler(() => ok("ctx"));
-      const fn3 = SafeFnBuilder.new(fn2)
-        .input(
-          z.object({
-            parsed3: z.string(),
-          }),
-        )
-        .handler((args) => ok(args));
+      const parentInputSchema = z.object({ age: z.number() });
+      const parent = createSafeFn()
+        .input(parentInputSchema)
+        .handler(() => ok("Parent!" as const));
 
-      const res = await fn3.run({
-        parsed1: "parsed1",
-        unparsed2: "unparsed2",
-        parsed3: "parsed3",
+      const childInputSchema = z.object({ name: z.string() });
+      const safeFn = createSafeFn()
+        .use(parent)
+        .input(childInputSchema)
+        .handler(() => ok("Ok!" as const))
+        .onStart(callbackMocks.onStart)
+        .onSuccess(callbackMocks.onSuccess)
+        .onError(callbackMocks.onError)
+        .onComplete(callbackMocks.onComplete);
+
+      await safeFn.run({ name: "John", age: 100 });
+
+      type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
+      type CallbackArgs = {
+        [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
+          args: infer Args,
+        ) => void
+          ? Args
+          : never;
+      };
+
+      test("onError", () => {
+        expect(callbackMocks.onError).not.toHaveBeenCalled();
       });
 
-      expect(res).toBeOk();
-      assert(res.isOk());
-      expect(res.value).toEqual({
-        ctx: "ctx",
-        input: {
-          parsed1: "parsed1",
-          parsed3: "parsed3",
-        },
-        unsafeRawInput: {
-          parsed1: "parsed1",
-          unparsed2: "unparsed2",
-          parsed3: "parsed3",
-        },
+      test("onStart", () => {
+        expect(callbackMocks.onStart).toHaveBeenCalledWith({
+          unsafeRawInput: { name: "John", age: 100 },
+        } satisfies CallbackArgs["onStart"]);
+      });
+
+      test("onSuccess", () => {
+        expect(callbackMocks.onSuccess).toHaveBeenCalledWith({
+          input: { name: "John" },
+          unsafeRawInput: { name: "John", age: 100 },
+          ctx: "Parent!",
+          ctxInput: [{ age: 100 }],
+          value: "Ok!",
+        } satisfies CallbackArgs["onSuccess"]);
+      });
+
+      test("onComplete", () => {
+        expect(callbackMocks.onComplete).toHaveBeenCalledWith({
+          asAction: false,
+          input: { name: "John" },
+          unsafeRawInput: { name: "John", age: 100 },
+          ctx: "Parent!",
+          ctxInput: [{ age: 100 }],
+          result: ok("Ok!"),
+        } satisfies CallbackArgs["onComplete"]);
+      });
+    });
+
+    describe("should run callbacks with right args when child returns Err", async () => {
+      const callbackMocks = {
+        onStart: vi.fn(),
+        onSuccess: vi.fn(),
+        onError: vi.fn(),
+        onComplete: vi.fn(),
+      };
+
+      const parentInputSchema = z.object({ age: z.number() });
+      const childInputSchema = z.object({ name: z.string() });
+
+      const parent = createSafeFn()
+        .input(parentInputSchema)
+        .handler(() => ok("Parent!" as const));
+
+      const safeFn = createSafeFn()
+        .use(parent)
+        .input(childInputSchema)
+        .handler((args) => {
+          return err("Woops!");
+        })
+        .onStart(callbackMocks.onStart)
+        .onSuccess(callbackMocks.onSuccess)
+        .onError(callbackMocks.onError)
+        .onComplete(callbackMocks.onComplete);
+
+      type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
+      type CallbackArgs = {
+        [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
+          args: infer Args,
+        ) => void
+          ? Args
+          : never;
+      };
+
+      await safeFn.run({ name: "John", age: 100 });
+
+      test("onStart", () => {
+        expect(callbackMocks.onStart).toHaveBeenCalledWith({
+          unsafeRawInput: { name: "John", age: 100 },
+        } satisfies CallbackArgs["onStart"]);
+      });
+
+      test("onSuccess", () => {
+        expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
+      });
+
+      test("onError", () => {
+        expect(callbackMocks.onError).toHaveBeenCalledWith({
+          asAction: false,
+          error: "Woops!",
+          ctx: "Parent!",
+          ctxInput: [{ age: 100 }],
+          input: { name: "John" },
+          unsafeRawInput: { name: "John", age: 100 },
+        } satisfies CallbackArgs["onError"]);
+      });
+
+      test("onComplete", () => {
+        expect(callbackMocks.onComplete).toHaveBeenCalledWith({
+          asAction: false,
+          input: { name: "John" },
+          unsafeRawInput: { name: "John", age: 100 },
+          ctx: "Parent!",
+          ctxInput: [{ age: 100 }],
+          result: err("Woops!"),
+        } satisfies CallbackArgs["onComplete"]);
+      });
+    });
+
+    describe("should run callbacks with right args when parent returns Err", async () => {
+      const callbackMocks = {
+        onStart: vi.fn(),
+        onSuccess: vi.fn(),
+        onError: vi.fn(),
+        onComplete: vi.fn(),
+      };
+
+      const parentInputSchema = z.object({ age: z.number() });
+      const childInputSchema = z.object({ name: z.string() });
+
+      const parent = createSafeFn()
+        .input(parentInputSchema)
+        .handler(() => err("Parent!" as const));
+
+      const safeFn = createSafeFn()
+        .use(parent)
+        .input(childInputSchema)
+        .handler((args) => {
+          return ok("Child");
+        })
+        .onStart(callbackMocks.onStart)
+        .onSuccess(callbackMocks.onSuccess)
+        .onError(callbackMocks.onError)
+        .onComplete(callbackMocks.onComplete);
+
+      type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
+      type CallbackArgs = {
+        [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
+          args: infer Args,
+        ) => void
+          ? Args
+          : never;
+      };
+
+      await safeFn.run({ name: "John", age: 100 });
+
+      test("onStart", () => {
+        expect(callbackMocks.onStart).toHaveBeenCalledWith({
+          unsafeRawInput: { name: "John", age: 100 },
+        } satisfies CallbackArgs["onStart"]);
+      });
+
+      test("onSuccess", () => {
+        expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
+      });
+
+      test("onError", () => {
+        expect(callbackMocks.onError).toHaveBeenCalledWith({
+          asAction: false,
+          error: "Parent!",
+          ctx: undefined,
+          ctxInput: [{ age: 100 }],
+          input: undefined,
+          unsafeRawInput: { name: "John", age: 100 },
+        } satisfies CallbackArgs["onError"]);
+      });
+
+      test("onComplete", () => {
+        expect(callbackMocks.onComplete).toHaveBeenCalledWith({
+          asAction: false,
+          input: undefined,
+          unsafeRawInput: { name: "John", age: 100 },
+          ctx: undefined,
+          ctxInput: [{ age: 100 }],
+          result: err("Parent!"),
+        } satisfies CallbackArgs["onComplete"]);
+      });
+    });
+
+    describe("should run callbacks with right args when parent fails parsing", async () => {
+      const callbackMocks = {
+        onStart: vi.fn(),
+        onSuccess: vi.fn(),
+        onError: vi.fn(),
+        onComplete: vi.fn(),
+      };
+
+      const parentInputSchema = z.object({ age: z.number() });
+      const childInputSchema = z.object({ name: z.string() });
+
+      const parent = createSafeFn()
+        .input(parentInputSchema)
+        .handler(() => ok("Parent!" as const));
+
+      const safeFn = createSafeFn()
+        .use(parent)
+        .input(childInputSchema)
+        .handler((args) => {
+          return ok("Child");
+        })
+        .onStart(callbackMocks.onStart)
+        .onSuccess(callbackMocks.onSuccess)
+        .onError(callbackMocks.onError)
+        .onComplete(callbackMocks.onComplete);
+
+      type Callbacks = TInferSafeFnCallbacks<typeof safeFn>;
+      type CallbackArgs = {
+        [K in keyof Callbacks]: Exclude<Callbacks[K], undefined> extends (
+          args: infer Args,
+        ) => void
+          ? Args
+          : never;
+      };
+
+      // @ts-expect-error - passing wrong inputs on purpose
+      await safeFn.run({ fake: "fake", data: "data" });
+
+      test("onStart", () => {
+        expect(callbackMocks.onStart).toHaveBeenCalledWith({
+          unsafeRawInput: { fake: "fake", data: "data" },
+        });
+      });
+
+      test("onSuccess", () => {
+        expect(callbackMocks.onSuccess).not.toHaveBeenCalled();
+      });
+
+      test("onError", () => {
+        expect(callbackMocks.onError).toHaveBeenCalled();
+
+        const args = callbackMocks.onError.mock
+          .calls[0]![0] as CallbackArgs["onError"];
+
+        assert(args.asAction === false);
+        assert(args.ctx === undefined);
+        assert(args.input === undefined);
+        assert(args.error.code === "INPUT_PARSING");
+        assert(args.error.cause instanceof ZodError);
+        expect(args.error.cause.format()).toHaveProperty(["age"]);
+      });
+
+      test("onComplete", () => {
+        expect(callbackMocks.onComplete).toHaveBeenCalled();
+        const args = callbackMocks.onComplete.mock
+          .calls[0]![0] as CallbackArgs["onComplete"];
+
+        assert(args.asAction === false);
+        assert(args.ctx === undefined);
+        assert(args.input === undefined);
+        assert(args.result.isErr());
+        assert(args.result.error.code === "INPUT_PARSING");
+        assert(args.result.error.cause instanceof ZodError);
+        expect(args.result.error.cause.format()).toHaveProperty(["age"]);
+      });
+    });
+  });
+});
+
+describe("parent", () => {
+  const parents = [
+    {
+      name: "regular",
+      createSafeFn: () => createSafeFn().handler((args) => ok("Parent!")),
+    },
+    {
+      name: "async",
+      createSafeFn: () => createSafeFn().handler(async (args) => ok("Parent!")),
+    },
+    {
+      name: "generator",
+      createSafeFn: () =>
+        createSafeFn().safeHandler(async function* (args) {
+          return ok("Parent!");
+        }),
+    },
+  ];
+
+  const children = [
+    {
+      name: "regular",
+      createSafeFn: (parent: AnyRunnableSafeFn, handlerMock: Mock) =>
+        createSafeFn().use(parent).handler(handlerMock),
+    },
+    {
+      name: "async",
+      createSafeFn: (parent: AnyRunnableSafeFn, handlerMock: Mock) =>
+        createSafeFn().use(parent).handler(handlerMock),
+    },
+    {
+      name: "generator",
+      createSafeFn: (parent: AnyRunnableSafeFn, handlerMock: Mock) =>
+        createSafeFn()
+          .use(parent)
+          .safeHandler(async function* (args) {
+            return handlerMock(args);
+          }),
+    },
+  ];
+
+  parents.forEach(({ name: parentName, createSafeFn: createParentSafeFn }) => {
+    children.forEach(({ name: childName, createSafeFn: createChildSafeFn }) => {
+      test(`should pass parent ctx from ${parentName} to ${childName}`, async () => {
+        const parent = createParentSafeFn();
+        const handlerMock = vi.fn().mockResolvedValue(ok(""));
+        const child = createChildSafeFn(
+          parent as AnyRunnableSafeFn,
+          handlerMock,
+        );
+        // @ts-expect-error - cast to any so input is not compatible
+        const res = await child.run();
+
+        const args = handlerMock.mock.calls[0]![0];
+        expect(args.ctx).toEqual("Parent!");
+        expect(args.ctxInput).toEqual([undefined]);
       });
     });
   });
 
-  describe("createAction", () => {
-    describe("input", async () => {
-      test("should transform input error", async () => {
-        const action = SafeFnBuilder.new()
-          .input(z.object({ name: z.string() }))
-          .handler((args) => ok(args))
-          .createAction();
+  const parentsWithError = [
+    {
+      name: "regular",
+      createSafeFn: () => createSafeFn().handler((args) => err("Not ok!")),
+    },
+    {
+      name: "async",
+      createSafeFn: () =>
+        createSafeFn().handler(async (args) => err("Not ok!")),
+    },
+    {
+      name: "generator - return error",
+      createSafeFn: () =>
+        createSafeFn().safeHandler(async function* (args) {
+          return err("Not ok!");
+        }),
+    },
+    {
+      name: "generator - yield error",
+      createSafeFn: () =>
+        createSafeFn().safeHandler(async function* (args) {
+          yield* err("Not ok!").safeUnwrap();
+          return ok("Ok!");
+        }),
+    },
+  ];
 
-        // @ts-expect-error
-        const res = await action({});
-        expect(res.ok).toBe(false);
-        assert(!res.ok);
-        expect(res.error.code).toBe("INPUT_PARSING");
-        assert(res.error.code === "INPUT_PARSING");
-        expect(res.error.cause).toHaveProperty(["formattedError"]);
-        expect(res.error.cause.formattedError).toHaveProperty(["name"]);
-        expect(res.error.cause).toHaveProperty(["flattenedError"]);
-      });
+  const childrenWithMocks = [
+    {
+      name: "regular",
+      createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
+        createSafeFn().use(parent).handler(mockHandler),
+    },
+    {
+      name: "async",
+      createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
+        createSafeFn()
+          .use(parent)
+          .handler(async () => mockHandler()),
+    },
+    {
+      name: "generator",
+      createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
+        createSafeFn()
+          .use(parent)
+          .safeHandler(async function* () {
+            return mockHandler();
+          }),
+    },
+  ];
+  parentsWithError.forEach(
+    ({ name: parentName, createSafeFn: createParentSafeFn }) => {
+      childrenWithMocks.forEach(
+        async ({ name: childName, createSafeFn: createChildSafeFn }) => {
+          const mockHandler = vi.fn().mockResolvedValue(ok(""));
+          const parent = createParentSafeFn();
+          const child = createChildSafeFn(
+            parent as AnyRunnableSafeFn,
+            mockHandler,
+          );
 
-      test("should transform input error from parent", async () => {
-        const parent = SafeFnBuilder.new()
-          .input(z.object({ name: z.string() }))
-          .handler((args) => ok(args));
-        const child = SafeFnBuilder.new(parent)
-          .input(z.object({ age: z.number() }))
-          .handler((args) => ok(args))
-          .createAction();
+          // @ts-expect-error - cast to any so input is not compatible
+          const res = await child.run();
+          test(`should pass error from ${parentName} to ${childName}`, () => {
+            expect(res).toBeErr();
+            assert(res.isErr());
+            expect(res.error).toBe("Not ok!");
+          });
+          test(`should not call ${childName} handler for error in ${parentName}`, () => {
+            expect(mockHandler).not.toHaveBeenCalled();
+          });
+        },
+      );
+    },
+  );
 
-        // @ts-expect-error
-        const res = await child({});
-        expect(res.ok).toBe(false);
-        assert(!res.ok);
-        expect(res.error.code).toBe("INPUT_PARSING");
-        assert(res.error.code === "INPUT_PARSING");
-        expect(res.error.cause).toHaveProperty(["formattedError"]);
-        expect(res.error.cause.formattedError).toHaveProperty(["name"]);
-        expect(res.error.cause).toHaveProperty(["flattenedError"]);
-      });
+  test("should pass parsed and unparsed input from parent to child", async () => {
+    // TODO: also do for other types of handlers
+    const fn1 = createSafeFn()
+      .input(
+        z.object({
+          parsed1: z.string(),
+        }),
+      )
+      .handler(() => ok(""));
+
+    const fn2 = createSafeFn()
+      .use(fn1)
+      .unparsedInput<{ unparsed2: string }>()
+      .handler(() => ok("ctx"));
+    const mockHandler = vi.fn().mockResolvedValue(ok(""));
+
+    const fn3 = createSafeFn()
+      .use(fn2)
+      .input(
+        z.object({
+          parsed3: z.string(),
+        }),
+      )
+      .handler(mockHandler);
+
+    const res = await fn3.run({
+      parsed1: "parsed1",
+      unparsed2: "unparsed2",
+      parsed3: "parsed3",
     });
 
-    describe("output", () => {
-      test("should transform output error", async () => {
-        const action = SafeFnBuilder.new()
-          .output(z.object({ name: z.string() }))
-          // @ts-expect-error - passing wrong input on purpose
-          .handler((args) => {
-            return ok({});
-          })
-          .createAction();
+    const args = mockHandler.mock.calls[0]![0];
 
-        const res = await action();
-        expect(res.ok).toBe(false);
-        assert(!res.ok);
-        expect(res.error.code).toBe("OUTPUT_PARSING");
-        assert(res.error.code === "OUTPUT_PARSING");
-        expect(res.error.cause).toHaveProperty(["formattedError"]);
-        expect(res.error.cause.formattedError).toHaveProperty(["name"]);
-        expect(res.error.cause).toHaveProperty(["flattenedError"]);
-      });
+    expect(res).toBeOk();
 
-      test("should transform output error from parent", async () => {
-        const parent = SafeFnBuilder.new()
-          .output(z.object({ name: z.string() }))
-          //@ts-expect-error - passing wrong input on purpose
-          .handler((args) => {
-            return ok({});
-          });
-        const child = SafeFnBuilder.new(parent)
-          .handler((args) => ok(args))
-          .createAction();
+    expect(args.ctx).toEqual("ctx");
+    expect(args.ctxInput).toEqual([{ parsed1: "parsed1" }, undefined]);
+    expect(args.input).toEqual({ parsed3: "parsed3" });
+    expect(args.unsafeRawInput).toEqual({
+      parsed1: "parsed1",
+      unparsed2: "unparsed2",
+      parsed3: "parsed3",
+    });
+  });
+});
 
-        const res = await child();
+describe("createAction", () => {
+  describe("input", async () => {
+    test("should transform input error", async () => {
+      const action = createSafeFn()
+        .input(z.object({ name: z.string() }))
+        .handler((args) => ok(args))
+        .createAction();
 
-        expect(res.ok).toBe(false);
-        assert(!res.ok);
+      // @ts-expect-error
+      const res = await action({});
+      expect(res.ok).toBe(false);
+      assert(!res.ok);
+      expect(res.error.code).toBe("INPUT_PARSING");
+      assert(res.error.code === "INPUT_PARSING");
+      expect(res.error.cause).toHaveProperty(["formattedError"]);
+      expect(res.error.cause.formattedError).toHaveProperty(["name"]);
+      expect(res.error.cause).toHaveProperty(["flattenedError"]);
+    });
 
-        expect(res.error.code).toBe("OUTPUT_PARSING");
-        assert(res.error.code === "OUTPUT_PARSING");
-        expect(res.error.cause).toHaveProperty(["formattedError"]);
-        expect(res.error.cause.formattedError).toHaveProperty(["name"]);
-        expect(res.error.cause).toHaveProperty(["flattenedError"]);
+    test("should transform input error from parent", async () => {
+      const parent = createSafeFn()
+        .input(z.object({ name: z.string() }))
+        .handler((args) => ok(args));
+      const child = createSafeFn()
+        .use(parent)
+        .input(z.object({ age: z.number() }))
+        .handler((args) => ok(args))
+        .createAction();
 
-        const child2 = SafeFnBuilder.new(parent)
-          .output(z.object({ age: z.number() }))
-          .handler(() => {
-            return ok({ age: 100 });
-          });
+      // @ts-expect-error
+      const res = await child({});
+      expect(res.ok).toBe(false);
+      assert(!res.ok);
+      expect(res.error.code).toBe("INPUT_PARSING");
+      assert(res.error.code === "INPUT_PARSING");
+      expect(res.error.cause).toHaveProperty(["formattedError"]);
+      expect(res.error.cause.formattedError).toHaveProperty(["name"]);
+      expect(res.error.cause).toHaveProperty(["flattenedError"]);
+    });
+  });
 
-        const child3 = SafeFnBuilder.new(child2)
-          .handler(() => ok({}))
-          .createAction();
+  describe("output", () => {
+    test("should transform output error", async () => {
+      const action = createSafeFn()
+        .output(z.object({ name: z.string() }))
+        // @ts-expect-error - passing wrong input on purpose
+        .handler((args) => {
+          return ok({});
+        })
+        .createAction();
 
-        const res2 = await child3();
-        expect(res2.ok).toBe(false);
-        assert(!res2.ok);
-        expect(res2.error.code).toBe("OUTPUT_PARSING");
-        assert(res2.error.code === "OUTPUT_PARSING");
-        expect(res2.error.cause).toHaveProperty(["formattedError"]);
-        expect(res2.error.cause.formattedError).toHaveProperty(["name"]);
-        expect(res2.error.cause).toHaveProperty(["flattenedError"]);
-      });
+      const res = await action();
+      expect(res.ok).toBe(false);
+      assert(!res.ok);
+      expect(res.error.code).toBe("OUTPUT_PARSING");
+      assert(res.error.code === "OUTPUT_PARSING");
+      expect(res.error.cause).toHaveProperty(["formattedError"]);
+      expect(res.error.cause.formattedError).toHaveProperty(["name"]);
+      expect(res.error.cause).toHaveProperty(["flattenedError"]);
+    });
+
+    test("should transform output error from parent", async () => {
+      const parent = createSafeFn()
+        .output(z.object({ name: z.string() }))
+        //@ts-expect-error - passing wrong input on purpose
+        .handler((args) => {
+          return ok({});
+        });
+      const child = createSafeFn()
+        .use(parent)
+        .handler((args) => ok(args))
+        .createAction();
+
+      const res = await child();
+
+      expect(res.ok).toBe(false);
+      assert(!res.ok);
+
+      expect(res.error.code).toBe("OUTPUT_PARSING");
+      assert(res.error.code === "OUTPUT_PARSING");
+      expect(res.error.cause).toHaveProperty(["formattedError"]);
+      expect(res.error.cause.formattedError).toHaveProperty(["name"]);
+      expect(res.error.cause).toHaveProperty(["flattenedError"]);
+
+      const child2 = createSafeFn()
+        .use(parent)
+        .output(z.object({ age: z.number() }))
+        .handler(() => {
+          return ok({ age: 100 });
+        });
+
+      const child3 = createSafeFn()
+        .use(child2)
+        .handler(() => ok({}))
+        .createAction();
+
+      const res2 = await child3();
+      expect(res2.ok).toBe(false);
+      assert(!res2.ok);
+      expect(res2.error.code).toBe("OUTPUT_PARSING");
+      assert(res2.error.code === "OUTPUT_PARSING");
+      expect(res2.error.cause).toHaveProperty(["formattedError"]);
+      expect(res2.error.cause.formattedError).toHaveProperty(["name"]);
+      expect(res2.error.cause).toHaveProperty(["flattenedError"]);
     });
   });
 });

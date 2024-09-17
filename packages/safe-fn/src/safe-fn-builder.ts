@@ -22,6 +22,9 @@ import type {
 
 import type { TMaybePromise, TPrettify, TUnionIfNotT } from "./types/util";
 
+export const createSafeFn = () => {
+  return SafeFnBuilder.new();
+};
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends TSafeFnInput,
@@ -55,16 +58,9 @@ export class SafeFnBuilder<
 ||                            ||
 ################################
 */
-  static new<TNewParent extends AnyRunnableSafeFn | undefined = undefined>(
-    parent?: TNewParent,
-  ): SafeFnBuilder<
-    TNewParent,
-    undefined,
-    undefined,
-    InferUnparsedInput<TNewParent>
-  > {
+  static new(): SafeFnBuilder<undefined, undefined, undefined, never> {
     return new SafeFnBuilder({
-      parent,
+      parent: undefined,
       inputSchema: undefined,
       outputSchema: undefined,
       handler: (() =>
@@ -80,6 +76,20 @@ export class SafeFnBuilder<
             "An uncaught error occurred. You can implement a custom error handler by using `catch()`",
         } as const);
       }) satisfies TSafeFnDefaultCatchHandler,
+    }) as any;
+  }
+
+  use<TNewParent extends AnyRunnableSafeFn>(
+    parent: TNewParent,
+  ): SafeFnBuilder<
+    TNewParent,
+    TInputSchema,
+    TOutputSchema,
+    InferUnparsedInput<TNewParent>
+  > {
+    return new SafeFnBuilder({
+      ...this._internals,
+      parent: parent as any,
     }) as any;
   }
 
