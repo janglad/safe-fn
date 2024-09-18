@@ -8,8 +8,7 @@ title: Instantiate
 You can create a SafeFn by using the `.new()` method. Here you can optionally pass in a parent handler (see chaining)
 
 ```ts
-import { parentFunction } from "./some-file";
+import { createSafeFn } from "safe-fn";
 
-const myySafeFunction = SafeFn.new();
-const mySafeFunction2 = SafeFn.new(parentFunction);
+const myySafeFunction = createSafeFn();
 ```

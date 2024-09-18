@@ -2,6 +2,7 @@
   "title": "Creating a SafeFn",
   "pages": [
     "instantiate",
+    "chaining",
     "input-output",
     "handler",
     "uncaught-errors",

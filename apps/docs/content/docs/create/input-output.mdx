@@ -21,7 +21,7 @@ const mySafeFunction = SafeFn.new()
   });
 ```
 
-When parsing is not succesful, your handler function is not called and the error is returned. As such, the following types are added to the return type of the function:
+When parsing is not successful, your handler function is not called and the error is returned. As such, the following types are added to the return type of the function:
 
 - when using `run()`
 
@@ -41,7 +41,7 @@ ResultAsync<{
 - when using `createAction()()` (full errors are stripped here as classes can not be sent via a Server Action and stack traces should not be shipped to the client)
 
 ```ts
-ActionResul<
+ActionResult<
   never,
   {
     code: "INPUT_PARSING";
