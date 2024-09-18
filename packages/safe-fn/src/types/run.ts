@@ -163,31 +163,20 @@ export type BuildMergedHandlersErrs<T extends AnyRunnableSafeFn> = Err<
   | InferErrError<InferMergedHandlersErr<T["_internals"]["parent"]>>
 >;
 
-export type InferMergedHandlersErr<T> = T extends
-  | RunnableSafeFn<
-      any,
-      infer TParentMergedHandlerErrs,
-      any,
-      any,
-      any,
-      any,
-      any,
-      any,
-      any
-    >
-  | RunnableSafeFn<
-      any,
-      infer TParentMergedHandlerErrs,
-      any,
-      any,
-      any,
-      any,
-      never,
-      any,
-      any
-    >
-  ? TParentMergedHandlerErrs
-  : never;
+type InferMergedHandlersErr<T> =
+  T extends RunnableSafeFn<
+    any,
+    infer TParentMergedHandlerErrs,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TParentMergedHandlerErrs
+    : never;
 
 type TOutputSchemaError<
   TOutputSchema extends TSafeFnOutput,

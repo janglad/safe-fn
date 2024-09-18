@@ -12,6 +12,7 @@ import type {
 } from "./schema";
 import type {
   FirstTupleElOrUndefined,
+  TIsAny,
   TMaybePromise,
   TOrFallback,
   TPrettify,
@@ -110,11 +111,6 @@ type TSafeFnAsyncGeneratorHandlerFn<
   Result<TSchemaInputOrFallback<TOutputSchema, any>, any>
 >;
 
-interface TCtx<in out TParent extends AnyRunnableSafeFn | undefined> {
-  value: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
-  input: TCtxInput<TParent>;
-}
-
 export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
   TIsAny<TParent> extends true
     ? any
@@ -125,5 +121,3 @@ export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
           TSchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
         ]
       : [];
-
-export type TIsAny<T> = 0 extends 1 & T ? true : false;
