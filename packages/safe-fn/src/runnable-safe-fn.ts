@@ -59,12 +59,14 @@ export type AnyRunnableSafeFn = TRunnableSafeFn<
   any,
   any,
   any,
+  any,
   "run"
 >;
 
 type InferRunnableSafeFn<T> =
   T extends TRunnableSafeFn<
     infer TParent,
+    infer TCtx,
     infer TCtxInput,
     infer TParentMergedHandlerErrs,
     infer TInputSchema,
@@ -78,6 +80,7 @@ type InferRunnableSafeFn<T> =
   >
     ? RunnableSafeFn<
         TParent,
+        TCtx,
         TCtxInput,
         TParentMergedHandlerErrs,
         TInputSchema,
@@ -102,6 +105,7 @@ export type TRunnableSafeFnPickArgs =
 
 export type TRunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
   TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
@@ -117,6 +121,7 @@ export type TRunnableSafeFn<
 > = Pick<
   RunnableSafeFn<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -133,6 +138,7 @@ export type TRunnableSafeFn<
 
 export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
   TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
@@ -221,6 +227,7 @@ export class RunnableSafeFn<
     handler: (error: unknown) => TNewThrownHandlerRes,
   ): TRunnableSafeFn<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -245,6 +252,7 @@ export class RunnableSafeFn<
     onStartFn: TSafeFnOnStart<TUnparsedInput>,
   ): TRunnableSafeFn<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -272,6 +280,7 @@ export class RunnableSafeFn<
     >,
   ): TRunnableSafeFn<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -303,6 +312,7 @@ export class RunnableSafeFn<
     >,
   ): TRunnableSafeFn<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -334,6 +344,7 @@ export class RunnableSafeFn<
     >,
   ): TRunnableSafeFn<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,

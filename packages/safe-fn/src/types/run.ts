@@ -50,6 +50,7 @@ export type InferSafeFnArgs<T> =
     any,
     any,
     any,
+    any,
     infer TUnparsedInput,
     any,
     any,
@@ -65,6 +66,7 @@ export type InferSafeFnArgs<T> =
  */
 export type InferSafeFnReturn<T, TAsAction extends boolean> =
   T extends TRunnableSafeFn<
+    any,
     any,
     any,
     infer TParentMergedHandlerErrs,
@@ -92,6 +94,7 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
 export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
   T extends TRunnableSafeFn<
     infer TParent,
+    infer TCtx,
     infer TCtxInput,
     infer TParentMergedHandlerErrs,
     infer TInputSchema,
@@ -205,6 +208,7 @@ export type TBuildMergedHandlersErrs<T extends AnyRunnableSafeFn> = Err<
 export type Thing<T> =
   T extends TRunnableSafeFn<
     infer TParent,
+    infer TCtx,
     infer TCtxInput,
     infer TParentMergedHandlerErrs,
     infer TInputSchema,
@@ -224,6 +228,7 @@ export type Thing<T> =
 
 type TInferMergedHandlersErr<T> =
   T extends TRunnableSafeFn<
+    any,
     any,
     infer TCtxInput,
     infer TParentMergedHandlerErrs,

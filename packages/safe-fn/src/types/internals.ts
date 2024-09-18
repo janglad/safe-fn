@@ -42,6 +42,7 @@ export type TInferSafeFnParent<T> =
     any,
     any,
     any,
+    any,
     any
   >
     ? TParent

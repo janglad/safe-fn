@@ -31,7 +31,7 @@ import type {
   TSchemaOutputOrFallback,
 } from "./types/schema";
 
-import type { TBuildMergedHandlersErrs } from "./types/run";
+import type { InferSafeFnOkData, TBuildMergedHandlersErrs } from "./types/run";
 import type {
   AnyObject,
   TIntersectIfNotT,
@@ -46,6 +46,7 @@ export const createSafeFn = () => {
 
 type TSafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
   TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
@@ -57,6 +58,7 @@ type TSafeFnBuilder<
 > = Omit<
   SafeFnBuilder<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -71,6 +73,7 @@ type TSafeFnBuilder<
 
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
   TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
@@ -113,6 +116,7 @@ export class SafeFnBuilder<
 */
   static new(): TSafeFnBuilder<
     undefined,
+    undefined,
     [],
     Result<never, never>,
     undefined,
@@ -146,6 +150,7 @@ export class SafeFnBuilder<
     parent: TNewParent,
   ): TSafeFnBuilder<
     TNewParent,
+    InferSafeFnOkData<TNewParent, boolean>,
     [
       ...TInferCtxInput<TNewParent>,
       TSchemaOutputOrFallback<InferInputSchema<TNewParent>, undefined>,
@@ -168,6 +173,7 @@ export class SafeFnBuilder<
     schema: TNewInputSchema,
   ): TSafeFnBuilder<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TNewInputSchema,
@@ -194,6 +200,7 @@ export class SafeFnBuilder<
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
   unparsedInput<TNewUnparsedInput>(): TSafeFnBuilder<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -209,6 +216,7 @@ export class SafeFnBuilder<
   > {
     return this as unknown as SafeFnBuilder<
       TParent,
+      TCtx,
       TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
@@ -228,6 +236,7 @@ export class SafeFnBuilder<
     schema: TNewOutputSchema,
   ): TSafeFnBuilder<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -251,6 +260,7 @@ export class SafeFnBuilder<
     ) => TMaybePromise<TNewHandlerResult>,
   ): TRunnableSafeFn<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -290,6 +300,7 @@ export class SafeFnBuilder<
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): TRunnableSafeFn<
     TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
