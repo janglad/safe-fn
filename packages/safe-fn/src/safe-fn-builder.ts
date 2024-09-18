@@ -45,15 +45,15 @@ export const createSafeFn = () => {
 };
 
 type TSafeFnBuilder<
-  TCtx,
-  TCtxInput extends unknown[],
-  TParentMergedHandlerErrs extends Result<never, unknown>,
-  TInputSchema extends TSafeFnInput,
-  TMergedInputSchemaInput extends AnyObject | undefined,
-  TOutputSchema extends TSafeFnInput,
-  TMergedParentOutputSchemaInput extends AnyObject | undefined,
-  TUnparsedInput extends TSafeFnUnparsedInput,
-  TOmitArgs extends string | number | symbol,
+  in out TCtx,
+  in out TCtxInput extends unknown[],
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
+  in out TInputSchema extends TSafeFnInput,
+  in out TMergedInputSchemaInput extends AnyObject | undefined,
+  in out TOutputSchema extends TSafeFnInput,
+  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
+  in out TUnparsedInput extends TSafeFnUnparsedInput,
+  in out TOmitArgs extends string | number | symbol,
 > = Omit<
   SafeFnBuilder<
     TCtx,
@@ -70,15 +70,15 @@ type TSafeFnBuilder<
 >;
 
 export class SafeFnBuilder<
-  TCtx,
-  TCtxInput extends unknown[],
-  TParentMergedHandlerErrs extends Result<never, unknown>,
-  TInputSchema extends TSafeFnInput,
-  TMergedInputSchemaInput extends AnyObject | undefined,
-  TOutputSchema extends TSafeFnInput,
-  TMergedParentOutputSchemaInput extends AnyObject | undefined,
-  TUnparsedInput extends TSafeFnUnparsedInput,
-  TOmitArgs extends string | number | symbol,
+  in out TCtx,
+  in out TCtxInput extends unknown[],
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
+  in out TInputSchema extends TSafeFnInput,
+  in out TMergedInputSchemaInput extends AnyObject | undefined,
+  in out TOutputSchema extends TSafeFnInput,
+  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
+  in out TUnparsedInput extends TSafeFnUnparsedInput,
+  in out TOmitArgs extends string | number | symbol,
 > {
   readonly _internals: TSafeFnInternals<
     TCtx,
