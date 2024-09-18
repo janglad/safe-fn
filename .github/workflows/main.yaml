@@ -20,9 +20,9 @@ jobs:
           node-version: 20.x
           cache: "pnpm"
       - name: "Install dependencies"
-        run: pnpm install --frozen-lockfile
-      - name: "Build"
-        run: pnpm build
+        run: pnpm install --filter "\!./apps/**" --frozen-lockfile
+      - name: "Build packages"
+        run: pnpm build-packages
       - name: "Run type-check"
         run: pnpm check-types
       - name: "Run lint"
