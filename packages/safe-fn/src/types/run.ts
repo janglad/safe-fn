@@ -16,16 +16,11 @@ import type { TAnySafeFnHandlerRes, TCtxInput } from "../types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
+  TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
 } from "../types/schema";
-import type {
-  AnyObject,
-  TODO,
-  TPrettify,
-  TToTuple,
-  TUnionIfNotT,
-} from "../types/util";
+import type { AnyObject, TODO, TPrettify, TUnionIfNotT } from "../types/util";
 
 /*
 ################################
@@ -255,7 +250,7 @@ type TInputSchemaError<
  * Note this is an array and can be spread into the args.
  */
 
-export type TSafeFnRunArgs<TUnparsedInput> = TToTuple<TUnparsedInput>;
+export type TSafeFnRunArgs<T extends TSafeFnUnparsedInput> = T;
 
 /**
  * @param TParent the parent safe function or undefined

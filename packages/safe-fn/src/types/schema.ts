@@ -32,7 +32,7 @@ export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
  * @param T the runnable safe function
  * @returns the unparsed input of the safe function
  */
-export type InferUnparsedInput<T> =
+export type InferUnparsedInputTuple<T> =
   T extends RunnableSafeFn<
     any,
     any,
@@ -118,6 +118,8 @@ export type TSafeFnInput = z.ZodTypeAny | undefined;
  * A Zod schema that is used to parse the output of the `handler()` and return the final value on `run()`, or undefined.
  */
 export type TSafeFnOutput = z.ZodTypeAny | undefined;
+
+export type TSafeFnUnparsedInput = [unknown] | [];
 
 /**
  * @param TSchema a Zod schema or undefined

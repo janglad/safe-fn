@@ -22,7 +22,11 @@ import type {
   TSafeFnReturnData,
   TSafeFnRunArgs,
 } from "./types/run";
-import type { TSafeFnInput, TSchemaOutputOrFallback } from "./types/schema";
+import type {
+  TSafeFnInput,
+  TSafeFnUnparsedInput,
+  TSchemaOutputOrFallback,
+} from "./types/schema";
 
 import type {
   TSafeFnAction,
@@ -46,9 +50,17 @@ import {
   throwFrameworkErrorOrVoid,
 } from "./util";
 
-export type AnyRunnableSafeFn =
-  | RunnableSafeFn<any, any, any, any, any, any, any, any, any>
-  | RunnableSafeFn<any, any, any, any, any, any, never, any, any>;
+export type AnyRunnableSafeFn = RunnableSafeFn<
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+>;
 
 export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
@@ -57,7 +69,7 @@ export class RunnableSafeFn<
   TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
   TMergedParentOutputSchemaInput extends AnyObject | undefined,
-  TUnparsedInput,
+  TUnparsedInput extends TSafeFnUnparsedInput,
   THandlerRes extends TSafeFnHandlerReturn<TOutputSchema>,
   TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > {
@@ -334,7 +346,7 @@ export class RunnableSafeFn<
             _callBacks.onStart,
             throwFrameworkErrorOrVoid,
           )({
-            unsafeRawInput: args as TUnparsedInput,
+            unsafeRawInput: args as TODO,
           });
 
     type InternalOk = TSafeFnInternalRunReturnData<

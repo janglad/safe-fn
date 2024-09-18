@@ -3,7 +3,11 @@ import { z } from "zod";
 import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
 import type { TSafeFnCallBacks } from "./types/callbacks";
 import type { TAnySafeFnHandlerRes } from "./types/handler";
-import type { TSafeFnInput, TSafeFnOutput } from "./types/schema";
+import type {
+  TSafeFnInput,
+  TSafeFnOutput,
+  TSafeFnUnparsedInput,
+} from "./types/schema";
 
 import type {
   TAnySafeFnCatchHandlerRes,
@@ -39,7 +43,7 @@ export const runCallbacks = <
   TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnOutput,
   TMergedParentOutputSchemaInput extends AnyObject | undefined,
-  TUnparsedInput,
+  TUnparsedInput extends TSafeFnUnparsedInput,
   THandlerRes extends TAnySafeFnHandlerRes,
   TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
   TAsAction extends boolean,

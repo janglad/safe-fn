@@ -7,7 +7,7 @@ import type {
 import type { TSafeFnReturn, TSafeFnRunArgs } from "../types/run";
 import type { TAnySafeFnCatchHandlerRes } from "./error";
 import type { TAnySafeFnHandlerRes } from "./handler";
-import type { TSafeFnOutput } from "./schema";
+import type { TSafeFnOutput, TSafeFnUnparsedInput } from "./schema";
 import type { AnyObject } from "./util";
 
 /*
@@ -61,7 +61,8 @@ export type TAnySafeFnAction = TSafeFnAction<any, any, any, any, any, any, any>;
  * @param TParent the parent safe function or undefined
  * @returns the input necessary to run the action created through `createAction()`.
  */
-export type TSafeFnActionArgs<TUnparsedInput> = TSafeFnRunArgs<TUnparsedInput>;
+export type TSafeFnActionArgs<T extends TSafeFnUnparsedInput> =
+  TSafeFnRunArgs<T>;
 
 export type TSafeFnActionReturn<
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -88,7 +89,7 @@ export type TSafeFnAction<
   in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
   in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
-  in out TUnparsedInput,
+  in out TUnparsedInput extends TSafeFnUnparsedInput,
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > = (

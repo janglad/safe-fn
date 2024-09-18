@@ -35,7 +35,7 @@ type SchemaTransformedInput = z.input<typeof schemaTransformed>;
 type SchemaTransformedOutput = z.output<typeof schemaTransformed>;
 
 describe("SafeFnBuilder", () => {
-  describe("action", () => {
+  describe("handler", () => {
     const safeFnPrimitiveInput = createSafeFn().input(schemaPrimitive);
     const safeFnObjectInput = createSafeFn().input(schemaObject);
     const safeFnTransformedInput = createSafeFn().input(schemaTransformed);
@@ -117,21 +117,21 @@ describe("SafeFnBuilder", () => {
         });
       });
 
-      test("should type parsedInput as undefined, unparsed input as never when no input schema is provided", () => {
+      test("should type parsedInput as undefined and unparsedInput as undefined  when no input schema is provided", () => {
         safeFnNoInput.handler((input) => {
-          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<never>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<undefined>();
           expectTypeOf(input.input).toEqualTypeOf<undefined>();
           return ok(input);
         });
 
         safeFnNoInput.handler(async (input) => {
-          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<never>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<undefined>();
           expectTypeOf(input.input).toEqualTypeOf<undefined>();
           return ok(input);
         });
 
         safeFnNoInput.safeHandler(async function* (input) {
-          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<never>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<undefined>();
           expectTypeOf(input.input).toEqualTypeOf<undefined>();
           return ok(input);
         });
@@ -306,11 +306,11 @@ describe("SafeFnBuilder", () => {
         });
       });
 
-      test("should type unparsedInput as never and parsedInput as undefined when no input schema is provided", () => {
+      test("should type unparsedInput as undefined and parsedInput as undefined when no input schema is provided", () => {
         const parent = createSafeFn().handler(() => ok(""));
         const child = createSafeFn().use(parent);
 
-        type ExpectedUnparsedInput = never;
+        type ExpectedUnparsedInput = undefined;
         type ExpectedParsedInput = undefined;
 
         child.handler((input) => {
@@ -1396,7 +1396,11 @@ describe("runnableSafeFn", () => {
 });
 
 const test1 = createSafeFn()
-  .input(z.object({}))
+  .input(
+    z.object({
+      test: z.string(),
+    }),
+  )
   .output(
     z.object({
       one: z.string(),
@@ -1407,6 +1411,11 @@ const test1 = createSafeFn()
       one: "1",
     }),
   );
+
+const schema = z.object({
+  test: z.string(),
+});
+
 const test2 = createSafeFn()
   .use(test1)
   .input(z.object({}))

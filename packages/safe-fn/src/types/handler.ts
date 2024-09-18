@@ -4,18 +4,17 @@ import type { TInferSafeFnParent } from "./internals";
 import type { InferSafeFnOkData } from "./run";
 import type {
   InferInputSchema,
-  InferUnparsedInput,
   TSafeFnInput,
   TSafeFnOutput,
+  TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
 } from "./schema";
 import type {
-  TIsUnknown,
+  FirstTupleElOrUndefined,
   TMaybePromise,
   TOrFallback,
   TPrettify,
-  TUnionIfNotT,
 } from "./util";
 
 /*
@@ -49,7 +48,7 @@ export type TSafeFnDefaultHandlerFn = () => Result<
  */
 export interface TSafeFnHandlerArgs<
   in out TInputSchema extends TSafeFnInput,
-  in out TUnparsedInput,
+  in out TUnparsedInput extends TSafeFnUnparsedInput,
   in out TParent extends AnyRunnableSafeFn | undefined,
 > {
   input: TPrettify<TSchemaOutputOrFallback<TInputSchema, undefined>>;
@@ -59,16 +58,7 @@ export interface TSafeFnHandlerArgs<
    *
    *  **WARNING**: this can have excess values that are not in the type when you use this SafeFn as a parent for another SafeFn.
    */
-  unsafeRawInput: TUnionIfNotT<
-    TUnparsedInput,
-    InferUnparsedInput<TParent>,
-    never
-  > extends infer Merged
-    ? TIsUnknown<Merged> extends true
-      ? unknown
-      : TPrettify<Merged>
-    : never;
-
+  unsafeRawInput: TPrettify<FirstTupleElOrUndefined<TUnparsedInput>>;
   ctx: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
   ctxInput: TCtxInput<TParent>;
 }
@@ -94,7 +84,7 @@ export type TSafeFnHandlerReturn<TOutputSchema extends TSafeFnOutput> = Result<
 type TSafeFnRegularHandlerFn<
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnOutput,
-  in out TUnparsedInput,
+  in out TUnparsedInput extends TSafeFnUnparsedInput,
   in out TParent extends AnyRunnableSafeFn | undefined,
 > = (
   args: TPrettify<TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
@@ -111,7 +101,7 @@ type TSafeFnRegularHandlerFn<
 type TSafeFnAsyncGeneratorHandlerFn<
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnOutput,
-  in out TUnparsedInput,
+  in out TUnparsedInput extends TSafeFnUnparsedInput,
   in out TParent extends AnyRunnableSafeFn | undefined,
 > = (
   args: TPrettify<TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,

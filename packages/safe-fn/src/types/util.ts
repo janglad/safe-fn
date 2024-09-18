@@ -1,3 +1,5 @@
+import type { TSafeFnUnparsedInput } from "./schema";
+
 /*
 ################################
 ||                            ||
@@ -38,3 +40,6 @@ export type TToTuple<T> = [T] extends [never] ? [] : [T];
 
 export type TIsNever<T> = [T] extends [never] ? true : false;
 export type AnyObject = Record<PropertyKey, unknown>;
+
+export type FirstTupleElOrUndefined<T extends TSafeFnUnparsedInput> =
+  T extends [] ? undefined : T[0];

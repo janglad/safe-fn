@@ -17,8 +17,9 @@ import type { TSafeFnInternals } from "./types/internals";
 import type {
   InferMergedInputSchemaInput,
   InferMergedParentOutputSchemaInput,
-  InferUnparsedInput,
+  InferUnparsedInputTuple,
   TSafeFnInput,
+  TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
 } from "./types/schema";
 
@@ -41,7 +42,7 @@ export class SafeFnBuilder<
   TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
   TMergedParentOutputSchemaInput extends AnyObject | undefined,
-  TUnparsedInput,
+  TUnparsedInput extends TSafeFnUnparsedInput,
 > {
   readonly _internals: TSafeFnInternals<
     TParent,
@@ -79,7 +80,7 @@ export class SafeFnBuilder<
     undefined,
     undefined,
     undefined,
-    never
+    []
   > {
     return new SafeFnBuilder({
       parent: undefined,
@@ -110,7 +111,7 @@ export class SafeFnBuilder<
     InferMergedInputSchemaInput<TNewParent>,
     TOutputSchema,
     InferMergedParentOutputSchemaInput<TNewParent>,
-    InferUnparsedInput<TNewParent>
+    InferUnparsedInputTuple<TNewParent>
   > {
     return new SafeFnBuilder({
       ...(this._internals as TODO),
@@ -132,7 +133,11 @@ export class SafeFnBuilder<
       >,
       TOutputSchema,
       TMergedParentOutputSchemaInput,
-      TUnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>
+      [
+        TUnparsedInput extends []
+          ? z.input<TNewInputSchema>
+          : TUnparsedInput[0] & z.input<TNewInputSchema>,
+      ]
     >,
     "input" | "unparsedInput"
   > {
@@ -151,7 +156,11 @@ export class SafeFnBuilder<
       TMergedInputSchemaInput,
       TOutputSchema,
       TMergedParentOutputSchemaInput,
-      TUnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
+      [
+        TUnparsedInput extends []
+          ? TNewUnparsedInput
+          : TUnparsedInput[0] & TNewUnparsedInput,
+      ]
     >,
     "input" | "unparsedInput"
   > {
@@ -162,7 +171,11 @@ export class SafeFnBuilder<
       TMergedInputSchemaInput,
       TOutputSchema,
       TMergedParentOutputSchemaInput,
-      TUnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
+      [
+        TUnparsedInput extends []
+          ? TNewUnparsedInput
+          : TUnparsedInput[0] & TNewUnparsedInput,
+      ]
     >;
   }
 
