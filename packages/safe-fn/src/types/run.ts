@@ -1,4 +1,4 @@
-import { type Result, type ResultAsync } from "neverthrow";
+import { Err, type Result, type ResultAsync } from "neverthrow";
 import type { z } from "zod";
 import type {
   InferActionErrError,
@@ -59,6 +59,7 @@ export type InferSafeFnReturn<
 export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
   T extends RunnableSafeFn<
     infer TParent,
+    infer TParentMergedHandlerErrs,
     infer TInputSchema,
     infer TMergedInputSchemaInput,
     infer TOutputSchema,
@@ -69,6 +70,7 @@ export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
   >
     ? TSafeFnInternalRunReturnData<
         TParent,
+        TParentMergedHandlerErrs,
         TInputSchema,
         TMergedInputSchemaInput,
         TOutputSchema,
@@ -140,7 +142,7 @@ export type TSafeFnReturnData<
  * - A `SafeFnOutputParseError` if the output schema is defined and the output could not be parsed
  */
 export type TSafeFnReturnError<
-  TParent extends AnyRunnableSafeFn | undefined,
+  TParentMergedHandlerErrs extends Result<never, unknown>,
   TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnOutput,
   TMergedParentOutputSchemaInput extends AnyObject | undefined,
@@ -157,37 +159,40 @@ export type TSafeFnReturnError<
       THandlerRes,
       TAsAction
     >
-  | ParentHandlerCatchErrs<TParent>;
+  | InferErrError<TParentMergedHandlerErrs>;
 
-type ParentHandlerCatchErrs<TParent extends AnyRunnableSafeFn | undefined> =
-  TParent extends
-    | RunnableSafeFn<
-        infer TParentParent,
-        any,
-        any,
-        any,
-        any,
-        any,
-        infer THandlerRes,
-        infer TThrownHandlerRes
-      >
-    | RunnableSafeFn<
-        infer TParentParent,
-        any,
-        any,
-        any,
-        any,
-        never,
-        infer THandlerRes,
-        infer TThrownHandlerRes
-      >
-    ?
-        | InferErrError<THandlerRes>
-        | InferErrError<TThrownHandlerRes>
-        | (TParentParent extends AnyRunnableSafeFn
-            ? ParentHandlerCatchErrs<TParentParent>
-            : never)
-    : never;
+export type BuildMergedHandlersErrs<T extends AnyRunnableSafeFn> = Err<
+  never,
+  | InferErrError<Awaited<ReturnType<T["_internals"]["handler"]>>>
+  | InferErrError<Awaited<ReturnType<T["_internals"]["uncaughtErrorHandler"]>>>
+  | InferErrError<InferMergedHandlersErr<T["_internals"]["parent"]>>
+>;
+
+export type InferMergedHandlersErr<T> = T extends
+  | RunnableSafeFn<
+      any,
+      infer TParentMergedHandlerErrs,
+      any,
+      any,
+      any,
+      any,
+      any,
+      any,
+      any
+    >
+  | RunnableSafeFn<
+      any,
+      infer TParentMergedHandlerErrs,
+      any,
+      any,
+      any,
+      any,
+      never,
+      any,
+      any
+    >
+  ? TParentMergedHandlerErrs
+  : never;
 
 type TOutputSchemaError<
   TOutputSchema extends TSafeFnOutput,
@@ -263,7 +268,7 @@ export type TSafeFnRunArgs<TUnparsedInput> = TToTuple<TUnparsedInput>;
  *
  */
 export type TSafeFnReturn<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
   in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
@@ -273,7 +278,7 @@ export type TSafeFnReturn<
 > = ResultAsync<
   TSafeFnReturnData<TOutputSchema, THandlerRes>,
   TSafeFnReturnError<
-    TParent,
+    TParentMergedHandlerErrs,
     TMergedInputSchemaInput,
     TOutputSchema,
     TMergedParentOutputSchemaInput,
@@ -285,6 +290,7 @@ export type TSafeFnReturn<
 
 export type TSafeFnInternalRunReturn<
   TParent extends AnyRunnableSafeFn | undefined,
+  TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnOutput,
@@ -296,6 +302,7 @@ export type TSafeFnInternalRunReturn<
 > = ResultAsync<
   TSafeFnInternalRunReturnData<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
@@ -307,6 +314,7 @@ export type TSafeFnInternalRunReturn<
   >,
   TSafeFnInternalRunReturnError<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
@@ -320,6 +328,7 @@ export type TSafeFnInternalRunReturn<
 
 export interface TSafeFnInternalRunReturnData<
   in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
@@ -331,7 +340,7 @@ export interface TSafeFnInternalRunReturnData<
 > {
   value: InferAsyncOkData<
     TSafeFnReturn<
-      TParent,
+      TParentMergedHandlerErrs,
       TMergedInputSchemaInput,
       TOutputSchema,
       TMergedParentOutputSchemaInput,
@@ -351,6 +360,7 @@ export interface TSafeFnInternalRunReturnData<
 
 export interface TSafeFnInternalRunReturnError<
   in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
@@ -362,7 +372,7 @@ export interface TSafeFnInternalRunReturnError<
 > {
   public: InferAsyncErrError<
     TSafeFnReturn<
-      TParent,
+      TParentMergedHandlerErrs,
       TMergedInputSchemaInput,
       TOutputSchema,
       TMergedParentOutputSchemaInput,

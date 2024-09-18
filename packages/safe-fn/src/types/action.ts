@@ -1,9 +1,9 @@
+import type { Result } from "neverthrow";
 import type {
   InferActionErrError,
   InferActionOkData,
   ResultAsyncToActionResult,
 } from "../result";
-import type { AnyRunnableSafeFn } from "../runnable-safe-fn";
 import type { TSafeFnReturn, TSafeFnRunArgs } from "../types/run";
 import type { TAnySafeFnCatchHandlerRes } from "./error";
 import type { TAnySafeFnHandlerRes } from "./handler";
@@ -64,7 +64,7 @@ export type TAnySafeFnAction = TSafeFnAction<any, any, any, any, any, any, any>;
 export type TSafeFnActionArgs<TUnparsedInput> = TSafeFnRunArgs<TUnparsedInput>;
 
 export type TSafeFnActionReturn<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
   in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
@@ -73,7 +73,7 @@ export type TSafeFnActionReturn<
 > = Promise<
   ResultAsyncToActionResult<
     TSafeFnReturn<
-      TParent,
+      TParentMergedHandlerErrs,
       TMergedInputSchemaInput,
       TOutputSchema,
       TMergedParentOutputSchemaInput,
@@ -84,7 +84,7 @@ export type TSafeFnActionReturn<
   >
 >;
 export type TSafeFnAction<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
   in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
@@ -94,7 +94,7 @@ export type TSafeFnAction<
 > = (
   ...args: TSafeFnActionArgs<TUnparsedInput>
 ) => TSafeFnActionReturn<
-  TParent,
+  TParentMergedHandlerErrs,
   TMergedInputSchemaInput,
   TOutputSchema,
   TMergedParentOutputSchemaInput,

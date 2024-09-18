@@ -1,4 +1,4 @@
-import { ResultAsync, err, ok } from "neverthrow";
+import { Result, ResultAsync, err, ok } from "neverthrow";
 import { z } from "zod";
 import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
 import type { TSafeFnCallBacks } from "./types/callbacks";
@@ -34,6 +34,7 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 
 export const runCallbacks = <
   TParent extends AnyRunnableSafeFn | undefined,
+  TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnOutput,
@@ -44,6 +45,7 @@ export const runCallbacks = <
   TAsAction extends boolean,
   TRes extends TSafeFnInternalRunReturn<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
@@ -54,6 +56,7 @@ export const runCallbacks = <
     NoInfer<TAsAction>
   > = TSafeFnInternalRunReturn<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
@@ -68,6 +71,7 @@ export const runCallbacks = <
   asAction: TAsAction;
   callbacks: TSafeFnCallBacks<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,

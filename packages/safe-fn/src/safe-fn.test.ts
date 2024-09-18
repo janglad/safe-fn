@@ -57,7 +57,7 @@ describe("safe-fn-builder", () => {
       const builder = createSafeFn();
       const res = builder._internals.handler(undefined as TODO);
       expect(res).toBeErr();
-      // @ts-expect-error - Return not defined in builder type as .run can not be called anyway
+
       expect(res.error).toMatchObject({
         code: "NO_HANDLER",
       });

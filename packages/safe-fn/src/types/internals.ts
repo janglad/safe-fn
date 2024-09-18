@@ -15,6 +15,7 @@ export interface TSafeFnInternals<
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnInput,
   in out TUnparsedInput,
+  in out THandlerReturn extends TSafeFnHandlerReturn<TOutputSchema>,
   in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > {
   parent: TParent;
@@ -22,7 +23,7 @@ export interface TSafeFnInternals<
   outputSchema: TOutputSchema;
   handler: (
     input: TPrettify<TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
-  ) => TMaybePromise<TSafeFnHandlerReturn<TOutputSchema>>;
+  ) => TMaybePromise<THandlerReturn>;
   uncaughtErrorHandler: (error: unknown) => TThrownHandlerRes;
 }
 

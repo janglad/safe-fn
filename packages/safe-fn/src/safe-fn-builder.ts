@@ -22,6 +22,7 @@ import type {
   TSchemaInputOrFallback,
 } from "./types/schema";
 
+import type { BuildMergedHandlersErrs } from "./types/run";
 import type {
   AnyObject,
   TMaybePromise,
@@ -35,6 +36,7 @@ export const createSafeFn = () => {
 };
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
+  TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
@@ -46,6 +48,7 @@ export class SafeFnBuilder<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
+    any,
     TSafeFnDefaultCatchHandlerErr
   >;
 
@@ -55,6 +58,7 @@ export class SafeFnBuilder<
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
+      any,
       TSafeFnDefaultCatchHandlerErr
     >,
   ) {
@@ -70,6 +74,7 @@ export class SafeFnBuilder<
 */
   static new(): SafeFnBuilder<
     undefined,
+    Result<never, never>,
     undefined,
     undefined,
     undefined,
@@ -100,6 +105,7 @@ export class SafeFnBuilder<
     parent: TNewParent,
   ): SafeFnBuilder<
     TNewParent,
+    BuildMergedHandlersErrs<TNewParent>,
     TInputSchema,
     InferMergedInputSchemaInput<TNewParent>,
     TOutputSchema,
@@ -117,6 +123,7 @@ export class SafeFnBuilder<
   ): Omit<
     SafeFnBuilder<
       TParent,
+      TParentMergedHandlerErrs,
       TNewInputSchema,
       TUnionIfNotT<
         TMergedInputSchemaInput,
@@ -139,6 +146,7 @@ export class SafeFnBuilder<
   unparsedInput<TNewUnparsedInput>(): Omit<
     SafeFnBuilder<
       TParent,
+      TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
       TOutputSchema,
@@ -149,6 +157,7 @@ export class SafeFnBuilder<
   > {
     return this as unknown as SafeFnBuilder<
       TParent,
+      TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
       TOutputSchema,
@@ -162,6 +171,7 @@ export class SafeFnBuilder<
   ): Omit<
     SafeFnBuilder<
       TParent,
+      TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
       TNewOutputSchema,
@@ -184,6 +194,7 @@ export class SafeFnBuilder<
     ) => TMaybePromise<TNewHandlerResult>,
   ): RunnableSafeFn<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
@@ -220,6 +231,7 @@ export class SafeFnBuilder<
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): RunnableSafeFn<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
