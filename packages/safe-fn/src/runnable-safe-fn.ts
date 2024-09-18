@@ -7,11 +7,7 @@ import {
   type InferOkData,
 } from "./result";
 
-import type {
-  TAnySafeFnCatchHandlerRes,
-  TSafeFnInputParseError,
-  TSafeFnOutputParseError,
-} from "./types/error";
+import type { TAnySafeFnCatchHandlerRes } from "./types/error";
 import type { TSafeFnInternals } from "./types/internals";
 import type {
   TInferSafeFnInternalRunReturnData,
@@ -24,6 +20,8 @@ import type {
 } from "./types/run";
 import type {
   TSafeFnInput,
+  TSafeFnInputParseError,
+  TSafeFnOutputParseError,
   TSafeFnUnparsedInput,
   TSchemaOutputOrFallback,
 } from "./types/schema";

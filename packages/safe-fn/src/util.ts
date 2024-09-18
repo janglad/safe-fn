@@ -6,13 +6,11 @@ import type { TAnySafeFnHandlerRes } from "./types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
+  TSafeFnParseError,
   TSafeFnUnparsedInput,
 } from "./types/schema";
 
-import type {
-  TAnySafeFnCatchHandlerRes,
-  TSafeFnParseError,
-} from "./types/error";
+import type { TAnySafeFnCatchHandlerRes } from "./types/error";
 import type { TSafeFnInternalRunReturn } from "./types/run";
 import type { AnyObject, TODO } from "./types/util";
 
