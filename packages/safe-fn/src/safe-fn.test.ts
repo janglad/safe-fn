@@ -44,17 +44,17 @@ describe("safe-fn-builder", () => {
     });
 
     test("should set the input schema as undefined", () => {
-      const builder = createSafeFn();
+      const builder = createSafeFn() as any;
       expect(builder._internals.inputSchema).toBeUndefined();
     });
 
     test("should set the output schema as undefined", () => {
-      const builder = createSafeFn();
+      const builder = createSafeFn() as any;
       expect(builder._internals.outputSchema).toBeUndefined();
     });
 
     test("should set the correct default action", () => {
-      const builder = createSafeFn();
+      const builder = createSafeFn() as any;
       const res = builder._internals.handler(undefined as TODO);
       expect(res).toBeErr();
 
@@ -64,7 +64,7 @@ describe("safe-fn-builder", () => {
     });
 
     test("should set the correct default catch handler", () => {
-      const builder = createSafeFn();
+      const builder = createSafeFn() as any;
       const returnedError = builder._internals.uncaughtErrorHandler(
         undefined as TODO,
       );
@@ -77,14 +77,14 @@ describe("safe-fn-builder", () => {
 
     test("should set the parent safe-fn", () => {
       const parent = createSafeFn().handler(() => ok(""));
-      const child = createSafeFn().use(parent);
+      const child = createSafeFn().use(parent) as any;
       expect(child._internals.parent).toBe(parent);
     });
   });
 
   describe("input", () => {
     test("should set the input schema", () => {
-      const builder = createSafeFn();
+      const builder = createSafeFn() as any;
       const inputSchema = z.string();
       const safeFn = builder.input(inputSchema);
       expect(safeFn._internals.inputSchema).toEqual(inputSchema);
@@ -108,7 +108,7 @@ describe("safe-fn-builder", () => {
 
   describe("output", () => {
     test("should set the output schema", () => {
-      const builder = createSafeFn();
+      const builder = createSafeFn() as any;
       const outputSchema = z.string();
       const safeFn = builder.output(outputSchema);
       expect(safeFn._internals.outputSchema).toEqual(outputSchema);

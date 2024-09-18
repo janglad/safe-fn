@@ -35,6 +35,30 @@ import type {
 export const createSafeFn = () => {
   return SafeFnBuilder.new();
 };
+
+type TSafeFnBuilder<
+  TParent extends AnyRunnableSafeFn | undefined,
+  TParentMergedHandlerErrs extends Result<never, unknown>,
+  TInputSchema extends TSafeFnInput,
+  TMergedInputSchemaInput extends AnyObject | undefined,
+  TOutputSchema extends TSafeFnInput,
+  TMergedParentOutputSchemaInput extends AnyObject | undefined,
+  TUnparsedInput extends TSafeFnUnparsedInput,
+  TOmitArgs extends string | number | symbol,
+> = Omit<
+  SafeFnBuilder<
+    TParent,
+    TParentMergedHandlerErrs,
+    TInputSchema,
+    TMergedInputSchemaInput,
+    TOutputSchema,
+    TMergedParentOutputSchemaInput,
+    TUnparsedInput,
+    TOmitArgs
+  >,
+  TOmitArgs
+>;
+
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
   TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -43,6 +67,7 @@ export class SafeFnBuilder<
   TOutputSchema extends TSafeFnInput,
   TMergedParentOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput extends TSafeFnUnparsedInput,
+  TOmitArgs extends string | number | symbol,
 > {
   readonly _internals: TSafeFnInternals<
     TParent,
@@ -73,14 +98,15 @@ export class SafeFnBuilder<
 ||                            ||
 ################################
 */
-  static new(): SafeFnBuilder<
+  static new(): TSafeFnBuilder<
     undefined,
     Result<never, never>,
     undefined,
     undefined,
     undefined,
     undefined,
-    []
+    [],
+    `_${string}` | "new"
   > {
     return new SafeFnBuilder({
       parent: undefined,
@@ -104,14 +130,15 @@ export class SafeFnBuilder<
 
   use<TNewParent extends AnyRunnableSafeFn>(
     parent: TNewParent,
-  ): SafeFnBuilder<
+  ): TSafeFnBuilder<
     TNewParent,
     TBuildMergedHandlersErrs<TNewParent>,
     TInputSchema,
     InferMergedInputSchemaInput<TNewParent>,
     TOutputSchema,
     InferMergedParentOutputSchemaInput<TNewParent>,
-    InferUnparsedInputTuple<TNewParent>
+    InferUnparsedInputTuple<TNewParent>,
+    TOmitArgs | "use"
   > {
     return new SafeFnBuilder({
       ...(this._internals as TODO),
@@ -121,25 +148,23 @@ export class SafeFnBuilder<
 
   input<TNewInputSchema extends z.ZodTypeAny>(
     schema: TNewInputSchema,
-  ): Omit<
-    SafeFnBuilder<
-      TParent,
-      TParentMergedHandlerErrs,
-      TNewInputSchema,
-      TIntersectIfNotT<
-        TMergedInputSchemaInput,
-        z.input<TNewInputSchema>,
-        undefined
-      >,
-      TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      [
-        TUnparsedInput extends []
-          ? z.input<TNewInputSchema>
-          : TUnparsedInput[0] & z.input<TNewInputSchema>,
-      ]
+  ): TSafeFnBuilder<
+    TParent,
+    TParentMergedHandlerErrs,
+    TNewInputSchema,
+    TIntersectIfNotT<
+      TMergedInputSchemaInput,
+      z.input<TNewInputSchema>,
+      undefined
     >,
-    "input" | "unparsedInput"
+    TOutputSchema,
+    TMergedParentOutputSchemaInput,
+    [
+      TUnparsedInput extends []
+        ? z.input<TNewInputSchema>
+        : TUnparsedInput[0] & z.input<TNewInputSchema>,
+    ],
+    TOmitArgs | "input"
   > {
     return new SafeFnBuilder({
       ...(this._internals as TODO),
@@ -148,21 +173,19 @@ export class SafeFnBuilder<
   }
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
-  unparsedInput<TNewUnparsedInput>(): Omit<
-    SafeFnBuilder<
-      TParent,
-      TParentMergedHandlerErrs,
-      TInputSchema,
-      TMergedInputSchemaInput,
-      TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      [
-        TUnparsedInput extends []
-          ? TNewUnparsedInput
-          : TUnparsedInput[0] & TNewUnparsedInput,
-      ]
-    >,
-    "input" | "unparsedInput"
+  unparsedInput<TNewUnparsedInput>(): TSafeFnBuilder<
+    TParent,
+    TParentMergedHandlerErrs,
+    TInputSchema,
+    TMergedInputSchemaInput,
+    TOutputSchema,
+    TMergedParentOutputSchemaInput,
+    [
+      TUnparsedInput extends []
+        ? TNewUnparsedInput
+        : TUnparsedInput[0] & TNewUnparsedInput,
+    ],
+    TOmitArgs | "unparsedInput"
   > {
     return this as unknown as SafeFnBuilder<
       TParent,
@@ -175,23 +198,22 @@ export class SafeFnBuilder<
         TUnparsedInput extends []
           ? TNewUnparsedInput
           : TUnparsedInput[0] & TNewUnparsedInput,
-      ]
+      ],
+      TOmitArgs | "unparsedInput"
     >;
   }
 
   output<TNewOutputSchema extends z.ZodTypeAny>(
     schema: TNewOutputSchema,
-  ): Omit<
-    SafeFnBuilder<
-      TParent,
-      TParentMergedHandlerErrs,
-      TInputSchema,
-      TMergedInputSchemaInput,
-      TNewOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput
-    >,
-    "output"
+  ): TSafeFnBuilder<
+    TParent,
+    TParentMergedHandlerErrs,
+    TInputSchema,
+    TMergedInputSchemaInput,
+    TNewOutputSchema,
+    TMergedParentOutputSchemaInput,
+    TUnparsedInput,
+    TOmitArgs | "output"
   > {
     return new SafeFnBuilder({
       ...this._internals,
