@@ -11,7 +11,7 @@ import type {
   TRunnableSafeFn,
   TRunnableSafeFnPickArgs,
 } from "../runnable-safe-fn";
-import type { TAnySafeFnHandlerRes } from "../types/handler";
+import type { AnyCtxInput, TAnySafeFnHandlerRes } from "../types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
@@ -341,7 +341,7 @@ export type TSafeFnReturn<
 
 export type TSafeFnInternalRunReturn<
   in out TCtx,
-  in out TCtxInput extends unknown[],
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -382,7 +382,7 @@ export type TSafeFnInternalRunReturn<
 
 export interface TSafeFnInternalRunReturnData<
   in out TCtx,
-  in out TCtxInput extends unknown[],
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -412,7 +412,7 @@ export interface TSafeFnInternalRunReturnData<
 
 export interface TSafeFnInternalRunReturnError<
   in out TCtx,
-  in out TCtxInput extends unknown[],
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,

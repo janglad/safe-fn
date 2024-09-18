@@ -14,6 +14,7 @@ import type {
   TSafeFnDefaultCatchHandlerErr,
 } from "./types/catch-handler";
 import type {
+  AnyCtxInput,
   TSafeFnDefaultHandlerFn,
   TSafeFnHandlerArgs,
   TSafeFnHandlerReturn,
@@ -46,7 +47,7 @@ export const createSafeFn = () => {
 
 type TSafeFnBuilder<
   in out TCtx,
-  in out TCtxInput extends unknown[],
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -71,7 +72,7 @@ type TSafeFnBuilder<
 
 export class SafeFnBuilder<
   in out TCtx,
-  in out TCtxInput extends unknown[],
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,

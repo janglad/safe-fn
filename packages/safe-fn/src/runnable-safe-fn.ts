@@ -37,7 +37,7 @@ import type {
   TSafeFnOnStart,
   TSafeFnOnSuccess,
 } from "./types/callbacks";
-import type { TSafeFnHandlerReturn } from "./types/handler";
+import type { AnyCtxInput, TSafeFnHandlerReturn } from "./types/handler";
 import type { AnyObject, TODO } from "./types/util";
 import {
   isFrameworkError,
@@ -86,7 +86,7 @@ export type TRunnableSafeFnPickArgs =
 
 export type TRunnableSafeFn<
   in out TCtx,
-  in out TCtxInput extends unknown[],
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   /* Includes input schema of `this` */
@@ -117,7 +117,7 @@ export type TRunnableSafeFn<
 
 export class RunnableSafeFn<
   in out TCtx,
-  in out TCtxInput extends unknown[],
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   /* Includes input schema of `this` */

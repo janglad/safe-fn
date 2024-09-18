@@ -1,7 +1,7 @@
 import { Result, ResultAsync, err, ok } from "neverthrow";
 import { z } from "zod";
 import type { TSafeFnCallBacks } from "./types/callbacks";
-import type { TAnySafeFnHandlerRes } from "./types/handler";
+import type { AnyCtxInput, TAnySafeFnHandlerRes } from "./types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
@@ -35,7 +35,7 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 
 export const runCallbacks = <
   TCtx,
-  TCtxInput extends unknown[],
+  TCtxInput extends AnyCtxInput,
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,

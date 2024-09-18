@@ -39,7 +39,7 @@ export type TSafeFnDefaultHandlerFn = () => Result<
  */
 export interface TSafeFnHandlerArgs<
   in out TCtx,
-  in out TCtxInput extends unknown[],
+  in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
 > {
@@ -63,3 +63,5 @@ export type TSafeFnHandlerReturn<TOutputSchema extends TSafeFnOutput> = Result<
   TSchemaInputOrFallback<TOutputSchema, any>,
   any
 >;
+
+export type AnyCtxInput = any[];
