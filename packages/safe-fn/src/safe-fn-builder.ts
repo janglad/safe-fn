@@ -2,7 +2,12 @@ import { z } from "zod";
 
 import { err, Result } from "neverthrow";
 import type { MergeResults } from "./result";
-import { RunnableSafeFn, type AnyRunnableSafeFn } from "./runnable-safe-fn";
+import {
+  RunnableSafeFn,
+  type AnyRunnableSafeFn,
+  type TRunnableSafeFn,
+  type TRunnableSafeFnPickArgs,
+} from "./runnable-safe-fn";
 
 import type {
   TSafeFnDefaultCatchHandler,
@@ -18,6 +23,7 @@ import type {
   InferMergedInputSchemaInput,
   InferMergedParentOutputSchemaInput,
   InferUnparsedInputTuple,
+  TInferCtxInput,
   TSafeFnInput,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
@@ -38,6 +44,7 @@ export const createSafeFn = () => {
 
 type TSafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
+  TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
@@ -48,6 +55,7 @@ type TSafeFnBuilder<
 > = Omit<
   SafeFnBuilder<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -61,6 +69,7 @@ type TSafeFnBuilder<
 
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
+  TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
@@ -100,6 +109,7 @@ export class SafeFnBuilder<
 */
   static new(): TSafeFnBuilder<
     undefined,
+    [],
     Result<never, never>,
     undefined,
     undefined,
@@ -132,6 +142,7 @@ export class SafeFnBuilder<
     parent: TNewParent,
   ): TSafeFnBuilder<
     TNewParent,
+    TInferCtxInput<TNewParent>,
     TBuildMergedHandlersErrs<TNewParent>,
     TInputSchema,
     InferMergedInputSchemaInput<TNewParent>,
@@ -150,6 +161,7 @@ export class SafeFnBuilder<
     schema: TNewInputSchema,
   ): TSafeFnBuilder<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TNewInputSchema,
     TIntersectIfNotT<
@@ -175,6 +187,7 @@ export class SafeFnBuilder<
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
   unparsedInput<TNewUnparsedInput>(): TSafeFnBuilder<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -189,6 +202,7 @@ export class SafeFnBuilder<
   > {
     return this as unknown as SafeFnBuilder<
       TParent,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -207,6 +221,7 @@ export class SafeFnBuilder<
     schema: TNewOutputSchema,
   ): TSafeFnBuilder<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -227,8 +242,9 @@ export class SafeFnBuilder<
         TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
       >,
     ) => TMaybePromise<TNewHandlerResult>,
-  ): RunnableSafeFn<
+  ): TRunnableSafeFn<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -236,7 +252,8 @@ export class SafeFnBuilder<
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
     Awaited<TNewHandlerResult>,
-    TSafeFnDefaultCatchHandlerErr
+    TSafeFnDefaultCatchHandlerErr,
+    TRunnableSafeFnPickArgs
   > {
     return new RunnableSafeFn(
       {
@@ -264,8 +281,9 @@ export class SafeFnBuilder<
         TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
       >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
-  ): RunnableSafeFn<
+  ): TRunnableSafeFn<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -276,7 +294,8 @@ export class SafeFnBuilder<
     [YieldErr] extends [never]
       ? GeneratorResult
       : MergeResults<GeneratorResult, YieldErr>,
-    TSafeFnDefaultCatchHandlerErr
+    TSafeFnDefaultCatchHandlerErr,
+    TRunnableSafeFnPickArgs
   > {
     const handler = async (
       args: TPrettify<
@@ -297,6 +316,6 @@ export class SafeFnBuilder<
         onError: undefined,
         onComplete: undefined,
       },
-    );
+    ) as any;
   }
 }

@@ -126,7 +126,7 @@ describe("safe-fn-builder", () => {
     test("should set the handler function", () => {
       const builder = createSafeFn();
       const handlerFn = () => ok("data");
-      const safeFn = builder.handler(handlerFn);
+      const safeFn = builder.handler(handlerFn) as any;
       expect(safeFn._internals.handler).toBe(handlerFn);
     });
 
@@ -145,7 +145,7 @@ describe("safe-fn-builder", () => {
         return ok("data");
       };
       // Note: generator functions are wrapped, so we're comparing the result instead of the function here
-      const safeFn = builder.safeHandler(safeHandlerFn);
+      const safeFn = builder.safeHandler(safeHandlerFn) as any;
       const handlerRes = await safeFn._internals.handler(undefined as TODO);
       const expectedRes = (await safeHandlerFn().next()).value;
       expect(handlerRes).toEqual(expectedRes);
@@ -159,7 +159,7 @@ describe("runnable-safe-fn", () => {
       const errorHandler = () => err("error");
       const safeFn = createSafeFn()
         .handler(() => ok(""))
-        .catch(errorHandler);
+        .catch(errorHandler) as any;
       expect(safeFn._internals.uncaughtErrorHandler).toEqual(errorHandler);
     });
   });
@@ -476,7 +476,7 @@ describe("runnable-safe-fn", () => {
       {
         name: "regular",
         createSafeFn: () => {
-          const builder = createSafeFn().handler(() => err("Ooh no!"));
+          const builder = createSafeFn().handler(() => err("Ooh no!")) as any;
           builder._parseOutput = outputParseMock;
           return builder;
         },
@@ -484,7 +484,9 @@ describe("runnable-safe-fn", () => {
       {
         name: "async",
         createSafeFn: () => {
-          const builder = createSafeFn().handler(async () => err("Ooh no!"));
+          const builder = createSafeFn().handler(async () =>
+            err("Ooh no!"),
+          ) as any;
           builder._parseOutput = outputParseMock;
           return builder;
         },
@@ -494,7 +496,7 @@ describe("runnable-safe-fn", () => {
         createSafeFn: () => {
           const builder = createSafeFn().safeHandler(async function* () {
             return err("Ooh no!");
-          });
+          }) as any;
           builder._parseOutput = outputParseMock;
           return builder;
         },
@@ -506,7 +508,7 @@ describe("runnable-safe-fn", () => {
             yield* err("Ooh no!").safeUnwrap();
             postYieldMock();
             return ok("Ooh yes!");
-          });
+          }) as any;
           builder._parseOutput = outputParseMock;
           return builder;
         },

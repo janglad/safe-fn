@@ -1,5 +1,5 @@
 import type { Err, Ok, Result } from "neverthrow";
-import type { AnyRunnableSafeFn, RunnableSafeFn } from "../runnable-safe-fn";
+import type { AnyRunnableSafeFn, TRunnableSafeFn } from "../runnable-safe-fn";
 import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 import type { TAnySafeFnHandlerRes, TSafeFnHandlerArgs } from "./handler";
 import type { TSafeFnReturnData, TSafeFnReturnError } from "./run";
@@ -18,8 +18,9 @@ import type { AnyObject, FirstTupleElOrUndefined, TPrettify } from "./util";
 ################################
 */
 export type TInferSafeFnCallbacks<T> =
-  T extends RunnableSafeFn<
+  T extends TRunnableSafeFn<
     infer TParent,
+    infer TCtxInput,
     infer TParentMergedHandlerErrs,
     infer TInputSchema,
     infer TMergedInputSchemaInput,
@@ -27,7 +28,8 @@ export type TInferSafeFnCallbacks<T> =
     infer TMergedParentOutputSchemaInput,
     infer TUnparsedInput,
     infer THandlerRes,
-    infer TCatchHandlerRes
+    infer TCatchHandlerRes,
+    any
   >
     ? TSafeFnCallBacks<
         TParent,

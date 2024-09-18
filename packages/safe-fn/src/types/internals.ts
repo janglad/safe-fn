@@ -1,4 +1,4 @@
-import type { AnyRunnableSafeFn } from "../runnable-safe-fn";
+import type { AnyRunnableSafeFn, TRunnableSafeFn } from "../runnable-safe-fn";
 import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 import type { TSafeFnHandlerArgs, TSafeFnHandlerReturn } from "./handler";
 import type { TSafeFnInput, TSafeFnUnparsedInput } from "./schema";
@@ -27,6 +27,19 @@ export interface TSafeFnInternals<
   uncaughtErrorHandler: (error: unknown) => TThrownHandlerRes;
 }
 
-export type TInferSafeFnParent<T> = T extends AnyRunnableSafeFn
-  ? T["_internals"]["parent"]
-  : never;
+export type TInferSafeFnParent<T> =
+  T extends TRunnableSafeFn<
+    infer TParent,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TParent
+    : never;

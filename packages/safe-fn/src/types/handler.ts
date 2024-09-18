@@ -12,7 +12,7 @@ import type {
 } from "./schema";
 import type {
   FirstTupleElOrUndefined,
-  TIsAny,
+  IsAnyRunnableSafeFn,
   TOrFallback,
   TPrettify,
 } from "./util";
@@ -41,8 +41,8 @@ export type TSafeFnDefaultHandlerFn = () => Result<
 >;
 
 export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
-  TIsAny<TParent> extends true
-    ? any
+  IsAnyRunnableSafeFn<TParent> extends true
+    ? any[]
     : TParent extends AnyRunnableSafeFn
       ? [
           ...TCtxInput<TInferSafeFnParent<TParent>>,

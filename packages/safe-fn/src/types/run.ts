@@ -7,7 +7,11 @@ import type {
   InferAsyncOkData,
   InferErrError,
 } from "../result";
-import type { AnyRunnableSafeFn, RunnableSafeFn } from "../runnable-safe-fn";
+import type {
+  AnyRunnableSafeFn,
+  TRunnableSafeFn,
+  TRunnableSafeFnPickArgs,
+} from "../runnable-safe-fn";
 import type { TAnySafeFnHandlerRes, TCtxInput } from "../types/handler";
 import type {
   TSafeFnInput,
@@ -23,6 +27,7 @@ import type {
   TODO,
   TPrettify,
 } from "../types/util";
+import type { TSafeFnActionReturn } from "./action";
 import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 
 /*
@@ -36,27 +41,58 @@ import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
  * @param T the runnable safe function
  * @returns the type of the arguments of the safe function passed to `run()`
  */
-export type InferSafeFnArgs<T extends AnyRunnableSafeFn> = Parameters<
-  T["run"]
->[0];
+export type InferSafeFnArgs<T> =
+  T extends TRunnableSafeFn<
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    infer TUnparsedInput,
+    any,
+    any,
+    any
+  >
+    ? TSafeFnRunArgs<TUnparsedInput>
+    : never;
 
 /**
  * @param T the runnable safe function
  * @param TAsAction true === `createAction()()`, false -> `run()`
  * @returns the type of the return `AsyncResult` or `Promise<ActionResult>` value of the safe function after calling run();
  */
-export type InferSafeFnReturn<
-  T,
-  TAsAction extends boolean,
-> = T extends AnyRunnableSafeFn
-  ? TAsAction extends true
-    ? ReturnType<T["_runAsAction"]>
-    : ReturnType<T["run"]>
-  : never;
+export type InferSafeFnReturn<T, TAsAction extends boolean> =
+  T extends TRunnableSafeFn<
+    any,
+    any,
+    infer TParentMergedHandlerErrs,
+    any,
+    infer TMergedInputSchemaInput,
+    infer TOutputSchema,
+    infer TMergedParentOutputSchemaInput,
+    any,
+    infer THandlerRes,
+    infer TThrownHandlerRes,
+    any
+  >
+    ? TAsAction extends true
+      ? TSafeFnActionReturn<
+          TParentMergedHandlerErrs,
+          TMergedInputSchemaInput,
+          TOutputSchema,
+          TMergedParentOutputSchemaInput,
+          THandlerRes,
+          TThrownHandlerRes
+        >
+      : ReturnType<T["run"]>
+    : never;
 
 export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
-  T extends RunnableSafeFn<
+  T extends TRunnableSafeFn<
     infer TParent,
+    infer TCtxInput,
     infer TParentMergedHandlerErrs,
     infer TInputSchema,
     infer TMergedInputSchemaInput,
@@ -64,7 +100,8 @@ export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
     infer TMergedParentOutputSchemaInput,
     infer TUnparsedInput,
     infer THandlerRes,
-    infer TThrownHandlerRes
+    infer TThrownHandlerRes,
+    TRunnableSafeFnPickArgs
   >
     ? TSafeFnInternalRunReturnData<
         TParent,
@@ -161,15 +198,35 @@ export type TSafeFnReturnError<
 
 export type TBuildMergedHandlersErrs<T extends AnyRunnableSafeFn> = Err<
   never,
-  | InferErrError<Awaited<ReturnType<T["_internals"]["handler"]>>>
-  | InferErrError<Awaited<ReturnType<T["_internals"]["uncaughtErrorHandler"]>>>
-  | InferErrError<TInferMergedHandlersErr<T["_internals"]["parent"]>>
+  Thing<T>
 >;
 
-type TInferMergedHandlersErr<T> =
-  T extends RunnableSafeFn<
-    any,
+export type Thing<T> =
+  T extends TRunnableSafeFn<
+    infer TParent,
+    infer TCtxInput,
     infer TParentMergedHandlerErrs,
+    infer TInputSchema,
+    infer TMergedInputSchemaInput,
+    infer TOutputSchema,
+    infer TMergedParentOutputSchemaInput,
+    infer TUnparsedInput,
+    infer THandlerRes,
+    infer TThrownHandlerRes,
+    any
+  >
+    ?
+        | InferErrError<THandlerRes>
+        | InferErrError<TThrownHandlerRes>
+        | InferErrError<TParentMergedHandlerErrs>
+    : never;
+
+type TInferMergedHandlersErr<T> =
+  T extends TRunnableSafeFn<
+    any,
+    infer TCtxInput,
+    infer TParentMergedHandlerErrs,
+    any,
     any,
     any,
     any,
