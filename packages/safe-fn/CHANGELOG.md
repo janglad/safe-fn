@@ -1,5 +1,32 @@
 # @safe-fn/safe-fn
 
+## 0.2.1
+
+### Patch Changes
+
+- 172faf3: Temporary fix for [#15](https://github.com/janglad/safe-fn/issues/15). By default errors are now not passed along but logged.
+- 382bb1a: ## Changes
+
+  - Type `unparsedInput` as `never` when there is no input
+
+  ## Fixes
+
+  - Fix bug when typing merged unparsed inputs where one is unknown
+  - Fix bug when typing merged parsed input when one schema is not defined
+  - Prettify user facing types where needed (and missing before)
+  - Fix bug in Generator typing when no error is yielded
+  - Fix bug where transformed errors from `action()` were not correctly typed
+
+- 3194b4a: Add callbacks (onError, onStart, onComplete, onSuccess)
+- 2bcb820: - Fix bad inference when not yielding an error in an async generator `safeHandler`
+- c8f8132: - Add InferActionErrError and InferActionOkData types
+  - Add InferAsyncOkData and InferAsyncErrError types
+  - Rename some types for clarity
+  - Improve type docs
+- f55152a: Fix errors not being typed when coming from parent
+  Fix parse errors not being typed correct when parent has them
+- cf9893e: IDK a lot lol. Nobody reads this anyway.
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,5 +1,20 @@
 # safe-fn-react
 
+## 0.1.3
+
+### Patch Changes
+
+- ef41088: Return ResultAsync instead of Promise<Result> from hook
+- cf9893e: IDK a lot lol. Nobody reads this anyway.
+- Updated dependencies [172faf3]
+- Updated dependencies [382bb1a]
+- Updated dependencies [3194b4a]
+- Updated dependencies [2bcb820]
+- Updated dependencies [c8f8132]
+- Updated dependencies [f55152a]
+- Updated dependencies [cf9893e]
+  - safe-fn@0.2.1
+
 ## 0.1.2
 
 ### Patch Changes
