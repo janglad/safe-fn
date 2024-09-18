@@ -1,21 +1,12 @@
 import { type Result } from "neverthrow";
-import type { AnyRunnableSafeFn } from "../runnable-safe-fn";
-import type { TInferSafeFnParent } from "./internals";
-import type { InferSafeFnOkData } from "./run";
 import type {
-  InferInputSchema,
   TSafeFnInput,
   TSafeFnOutput,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
 } from "./schema";
-import type {
-  FirstTupleElOrUndefined,
-  TIsAny,
-  TOrFallback,
-  TPrettify,
-} from "./util";
+import type { FirstTupleElOrUndefined, TPrettify } from "./util";
 
 /*
 ################################
@@ -40,16 +31,6 @@ export type TSafeFnDefaultHandlerFn = () => Result<
   }
 >;
 
-export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
-  TIsAny<TParent> extends true
-    ? any
-    : TParent extends AnyRunnableSafeFn
-      ? [
-          ...TCtxInput<TInferSafeFnParent<TParent>>,
-          TSchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
-        ]
-      : [];
-
 /**
  * @param TInputSchema a Zod schema or undefined
  * @param TUnparsedInput the unparsed input type. This is inferred from TInputSchema. When none is provided, this is `never` by default or overridden by using `unparsedInput<>()`
@@ -57,9 +38,10 @@ export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
  * @returns the type of the arguments available in the passed handler function.
  */
 export interface TSafeFnHandlerArgs<
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out TParent extends AnyRunnableSafeFn | undefined,
 > {
   input: TPrettify<TSchemaOutputOrFallback<TInputSchema, undefined>>;
   /**
@@ -68,8 +50,8 @@ export interface TSafeFnHandlerArgs<
    *  **WARNING**: this can have excess values that are not in the type when you use this SafeFn as a parent for another SafeFn.
    */
   unsafeRawInput: TPrettify<FirstTupleElOrUndefined<TUnparsedInput>>;
-  ctx: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
-  ctxInput: TCtxInput<TParent>;
+  ctx: TCtx;
+  ctxInput: TCtxInput;
 }
 
 /**
@@ -81,3 +63,5 @@ export type TSafeFnHandlerReturn<TOutputSchema extends TSafeFnOutput> = Result<
   TSchemaInputOrFallback<TOutputSchema, any>,
   any
 >;
+
+export type AnyCtxInput = any[];

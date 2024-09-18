@@ -1,8 +1,7 @@
 import { Result, ResultAsync, err, ok } from "neverthrow";
 import { z } from "zod";
-import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
 import type { TSafeFnCallBacks } from "./types/callbacks";
-import type { TAnySafeFnHandlerRes } from "./types/handler";
+import type { AnyCtxInput, TAnySafeFnHandlerRes } from "./types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
@@ -35,7 +34,8 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 };
 
 export const runCallbacks = <
-  TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
+  TCtxInput extends AnyCtxInput,
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
@@ -46,7 +46,8 @@ export const runCallbacks = <
   TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
   TRes extends TSafeFnInternalRunReturn<
-    TParent,
+    TCtx,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -57,7 +58,8 @@ export const runCallbacks = <
     TCatchHandlerRes,
     NoInfer<TAsAction>
   > = TSafeFnInternalRunReturn<
-    TParent,
+    TCtx,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -72,7 +74,8 @@ export const runCallbacks = <
   resultAsync: TRes;
   asAction: TAsAction;
   callbacks: TSafeFnCallBacks<
-    TParent,
+    TCtx,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -132,7 +135,7 @@ export const runCallbacks = <
         ctx: res.match(
           (value) => value.ctx,
           (err) => err.private.ctx,
-        ),
+        ) as TODO,
         input: res.match(
           (value) => value.input,
           (err) => err.private.input,

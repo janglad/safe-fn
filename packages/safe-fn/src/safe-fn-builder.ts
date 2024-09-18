@@ -2,28 +2,37 @@ import { z } from "zod";
 
 import { err, Result } from "neverthrow";
 import type { MergeResults } from "./result";
-import { RunnableSafeFn, type AnyRunnableSafeFn } from "./runnable-safe-fn";
+import {
+  RunnableSafeFn,
+  type TAnyRunnableSafeFn,
+  type TRunnableSafeFn,
+  type TRunnableSafeFnPickArgs,
+} from "./runnable-safe-fn";
 
 import type {
   TSafeFnDefaultCatchHandler,
   TSafeFnDefaultCatchHandlerErr,
 } from "./types/catch-handler";
 import type {
+  AnyCtxInput,
   TSafeFnDefaultHandlerFn,
   TSafeFnHandlerArgs,
   TSafeFnHandlerReturn,
 } from "./types/handler";
 import type { TSafeFnInternals } from "./types/internals";
 import type {
+  InferInputSchema,
   InferMergedInputSchemaInput,
   InferMergedParentOutputSchemaInput,
   InferUnparsedInputTuple,
+  TInferCtxInput,
   TSafeFnInput,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
+  TSchemaOutputOrFallback,
 } from "./types/schema";
 
-import type { TBuildMergedHandlersErrs } from "./types/run";
+import type { InferSafeFnOkData, TBuildMergedHandlersErrs } from "./types/run";
 import type {
   AnyObject,
   TIntersectIfNotT,
@@ -35,17 +44,46 @@ import type {
 export const createSafeFn = () => {
   return SafeFnBuilder.new();
 };
+
+type TSafeFnBuilder<
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
+  in out TInputSchema extends TSafeFnInput,
+  in out TMergedInputSchemaInput extends AnyObject | undefined,
+  in out TOutputSchema extends TSafeFnInput,
+  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
+  in out TUnparsedInput extends TSafeFnUnparsedInput,
+  in out TOmitArgs extends string | number | symbol,
+> = Omit<
+  SafeFnBuilder<
+    TCtx,
+    TCtxInput,
+    TParentMergedHandlerErrs,
+    TInputSchema,
+    TMergedInputSchemaInput,
+    TOutputSchema,
+    TMergedParentOutputSchemaInput,
+    TUnparsedInput,
+    TOmitArgs
+  >,
+  TOmitArgs
+>;
+
 export class SafeFnBuilder<
-  TParent extends AnyRunnableSafeFn | undefined,
-  TParentMergedHandlerErrs extends Result<never, unknown>,
-  TInputSchema extends TSafeFnInput,
-  TMergedInputSchemaInput extends AnyObject | undefined,
-  TOutputSchema extends TSafeFnInput,
-  TMergedParentOutputSchemaInput extends AnyObject | undefined,
-  TUnparsedInput extends TSafeFnUnparsedInput,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
+  in out TInputSchema extends TSafeFnInput,
+  in out TMergedInputSchemaInput extends AnyObject | undefined,
+  in out TOutputSchema extends TSafeFnInput,
+  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
+  in out TUnparsedInput extends TSafeFnUnparsedInput,
+  in out TOmitArgs extends string | number | symbol,
 > {
   readonly _internals: TSafeFnInternals<
-    TParent,
+    TCtx,
+    TCtxInput,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -55,7 +93,8 @@ export class SafeFnBuilder<
 
   protected constructor(
     internals: TSafeFnInternals<
-      TParent,
+      TCtx,
+      TCtxInput,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -73,14 +112,16 @@ export class SafeFnBuilder<
 ||                            ||
 ################################
 */
-  static new(): SafeFnBuilder<
+  static new(): TSafeFnBuilder<
     undefined,
+    [],
     Result<never, never>,
     undefined,
     undefined,
     undefined,
     undefined,
-    []
+    [],
+    `_${string}` | "new"
   > {
     return new SafeFnBuilder({
       parent: undefined,
@@ -102,16 +143,21 @@ export class SafeFnBuilder<
     }) as any;
   }
 
-  use<TNewParent extends AnyRunnableSafeFn>(
+  use<TNewParent extends TAnyRunnableSafeFn>(
     parent: TNewParent,
-  ): SafeFnBuilder<
-    TNewParent,
+  ): TSafeFnBuilder<
+    InferSafeFnOkData<TNewParent>,
+    [
+      ...TInferCtxInput<TNewParent>,
+      TSchemaOutputOrFallback<InferInputSchema<TNewParent>, undefined>,
+    ],
     TBuildMergedHandlersErrs<TNewParent>,
     TInputSchema,
     InferMergedInputSchemaInput<TNewParent>,
     TOutputSchema,
     InferMergedParentOutputSchemaInput<TNewParent>,
-    InferUnparsedInputTuple<TNewParent>
+    InferUnparsedInputTuple<TNewParent>,
+    TOmitArgs | "use"
   > {
     return new SafeFnBuilder({
       ...(this._internals as TODO),
@@ -121,25 +167,24 @@ export class SafeFnBuilder<
 
   input<TNewInputSchema extends z.ZodTypeAny>(
     schema: TNewInputSchema,
-  ): Omit<
-    SafeFnBuilder<
-      TParent,
-      TParentMergedHandlerErrs,
-      TNewInputSchema,
-      TIntersectIfNotT<
-        TMergedInputSchemaInput,
-        z.input<TNewInputSchema>,
-        undefined
-      >,
-      TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      [
-        TUnparsedInput extends []
-          ? z.input<TNewInputSchema>
-          : TUnparsedInput[0] & z.input<TNewInputSchema>,
-      ]
+  ): TSafeFnBuilder<
+    TCtx,
+    TCtxInput,
+    TParentMergedHandlerErrs,
+    TNewInputSchema,
+    TIntersectIfNotT<
+      TMergedInputSchemaInput,
+      z.input<TNewInputSchema>,
+      undefined
     >,
-    "input" | "unparsedInput"
+    TOutputSchema,
+    TMergedParentOutputSchemaInput,
+    [
+      TUnparsedInput extends []
+        ? z.input<TNewInputSchema>
+        : TUnparsedInput[0] & z.input<TNewInputSchema>,
+    ],
+    TOmitArgs | "input"
   > {
     return new SafeFnBuilder({
       ...(this._internals as TODO),
@@ -148,24 +193,24 @@ export class SafeFnBuilder<
   }
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
-  unparsedInput<TNewUnparsedInput>(): Omit<
-    SafeFnBuilder<
-      TParent,
-      TParentMergedHandlerErrs,
-      TInputSchema,
-      TMergedInputSchemaInput,
-      TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      [
-        TUnparsedInput extends []
-          ? TNewUnparsedInput
-          : TUnparsedInput[0] & TNewUnparsedInput,
-      ]
-    >,
-    "input" | "unparsedInput"
+  unparsedInput<TNewUnparsedInput>(): TSafeFnBuilder<
+    TCtx,
+    TCtxInput,
+    TParentMergedHandlerErrs,
+    TInputSchema,
+    TMergedInputSchemaInput,
+    TOutputSchema,
+    TMergedParentOutputSchemaInput,
+    [
+      TUnparsedInput extends []
+        ? TNewUnparsedInput
+        : TUnparsedInput[0] & TNewUnparsedInput,
+    ],
+    TOmitArgs | "unparsedInput"
   > {
     return this as unknown as SafeFnBuilder<
-      TParent,
+      TCtx,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -175,23 +220,23 @@ export class SafeFnBuilder<
         TUnparsedInput extends []
           ? TNewUnparsedInput
           : TUnparsedInput[0] & TNewUnparsedInput,
-      ]
+      ],
+      TOmitArgs | "unparsedInput"
     >;
   }
 
   output<TNewOutputSchema extends z.ZodTypeAny>(
     schema: TNewOutputSchema,
-  ): Omit<
-    SafeFnBuilder<
-      TParent,
-      TParentMergedHandlerErrs,
-      TInputSchema,
-      TMergedInputSchemaInput,
-      TNewOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput
-    >,
-    "output"
+  ): TSafeFnBuilder<
+    TCtx,
+    TCtxInput,
+    TParentMergedHandlerErrs,
+    TInputSchema,
+    TMergedInputSchemaInput,
+    TNewOutputSchema,
+    TMergedParentOutputSchemaInput,
+    TUnparsedInput,
+    TOmitArgs | "output"
   > {
     return new SafeFnBuilder({
       ...this._internals,
@@ -202,11 +247,12 @@ export class SafeFnBuilder<
   handler<TNewHandlerResult extends TSafeFnHandlerReturn<TOutputSchema>>(
     handler: (
       args: TPrettify<
-        TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+        TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
       >,
     ) => TMaybePromise<TNewHandlerResult>,
-  ): RunnableSafeFn<
-    TParent,
+  ): TRunnableSafeFn<
+    TCtx,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -214,7 +260,8 @@ export class SafeFnBuilder<
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
     Awaited<TNewHandlerResult>,
-    TSafeFnDefaultCatchHandlerErr
+    TSafeFnDefaultCatchHandlerErr,
+    TRunnableSafeFnPickArgs
   > {
     return new RunnableSafeFn(
       {
@@ -239,11 +286,12 @@ export class SafeFnBuilder<
   >(
     fn: (
       args: TPrettify<
-        TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+        TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
       >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
-  ): RunnableSafeFn<
-    TParent,
+  ): TRunnableSafeFn<
+    TCtx,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -254,11 +302,12 @@ export class SafeFnBuilder<
     [YieldErr] extends [never]
       ? GeneratorResult
       : MergeResults<GeneratorResult, YieldErr>,
-    TSafeFnDefaultCatchHandlerErr
+    TSafeFnDefaultCatchHandlerErr,
+    TRunnableSafeFnPickArgs
   > {
     const handler = async (
       args: TPrettify<
-        TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+        TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
       >,
     ) => {
       return (await fn(args).next()).value;
@@ -275,6 +324,6 @@ export class SafeFnBuilder<
         onError: undefined,
         onComplete: undefined,
       },
-    );
+    ) as any;
   }
 }

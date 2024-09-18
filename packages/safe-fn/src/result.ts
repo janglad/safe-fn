@@ -1,11 +1,11 @@
-import { err, ok, Result, ResultAsync } from "neverthrow";
+import { Err, err, Ok, ok, Result, ResultAsync } from "neverthrow";
 
-export type InferOkData<T> = T extends Result<infer TData, any> ? TData : never;
+export type InferOkData<T> = T extends Ok<infer TData, any> ? TData : never;
 export type InferAsyncOkData<T> =
   T extends ResultAsync<infer TData, any> ? TData : never;
 
 export type InferErrError<T> =
-  T extends Result<any, infer TError> ? TError : never;
+  T extends Err<any, infer TError> ? TError : never;
 export type InferAsyncErrError<T> =
   T extends ResultAsync<any, infer TError> ? TError : never;
 

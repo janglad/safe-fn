@@ -1,7 +1,11 @@
 import type { Err, Ok, Result } from "neverthrow";
-import type { AnyRunnableSafeFn, RunnableSafeFn } from "../runnable-safe-fn";
+import type { TRunnableSafeFn } from "../runnable-safe-fn";
 import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
-import type { TAnySafeFnHandlerRes, TSafeFnHandlerArgs } from "./handler";
+import type {
+  AnyCtxInput,
+  TAnySafeFnHandlerRes,
+  TSafeFnHandlerArgs,
+} from "./handler";
 import type { TSafeFnReturnData, TSafeFnReturnError } from "./run";
 import type {
   TSafeFnInput,
@@ -18,8 +22,9 @@ import type { AnyObject, FirstTupleElOrUndefined, TPrettify } from "./util";
 ################################
 */
 export type TInferSafeFnCallbacks<T> =
-  T extends RunnableSafeFn<
-    infer TParent,
+  T extends TRunnableSafeFn<
+    infer TCtx,
+    infer TCtxInput,
     infer TParentMergedHandlerErrs,
     infer TInputSchema,
     infer TMergedInputSchemaInput,
@@ -27,10 +32,12 @@ export type TInferSafeFnCallbacks<T> =
     infer TMergedParentOutputSchemaInput,
     infer TUnparsedInput,
     infer THandlerRes,
-    infer TCatchHandlerRes
+    infer TCatchHandlerRes,
+    any
   >
     ? TSafeFnCallBacks<
-        TParent,
+        TCtx,
+        TCtxInput,
         TParentMergedHandlerErrs,
         TInputSchema,
         TMergedInputSchemaInput,
@@ -43,7 +50,8 @@ export type TInferSafeFnCallbacks<T> =
     : never;
 
 export interface TSafeFnCallBacks<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -56,7 +64,8 @@ export interface TSafeFnCallBacks<
   onStart: TSafeFnOnStart<TUnparsedInput> | undefined;
   onSuccess:
     | TSafeFnOnSuccess<
-        TParent,
+        TCtx,
+        TCtxInput,
         TInputSchema,
         TOutputSchema,
         TUnparsedInput,
@@ -65,7 +74,8 @@ export interface TSafeFnCallBacks<
     | undefined;
   onError:
     | TSafeFnOnError<
-        TParent,
+        TCtx,
+        TCtxInput,
         TParentMergedHandlerErrs,
         TInputSchema,
         TMergedInputSchemaInput,
@@ -78,7 +88,8 @@ export interface TSafeFnCallBacks<
     | undefined;
   onComplete:
     | TSafeFnOnComplete<
-        TParent,
+        TCtx,
+        TCtxInput,
         TParentMergedHandlerErrs,
         TInputSchema,
         TMergedInputSchemaInput,
@@ -96,24 +107,27 @@ export type TSafeFnOnStart<in out TUnparsedInput extends TSafeFnUnparsedInput> =
   }) => Promise<void>;
 
 export interface TSafeFnOnSuccessArgs<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
   in out THandlerRes extends TAnySafeFnHandlerRes,
-> extends TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> {
+> extends TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput> {
   value: TSafeFnReturnData<TOutputSchema, THandlerRes>;
 }
 
 export type TSafeFnOnSuccess<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
   in out THandlerRes extends TAnySafeFnHandlerRes,
 > = (
   args: TSafeFnOnSuccessArgs<
-    TParent,
+    TCtx,
+    TCtxInput,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -127,7 +141,8 @@ type TToOptionalSafeFnArgs<T> = {
 };
 
 export type TSafeFnOnErrorArgs<
-  TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
+  TCtxInput extends AnyCtxInput,
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
@@ -138,7 +153,8 @@ export type TSafeFnOnErrorArgs<
   TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > =
   | TSafeFnOnErrorActionArgs<
-      TParent,
+      TCtx,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -149,7 +165,8 @@ export type TSafeFnOnErrorArgs<
       TCatchHandlerRes
     >
   | TSafeFnOnErrorNonActionArgs<
-      TParent,
+      TCtx,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -160,7 +177,8 @@ export type TSafeFnOnErrorArgs<
       TCatchHandlerRes
     >;
 interface TSafeFnOnErrorActionArgs<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -170,7 +188,7 @@ interface TSafeFnOnErrorActionArgs<
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > extends TToOptionalSafeFnArgs<
-    TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+    TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
   asAction: true;
   error: TSafeFnReturnError<
@@ -185,7 +203,8 @@ interface TSafeFnOnErrorActionArgs<
 }
 
 interface TSafeFnOnErrorNonActionArgs<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -195,7 +214,7 @@ interface TSafeFnOnErrorNonActionArgs<
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > extends TToOptionalSafeFnArgs<
-    TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+    TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
   asAction: false;
   error: TSafeFnReturnError<
@@ -210,7 +229,8 @@ interface TSafeFnOnErrorNonActionArgs<
 }
 
 export type TSafeFnOnError<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -221,7 +241,8 @@ export type TSafeFnOnError<
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > = (
   args: TSafeFnOnErrorArgs<
-    TParent,
+    TCtx,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -234,7 +255,8 @@ export type TSafeFnOnError<
 ) => Promise<void>;
 
 export type TSafeFnOnCompleteArgs<
-  TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
+  TCtxInput extends AnyCtxInput,
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
@@ -245,7 +267,8 @@ export type TSafeFnOnCompleteArgs<
   TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > =
   | TSafeFnOnCompleteErrorArgs<
-      TParent,
+      TCtx,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -256,7 +279,8 @@ export type TSafeFnOnCompleteArgs<
       TThrownHandlerRes
     >
   | TSafeFnOnCompleteSuccessArgs<
-      TParent,
+      TCtx,
+      TCtxInput,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -264,7 +288,8 @@ export type TSafeFnOnCompleteArgs<
     >;
 
 type TSafeFnOnCompleteErrorArgs<
-  TParent extends AnyRunnableSafeFn | undefined,
+  TCtx,
+  TCtxInput extends AnyCtxInput,
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
@@ -275,7 +300,8 @@ type TSafeFnOnCompleteErrorArgs<
   TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > =
   | TSafeFnOnCompleteErrorActionArgs<
-      TParent,
+      TCtx,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -286,7 +312,8 @@ type TSafeFnOnCompleteErrorArgs<
       TThrownHandlerRes
     >
   | TSafeFnOnCompleteErrorNonActionArgs<
-      TParent,
+      TCtx,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -298,18 +325,20 @@ type TSafeFnOnCompleteErrorArgs<
     >;
 
 interface TSafeFnOnCompleteSuccessArgs<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnInput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
   in out THandlerRes extends TAnySafeFnHandlerRes,
-> extends TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent> {
+> extends TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput> {
   asAction: boolean;
   result: Ok<TSafeFnReturnData<TOutputSchema, THandlerRes>, never>;
 }
 
 interface TSafeFnOnCompleteErrorActionArgs<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -319,7 +348,7 @@ interface TSafeFnOnCompleteErrorActionArgs<
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > extends TToOptionalSafeFnArgs<
-    TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+    TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
   asAction: true;
   result: Err<
@@ -337,7 +366,8 @@ interface TSafeFnOnCompleteErrorActionArgs<
 }
 
 interface TSafeFnOnCompleteErrorNonActionArgs<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -347,7 +377,7 @@ interface TSafeFnOnCompleteErrorNonActionArgs<
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > extends TToOptionalSafeFnArgs<
-    TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+    TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
   asAction: false;
   result: Err<
@@ -365,7 +395,8 @@ interface TSafeFnOnCompleteErrorNonActionArgs<
 }
 
 export type TSafeFnOnComplete<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
+  in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -376,7 +407,8 @@ export type TSafeFnOnComplete<
   in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > = (
   args: TSafeFnOnCompleteArgs<
-    TParent,
+    TCtx,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,

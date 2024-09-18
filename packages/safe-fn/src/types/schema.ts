@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { AnyRunnableSafeFn, RunnableSafeFn } from "../runnable-safe-fn";
+import type { TRunnableSafeFn } from "../runnable-safe-fn";
 import type { AnyObject, TIntersectIfNotT } from "./util";
 
 /*
@@ -14,18 +14,44 @@ import type { AnyObject, TIntersectIfNotT } from "./util";
  * @param T the runnable safe function
  * @returns the input schema of the safe function
  */
-export type InferInputSchema<T> = T extends AnyRunnableSafeFn
-  ? T["_internals"]["inputSchema"]
-  : never;
+export type InferInputSchema<T> =
+  T extends TRunnableSafeFn<
+    any,
+    any,
+    any,
+    infer TInputSchema,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TInputSchema
+    : never;
 
 /**
  * Infer the output schema of a runnable safe function.
  * @param T the runnable safe function
  * @returns the output schema of the safe function
  */
-export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
-  ? T["_internals"]["outputSchema"]
-  : never;
+export type InferOutputSchema<T> =
+  T extends TRunnableSafeFn<
+    any,
+    any,
+    any,
+    any,
+    any,
+    infer TOutputSchema,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TOutputSchema
+    : never;
 
 /**
  * Infer the unparsed input of a runnable safe function.
@@ -33,7 +59,8 @@ export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
  * @returns the unparsed input of the safe function
  */
 export type InferUnparsedInputTuple<T> =
-  T extends RunnableSafeFn<
+  T extends TRunnableSafeFn<
+    any,
     any,
     any,
     any,
@@ -42,17 +69,20 @@ export type InferUnparsedInputTuple<T> =
     any,
     infer TUnparsed,
     any,
+    any,
     any
   >
     ? TUnparsed
     : never;
 
 export type InferMergedInputSchemaInput<T> =
-  T extends RunnableSafeFn<
+  T extends TRunnableSafeFn<
+    any,
     any,
     any,
     any,
     infer MergedInputSchemaInput,
+    any,
     any,
     any,
     any,
@@ -63,13 +93,15 @@ export type InferMergedInputSchemaInput<T> =
     : never;
 
 export type InferMergedParentOutputSchemaInput<T> =
-  T extends RunnableSafeFn<
+  T extends TRunnableSafeFn<
+    any,
     any,
     any,
     any,
     any,
     infer TOutputSchema,
     infer MergedOutputSchemaInput,
+    any,
     any,
     any,
     any
@@ -79,6 +111,23 @@ export type InferMergedParentOutputSchemaInput<T> =
         MergedOutputSchemaInput,
         undefined
       >
+    : never;
+
+export type TInferCtxInput<T> =
+  T extends TRunnableSafeFn<
+    any,
+    infer TCtxInput,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TCtxInput
     : never;
 
 /*
@@ -104,13 +153,10 @@ export type TSafeFnUnparsedInput = [unknown] | [];
  * @param TFallback the fallback type if the schema is undefined
  * @returns the output type of the schema if it is defined, otherwise `TFallback`
  */
-export type TSchemaInputOrFallback<TSchema extends TSafeFnInput, TFallback> = [
-  TSchema,
-] extends [never]
-  ? TFallback
-  : TSchema extends z.ZodTypeAny
-    ? z.input<TSchema>
-    : TFallback;
+export type TSchemaInputOrFallback<
+  TSchema extends TSafeFnInput,
+  TFallback,
+> = TSchema extends z.ZodTypeAny ? z.input<TSchema> : TFallback;
 
 /**
  * @param TSchema a Zod schema or undefined
@@ -120,11 +166,7 @@ export type TSchemaInputOrFallback<TSchema extends TSafeFnInput, TFallback> = [
 export type TSchemaOutputOrFallback<
   TSchema extends TSafeFnOutput,
   TFallback,
-> = [TSchema] extends [never]
-  ? TFallback
-  : TSchema extends z.ZodTypeAny
-    ? z.output<TSchema>
-    : TFallback;
+> = TSchema extends z.ZodTypeAny ? z.output<TSchema> : TFallback;
 
 export type TSafeFnParseError<
   TSchemaInput extends AnyObject,
