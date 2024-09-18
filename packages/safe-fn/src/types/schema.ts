@@ -47,61 +47,39 @@ export type InferUnparsedInputTuple<T> =
     ? TUnparsed
     : never;
 
-export type InferMergedInputSchemaInput<T> = T extends
-  | RunnableSafeFn<
-      any,
-      any,
-      any,
-      infer MergedInputSchemaInput,
-      any,
-      any,
-      any,
-      any,
-      any
-    >
-  | RunnableSafeFn<
-      any,
-      any,
-      any,
-      infer MergedInputSchemaInput,
-      any,
-      any,
-      never,
-      any,
-      any
-    >
-  ? MergedInputSchemaInput
-  : never;
+export type InferMergedInputSchemaInput<T> =
+  T extends RunnableSafeFn<
+    any,
+    any,
+    any,
+    infer MergedInputSchemaInput,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? MergedInputSchemaInput
+    : never;
 
-export type InferMergedParentOutputSchemaInput<T> = T extends
-  | RunnableSafeFn<
-      any,
-      any,
-      any,
-      any,
-      infer TOutputSchema,
-      infer MergedOutputSchemaInput,
-      any,
-      any,
-      any
-    >
-  | RunnableSafeFn<
-      any,
-      any,
-      any,
-      any,
-      infer TOutputSchema,
-      infer MergedOutputSchemaInput,
-      never,
-      any,
-      any
-    >
-  ? TUnionIfNotT<
-      TSchemaInputOrFallback<TOutputSchema, undefined>,
-      MergedOutputSchemaInput,
-      undefined
-    >
-  : never;
+export type InferMergedParentOutputSchemaInput<T> =
+  T extends RunnableSafeFn<
+    any,
+    any,
+    any,
+    any,
+    infer TOutputSchema,
+    infer MergedOutputSchemaInput,
+    any,
+    any,
+    any
+  >
+    ? TUnionIfNotT<
+        TSchemaInputOrFallback<TOutputSchema, undefined>,
+        MergedOutputSchemaInput,
+        undefined
+      >
+    : never;
 
 /*
 ################################
