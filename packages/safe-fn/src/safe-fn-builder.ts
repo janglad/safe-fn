@@ -7,7 +7,7 @@ import { RunnableSafeFn, type AnyRunnableSafeFn } from "./runnable-safe-fn";
 import type {
   TSafeFnDefaultCatchHandler,
   TSafeFnDefaultCatchHandlerErr,
-} from "./types/error";
+} from "./types/catch-handler";
 import type {
   TSafeFnDefaultHandlerFn,
   TSafeFnHandlerArgs,
@@ -15,27 +15,41 @@ import type {
 } from "./types/handler";
 import type { TSafeFnInternals } from "./types/internals";
 import type {
-  InferUnparsedInput,
+  InferMergedInputSchemaInput,
+  InferMergedParentOutputSchemaInput,
+  InferUnparsedInputTuple,
   TSafeFnInput,
+  TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
 } from "./types/schema";
 
-import type { TMaybePromise, TPrettify, TUnionIfNotT } from "./types/util";
+import type { TBuildMergedHandlersErrs } from "./types/run";
+import type {
+  AnyObject,
+  TIntersectIfNotT,
+  TMaybePromise,
+  TODO,
+  TPrettify,
+} from "./types/util";
 
 export const createSafeFn = () => {
   return SafeFnBuilder.new();
 };
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
+  TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
+  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
-  TUnparsedInput,
+  TMergedParentOutputSchemaInput extends AnyObject | undefined,
+  TUnparsedInput extends TSafeFnUnparsedInput,
 > {
   readonly _internals: TSafeFnInternals<
     TParent,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
+    any,
     TSafeFnDefaultCatchHandlerErr
   >;
 
@@ -45,6 +59,7 @@ export class SafeFnBuilder<
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
+      any,
       TSafeFnDefaultCatchHandlerErr
     >,
   ) {
@@ -58,7 +73,15 @@ export class SafeFnBuilder<
 ||                            ||
 ################################
 */
-  static new(): SafeFnBuilder<undefined, undefined, undefined, never> {
+  static new(): SafeFnBuilder<
+    undefined,
+    Result<never, never>,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    []
+  > {
     return new SafeFnBuilder({
       parent: undefined,
       inputSchema: undefined,
@@ -83,12 +106,15 @@ export class SafeFnBuilder<
     parent: TNewParent,
   ): SafeFnBuilder<
     TNewParent,
+    TBuildMergedHandlersErrs<TNewParent>,
     TInputSchema,
+    InferMergedInputSchemaInput<TNewParent>,
     TOutputSchema,
-    InferUnparsedInput<TNewParent>
+    InferMergedParentOutputSchemaInput<TNewParent>,
+    InferUnparsedInputTuple<TNewParent>
   > {
     return new SafeFnBuilder({
-      ...this._internals,
+      ...(this._internals as TODO),
       parent: parent as any,
     }) as any;
   }
@@ -98,46 +124,79 @@ export class SafeFnBuilder<
   ): Omit<
     SafeFnBuilder<
       TParent,
+      TParentMergedHandlerErrs,
       TNewInputSchema,
+      TIntersectIfNotT<
+        TMergedInputSchemaInput,
+        z.input<TNewInputSchema>,
+        undefined
+      >,
       TOutputSchema,
-      TUnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>
+      TMergedParentOutputSchemaInput,
+      [
+        TUnparsedInput extends []
+          ? z.input<TNewInputSchema>
+          : TUnparsedInput[0] & z.input<TNewInputSchema>,
+      ]
     >,
     "input" | "unparsedInput"
   > {
     return new SafeFnBuilder({
-      ...this._internals,
-      inputSchema: schema,
-    } as any);
+      ...(this._internals as TODO),
+      inputSchema: schema as TODO,
+    } as any) as TODO;
   }
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
   unparsedInput<TNewUnparsedInput>(): Omit<
     SafeFnBuilder<
       TParent,
+      TParentMergedHandlerErrs,
       TInputSchema,
+      TMergedInputSchemaInput,
       TOutputSchema,
-      TUnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
+      TMergedParentOutputSchemaInput,
+      [
+        TUnparsedInput extends []
+          ? TNewUnparsedInput
+          : TUnparsedInput[0] & TNewUnparsedInput,
+      ]
     >,
     "input" | "unparsedInput"
   > {
     return this as unknown as SafeFnBuilder<
       TParent,
+      TParentMergedHandlerErrs,
       TInputSchema,
+      TMergedInputSchemaInput,
       TOutputSchema,
-      TUnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
+      TMergedParentOutputSchemaInput,
+      [
+        TUnparsedInput extends []
+          ? TNewUnparsedInput
+          : TUnparsedInput[0] & TNewUnparsedInput,
+      ]
     >;
   }
 
   output<TNewOutputSchema extends z.ZodTypeAny>(
     schema: TNewOutputSchema,
   ): Omit<
-    SafeFnBuilder<TParent, TInputSchema, TNewOutputSchema, TUnparsedInput>,
+    SafeFnBuilder<
+      TParent,
+      TParentMergedHandlerErrs,
+      TInputSchema,
+      TMergedInputSchemaInput,
+      TNewOutputSchema,
+      TMergedParentOutputSchemaInput,
+      TUnparsedInput
+    >,
     "output"
   > {
     return new SafeFnBuilder({
       ...this._internals,
-      outputSchema: schema,
-    } as any);
+      outputSchema: schema as TODO,
+    } as any) as TODO;
   }
 
   handler<TNewHandlerResult extends TSafeFnHandlerReturn<TOutputSchema>>(
@@ -148,8 +207,11 @@ export class SafeFnBuilder<
     ) => TMaybePromise<TNewHandlerResult>,
   ): RunnableSafeFn<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     Awaited<TNewHandlerResult>,
     TSafeFnDefaultCatchHandlerErr
@@ -158,14 +220,14 @@ export class SafeFnBuilder<
       {
         ...this._internals,
         handler,
-      },
+      } as TODO,
       {
         onStart: undefined,
         onSuccess: undefined,
         onError: undefined,
         onComplete: undefined,
-      },
-    );
+      } as TODO,
+    ) as TODO;
   }
 
   safeHandler<
@@ -182,8 +244,11 @@ export class SafeFnBuilder<
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): RunnableSafeFn<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     // YieldErr can be never if the generator never yields an error, [] cause distribution
     [YieldErr] extends [never]
@@ -203,7 +268,7 @@ export class SafeFnBuilder<
       {
         ...this._internals,
         handler,
-      },
+      } as TODO,
       {
         onStart: undefined,
         onSuccess: undefined,

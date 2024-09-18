@@ -57,7 +57,7 @@ describe("safe-fn-builder", () => {
       const builder = createSafeFn();
       const res = builder._internals.handler(undefined as TODO);
       expect(res).toBeErr();
-      // @ts-expect-error - Return not defined in builder type as .run can not be called anyway
+
       expect(res.error).toMatchObject({
         code: "NO_HANDLER",
       });
@@ -875,7 +875,7 @@ describe("parent", () => {
           parent as AnyRunnableSafeFn,
           handlerMock,
         );
-        // @ts-expect-error - cast to any so input is not compatible
+
         const res = await child.run();
 
         const args = handlerMock.mock.calls[0]![0];
@@ -945,8 +945,6 @@ describe("parent", () => {
             parent as AnyRunnableSafeFn,
             mockHandler,
           );
-
-          // @ts-expect-error - cast to any so input is not compatible
           const res = await child.run();
           test(`should pass error from ${parentName} to ${childName}`, () => {
             expect(res).toBeErr();

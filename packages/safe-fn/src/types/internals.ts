@@ -1,7 +1,7 @@
 import type { AnyRunnableSafeFn } from "../runnable-safe-fn";
-import type { TAnySafeFnCatchHandlerRes } from "./error";
+import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 import type { TSafeFnHandlerArgs, TSafeFnHandlerReturn } from "./handler";
-import type { TSafeFnInput } from "./schema";
+import type { TSafeFnInput, TSafeFnUnparsedInput } from "./schema";
 import type { TMaybePromise, TPrettify } from "./util";
 /*
 ################################
@@ -14,7 +14,8 @@ export interface TSafeFnInternals<
   in out TParent extends AnyRunnableSafeFn | undefined,
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnInput,
-  in out TUnparsedInput,
+  in out TUnparsedInput extends TSafeFnUnparsedInput,
+  in out THandlerReturn extends TSafeFnHandlerReturn<TOutputSchema>,
   in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > {
   parent: TParent;
@@ -22,7 +23,7 @@ export interface TSafeFnInternals<
   outputSchema: TOutputSchema;
   handler: (
     input: TPrettify<TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
-  ) => TMaybePromise<TSafeFnHandlerReturn<TOutputSchema>>;
+  ) => TMaybePromise<THandlerReturn>;
   uncaughtErrorHandler: (error: unknown) => TThrownHandlerRes;
 }
 

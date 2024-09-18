@@ -3,11 +3,11 @@ import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 import { type ActionResult } from "./result";
 import { createSafeFn } from "./safe-fn-builder";
+import type { TSafeFnDefaultCatchHandlerErr } from "./types/catch-handler";
 import type {
-  TSafeFnDefaultCatchHandlerErr,
   TSafeFnInputParseError,
   TSafeFnOutputParseError,
-} from "./types/error";
+} from "./types/schema";
 import type { TPrettify } from "./types/util";
 
 const schemaPrimitive = z.string();
@@ -35,7 +35,7 @@ type SchemaTransformedInput = z.input<typeof schemaTransformed>;
 type SchemaTransformedOutput = z.output<typeof schemaTransformed>;
 
 describe("SafeFnBuilder", () => {
-  describe("action", () => {
+  describe("handler", () => {
     const safeFnPrimitiveInput = createSafeFn().input(schemaPrimitive);
     const safeFnObjectInput = createSafeFn().input(schemaObject);
     const safeFnTransformedInput = createSafeFn().input(schemaTransformed);
@@ -117,21 +117,21 @@ describe("SafeFnBuilder", () => {
         });
       });
 
-      test("should type parsedInput as undefined, unparsed input as never when no input schema is provided", () => {
+      test("should type parsedInput as undefined and unparsedInput as undefined  when no input schema is provided", () => {
         safeFnNoInput.handler((input) => {
-          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<never>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<undefined>();
           expectTypeOf(input.input).toEqualTypeOf<undefined>();
           return ok(input);
         });
 
         safeFnNoInput.handler(async (input) => {
-          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<never>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<undefined>();
           expectTypeOf(input.input).toEqualTypeOf<undefined>();
           return ok(input);
         });
 
         safeFnNoInput.safeHandler(async function* (input) {
-          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<never>();
+          expectTypeOf(input.unsafeRawInput).toEqualTypeOf<undefined>();
           expectTypeOf(input.input).toEqualTypeOf<undefined>();
           return ok(input);
         });
@@ -306,11 +306,11 @@ describe("SafeFnBuilder", () => {
         });
       });
 
-      test("should type unparsedInput as never and parsedInput as undefined when no input schema is provided", () => {
+      test("should type unparsedInput as undefined and parsedInput as undefined when no input schema is provided", () => {
         const parent = createSafeFn().handler(() => ok(""));
         const child = createSafeFn().use(parent);
 
-        type ExpectedUnparsedInput = never;
+        type ExpectedUnparsedInput = undefined;
         type ExpectedParsedInput = undefined;
 
         child.handler((input) => {
@@ -936,6 +936,8 @@ describe("runnableSafeFn", () => {
         assert(!resAsync.isOk());
         assert(!resSafe.isOk());
 
+        resAsync.error.code;
+
         expectTypeOf(resSync.error).toEqualTypeOf<
           | TSafeFnDefaultCatchHandlerErr["error"]
           | {
@@ -1015,11 +1017,9 @@ describe("runnableSafeFn", () => {
           | TSafeFnDefaultCatchHandlerErr["error"]
           | {
               code: "INPUT_PARSING";
-              cause: z.ZodError<SchemaTransformedInput>;
-            }
-          | {
-              code: "INPUT_PARSING";
-              cause: z.ZodError<ChildSchemaInput>;
+              cause: z.ZodError<
+                TPrettify<SchemaTransformedInput & ChildSchemaInput>
+              >;
             };
 
         type ExpectedActionErrError =
@@ -1027,19 +1027,11 @@ describe("runnableSafeFn", () => {
           | {
               code: "INPUT_PARSING";
               cause: {
-                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
-                flattenedError: z.typeToFlattenedError<
-                  SchemaTransformedInput,
-                  string
+                formattedError: z.ZodFormattedError<
+                  TPrettify<SchemaTransformedInput & ChildSchemaInput>
                 >;
-              };
-            }
-          | {
-              code: "INPUT_PARSING";
-              cause: {
-                formattedError: z.ZodFormattedError<ChildSchemaInput>;
                 flattenedError: z.typeToFlattenedError<
-                  ChildSchemaInput,
+                  TPrettify<SchemaTransformedInput & ChildSchemaInput>,
                   string
                 >;
               };
@@ -1106,11 +1098,9 @@ describe("runnableSafeFn", () => {
           | TSafeFnDefaultCatchHandlerErr["error"]
           | {
               code: "INPUT_PARSING";
-              cause: z.ZodError<SchemaTransformedInput>;
-            }
-          | {
-              code: "INPUT_PARSING";
-              cause: z.ZodError<ChildSchemaInput>;
+              cause: z.ZodError<
+                TPrettify<SchemaTransformedInput & ChildSchemaInput>
+              >;
             };
 
         type ExpectedActionErrError =
@@ -1118,19 +1108,11 @@ describe("runnableSafeFn", () => {
           | {
               code: "INPUT_PARSING";
               cause: {
-                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
-                flattenedError: z.typeToFlattenedError<
-                  SchemaTransformedInput,
-                  string
+                formattedError: z.ZodFormattedError<
+                  TPrettify<SchemaTransformedInput & ChildSchemaInput>
                 >;
-              };
-            }
-          | {
-              code: "INPUT_PARSING";
-              cause: {
-                formattedError: z.ZodFormattedError<ChildSchemaInput>;
                 flattenedError: z.typeToFlattenedError<
-                  ChildSchemaInput,
+                  TPrettify<SchemaTransformedInput & ChildSchemaInput>,
                   string
                 >;
               };
@@ -1412,3 +1394,66 @@ describe("runnableSafeFn", () => {
     });
   });
 });
+
+const test1 = createSafeFn()
+  .input(
+    z.object({
+      test: z.string(),
+    }),
+  )
+  .output(
+    z.object({
+      one: z.string(),
+    }),
+  )
+  .handler(() =>
+    ok({
+      one: "1",
+    }),
+  );
+
+const schema = z.object({
+  test: z.string(),
+});
+
+const test2 = createSafeFn()
+  .use(test1)
+  .input(z.object({}))
+  .output(
+    z.object({
+      two: z.string(),
+    }),
+  )
+  .handler(() =>
+    ok({
+      two: "2",
+    }),
+  );
+
+const test3 = createSafeFn()
+  .use(test2)
+  .input(z.object({}))
+  .output(
+    z.object({
+      three: z.string(),
+    }),
+  )
+  .handler(() =>
+    ok({
+      three: "3",
+    }),
+  );
+
+const test4 = createSafeFn()
+  .use(test3)
+  .input(z.object({}))
+  .output(
+    z.object({
+      four: z.string(),
+    }),
+  )
+  .handler(() =>
+    ok({
+      four: "4",
+    }),
+  );

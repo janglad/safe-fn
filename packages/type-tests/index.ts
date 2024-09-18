@@ -49,7 +49,8 @@ const safeFn2 = createSafeFn()
   .safeHandler(async function* (args) {
     const age = new Date().getFullYear() - args.input.birthday.getFullYear();
     return ok({ fullName: args.ctxInput[0].firstName, age });
-  });
+  })
+  .onError(async (args) => {});
 
 const res2 = safeFn2.run({
   firstName: "John",
