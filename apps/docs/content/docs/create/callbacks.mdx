@@ -79,6 +79,7 @@ Starts execution after output parsing has completed if you defined a schema, oth
 - `unsafeRawInput`: the raw input passed when running your SafeFn. Keep in mind this can contain additional properties when using one SafeFn as the parent of another!
 - `input`: the results of parsing `unsafeRawInput` through your input schema if you defined one, otherwise `undefined`
 - `ctx`: the `Ok` value of your parent safe-fn if you defined one, otherwise undefined.
+- `ctxInput`: an array of all the parsed input of parent SafeFns.
 - `value`: the `Ok` value of the safe-fn this callback is defined on.
 
 ## `onError()`
@@ -108,6 +109,7 @@ Starts execution after the first encountered `Err` return while executing your S
 - `unsafeRawInput`: the raw input passed when running your SafeFn. Keep in mind this can contain additional properties when using one SafeFn as the parent of another!
 - `input`: the results of parsing `unsafeRawInput` through your input schema if you defined one and parsing was successful, otherwise `undefined`.
 - `ctx`: the `Ok` value of your parent safe-fn if you defined one and execution was successful, otherwise undefined
+- `ctxInput`: an array of all the parsed input of parent SafeFns. (Note this is not properly typed yet, the value of this depends on where your function errors)
 - `error`: the `Err` error that caused your safe-fn to fail.
 
 ## `onComplete()`
@@ -138,4 +140,6 @@ Starts execution after either `onSuccess()` or `onError()` is **called** (not fi
 - `unsafeRawInput`: the raw input passed when running your SafeFn. Keep in mind this can contain additional properties when using one SafeFn as the parent of another!
 - `input`: the results of parsing `unsafeRawInput` through your input schema if you defined one and parsing was successful, otherwise `undefined`.
 - `ctx`: the `Ok` value of your parent safe-fn if you defined one and execution was successful, otherwise undefined
+- `ctxInput`: an array of all the parsed input of parent SafeFns. (Note this is not properly typed yet for the error case, the value of this depends on where your function errors)
+
 - `result`: a `Result<T,E>` with either the `Ok` value of the safe-fn this callback was defined on if execution was successful, or the `Err` error.

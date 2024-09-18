@@ -2,6 +2,13 @@
 title: Handler functions
 ---
 
+SafeFn has two types of handler functions, `handler()` and `safeHandler()`. These both take in an object with the following properties:
+
+- `args.input`: The result of parsing the input schema.
+- `args.unsafeRawInput`: The unparsed input of your function.
+- `args.ctx`: The `Ok` return value of the parent handler function or undefined if no parent handler function is set.
+- `args.ctxInput`: An array of all the parsed input of the parent handler functions. This could be handy in a pinch, altho ideally you'd just use the `ctx` property to pass the actual data you want.
+
 ### Handler
 
 `handler()` takes in a function that will be called when your SafeFn is executed. This function should return a `Result<TData,TError>` or `Promise<Result<TData,TError>>`.
@@ -21,15 +28,9 @@ const mySafeFunction = SafeFn.new()
   });
 ```
 
-the following arguments are passed to the handler function:
-
-- `args.input`: The result of parsing the input schema.
-- `args.unsafeRawInput`: The unparsed input of your function.
-- `args.ctx`: The `Ok` return value of the parent handler function or undefined if no parent handler function is set.
-
 ### Safe Handler
 
-Instead of using `handler()`, you can also use `safeHandler()`. This offers the same functionality as NeverThrow's `safeTry()` and requires an async generation function.
+Instead of using `handler()`, you can also use `safeHandler()`. This offers the same functionality as NeverThrow's `safeTry()` and requires an async generator function.
 This is probably the route you want to take if the rest of your codebase is built with NeverThrow, as it allows ergonomic "return if error" handling.
 
 Consider the following example:

@@ -24,3 +24,5 @@ const getUserTodos = createSafeFn().use(authedFn). ...
 ```
 
 If `authedFn` returns an `Err` value, the error is returned and `getUserTodos` is not executed, as such the `Err` type of `getUserTodos` is expanded to include the error type of `authedFn`.
+
+Chaining SafeFns also exposes additional properties to your handler function and callbacks, see the documentation for these for more info.
