@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { AnyRunnableSafeFn, RunnableSafeFn } from "../runnable-safe-fn";
+import type { TUnionIfNotT } from "./util";
 
 /*
 ################################
@@ -60,12 +61,12 @@ export type InferMergedInputSchemaInput<T> = T extends
   ? MergedInputSchemaInput
   : never;
 
-export type InferMergedOutputSchemaInput<T> = T extends
+export type InferMergedParentOutputSchemaInput<T> = T extends
   | RunnableSafeFn<
       any,
       any,
       any,
-      any,
+      infer TOutputSchema,
       infer MergedOutputSchemaInput,
       any,
       any,
@@ -75,13 +76,17 @@ export type InferMergedOutputSchemaInput<T> = T extends
       any,
       any,
       any,
-      any,
+      infer TOutputSchema,
       infer MergedOutputSchemaInput,
       never,
       any,
       any
     >
-  ? MergedOutputSchemaInput
+  ? TUnionIfNotT<
+      TSchemaInputOrFallback<TOutputSchema, undefined>,
+      MergedOutputSchemaInput,
+      undefined
+    >
   : never;
 
 /*

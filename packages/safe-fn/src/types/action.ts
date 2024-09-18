@@ -54,7 +54,7 @@ export type InferSafeFnActionError<T extends TAnySafeFnAction> =
 ################################
 */
 
-export type TAnySafeFnAction = TSafeFnAction<any, any, any, any, any, any>;
+export type TAnySafeFnAction = TSafeFnAction<any, any, any, any, any, any, any>;
 
 /**
  * @param TUnparsedInput the unparsed input type. Either inferred from TInputSchema or provided by `unparsedInput<>()`
@@ -67,6 +67,7 @@ export type TSafeFnActionReturn<
   in out TParent extends AnyRunnableSafeFn | undefined,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
+  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > = Promise<
@@ -75,6 +76,7 @@ export type TSafeFnActionReturn<
       TParent,
       TMergedInputSchemaInput,
       TOutputSchema,
+      TMergedParentOutputSchemaInput,
       THandlerRes,
       TCatchHandlerRes,
       true
@@ -85,6 +87,7 @@ export type TSafeFnAction<
   in out TParent extends AnyRunnableSafeFn | undefined,
   in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
+  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput,
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
@@ -94,6 +97,7 @@ export type TSafeFnAction<
   TParent,
   TMergedInputSchemaInput,
   TOutputSchema,
+  TMergedParentOutputSchemaInput,
   THandlerRes,
   TCatchHandlerRes
 >;

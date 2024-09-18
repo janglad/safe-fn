@@ -73,6 +73,7 @@ export class RunnableSafeFn<
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     THandlerRes,
     TThrownHandlerRes
@@ -91,6 +92,7 @@ export class RunnableSafeFn<
       TInputSchema,
       TMergedInputSchemaInput,
       TOutputSchema,
+      TMergedParentOutputSchemaInput,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes
@@ -104,6 +106,7 @@ export class RunnableSafeFn<
     TParent,
     TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     THandlerRes,
     TThrownHandlerRes
@@ -166,6 +169,8 @@ export class RunnableSafeFn<
       TParent,
       TInputSchema,
       TMergedInputSchemaInput,
+      TOutputSchema,
+      TMergedParentOutputSchemaInput,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes
@@ -182,6 +187,7 @@ export class RunnableSafeFn<
       TInputSchema,
       TMergedInputSchemaInput,
       TOutputSchema,
+      TMergedParentOutputSchemaInput,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes
@@ -206,6 +212,7 @@ export class RunnableSafeFn<
     TParent,
     TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     THandlerRes,
     TThrownHandlerRes,
     false
@@ -297,6 +304,7 @@ export class RunnableSafeFn<
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     THandlerRes,
     TThrownHandlerRes,
@@ -325,6 +333,7 @@ export class RunnableSafeFn<
       TInputSchema,
       TMergedInputSchemaInput,
       TOutputSchema,
+      TMergedParentOutputSchemaInput,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes,
@@ -335,6 +344,7 @@ export class RunnableSafeFn<
       TInputSchema,
       TMergedInputSchemaInput,
       TOutputSchema,
+      TMergedParentOutputSchemaInput,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes,
@@ -362,6 +372,7 @@ export class RunnableSafeFn<
                           TParent,
                           TMergedInputSchemaInput,
                           TOutputSchema,
+                          TMergedParentOutputSchemaInput,
                           THandlerRes,
                           TThrownHandlerRes,
                           TAsAction
@@ -471,6 +482,7 @@ export class RunnableSafeFn<
       TInputSchema,
       TMergedInputSchemaInput,
       TOutputSchema,
+      TMergedParentOutputSchemaInput,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes,
@@ -513,6 +525,7 @@ export class RunnableSafeFn<
     TParent,
     TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     THandlerRes,
     TThrownHandlerRes
   > {

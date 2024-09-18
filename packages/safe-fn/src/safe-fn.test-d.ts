@@ -1394,3 +1394,57 @@ describe("runnableSafeFn", () => {
     });
   });
 });
+
+const test1 = createSafeFn()
+  .input(z.object({}))
+  .output(
+    z.object({
+      one: z.string(),
+    }),
+  )
+  .handler(() =>
+    ok({
+      one: "1",
+    }),
+  );
+const test2 = createSafeFn()
+  .use(test1)
+  .input(z.object({}))
+  .output(
+    z.object({
+      two: z.string(),
+    }),
+  )
+  .handler(() =>
+    ok({
+      two: "2",
+    }),
+  );
+
+const test3 = createSafeFn()
+  .use(test2)
+  .input(z.object({}))
+  .output(
+    z.object({
+      three: z.string(),
+    }),
+  )
+  .handler(() =>
+    ok({
+      three: "3",
+    }),
+  );
+
+const test4 = createSafeFn()
+  .use(test3)
+  .input(z.object({}))
+  .output(
+    z.object({
+      four: z.string(),
+    }),
+  )
+  .handler(() =>
+    ok({
+      four: "4",
+    }),
+  );

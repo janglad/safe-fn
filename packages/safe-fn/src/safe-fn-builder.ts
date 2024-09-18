@@ -16,7 +16,7 @@ import type {
 import type { TSafeFnInternals } from "./types/internals";
 import type {
   InferMergedInputSchemaInput,
-  InferMergedOutputSchemaInput,
+  InferMergedParentOutputSchemaInput,
   InferUnparsedInput,
   TSafeFnInput,
   TSchemaInputOrFallback,
@@ -103,7 +103,7 @@ export class SafeFnBuilder<
     TInputSchema,
     InferMergedInputSchemaInput<TNewParent>,
     TOutputSchema,
-    InferMergedOutputSchemaInput<TNewParent>,
+    InferMergedParentOutputSchemaInput<TNewParent>,
     InferUnparsedInput<TNewParent>
   > {
     return new SafeFnBuilder({
