@@ -37,3 +37,4 @@ export type TUnionIfNotT<A, B, T> = [A] extends [T]
 export type TToTuple<T> = [T] extends [never] ? [] : [T];
 
 export type TIsNever<T> = [T] extends [never] ? true : false;
+export type AnyObject = Record<PropertyKey, unknown>;

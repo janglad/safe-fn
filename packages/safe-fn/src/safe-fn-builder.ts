@@ -15,12 +15,15 @@ import type {
 } from "./types/handler";
 import type { TSafeFnInternals } from "./types/internals";
 import type {
+  InferMergedInputSchemaInput,
+  InferMergedOutputSchemaInput,
   InferUnparsedInput,
   TSafeFnInput,
   TSchemaInputOrFallback,
 } from "./types/schema";
 
 import type {
+  AnyObject,
   TMaybePromise,
   TODO,
   TPrettify,
@@ -33,7 +36,9 @@ export const createSafeFn = () => {
 export class SafeFnBuilder<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends TSafeFnInput,
+  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
+  TMergedOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput,
 > {
   readonly _internals: TSafeFnInternals<
@@ -63,7 +68,14 @@ export class SafeFnBuilder<
 ||                            ||
 ################################
 */
-  static new(): SafeFnBuilder<undefined, undefined, undefined, never> {
+  static new(): SafeFnBuilder<
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    never
+  > {
     return new SafeFnBuilder({
       parent: undefined,
       inputSchema: undefined,
@@ -89,7 +101,9 @@ export class SafeFnBuilder<
   ): SafeFnBuilder<
     TNewParent,
     TInputSchema,
+    InferMergedInputSchemaInput<TNewParent>,
     TOutputSchema,
+    InferMergedOutputSchemaInput<TNewParent>,
     InferUnparsedInput<TNewParent>
   > {
     return new SafeFnBuilder({
@@ -104,7 +118,13 @@ export class SafeFnBuilder<
     SafeFnBuilder<
       TParent,
       TNewInputSchema,
+      TUnionIfNotT<
+        TMergedInputSchemaInput,
+        z.input<TNewInputSchema>,
+        undefined
+      >,
       TOutputSchema,
+      TMergedOutputSchemaInput,
       TUnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>
     >,
     "input" | "unparsedInput"
@@ -120,7 +140,9 @@ export class SafeFnBuilder<
     SafeFnBuilder<
       TParent,
       TInputSchema,
+      TMergedInputSchemaInput,
       TOutputSchema,
+      TMergedOutputSchemaInput,
       TUnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
     >,
     "input" | "unparsedInput"
@@ -128,7 +150,9 @@ export class SafeFnBuilder<
     return this as unknown as SafeFnBuilder<
       TParent,
       TInputSchema,
+      TMergedInputSchemaInput,
       TOutputSchema,
+      TMergedOutputSchemaInput,
       TUnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
     >;
   }
@@ -136,7 +160,18 @@ export class SafeFnBuilder<
   output<TNewOutputSchema extends z.ZodTypeAny>(
     schema: TNewOutputSchema,
   ): Omit<
-    SafeFnBuilder<TParent, TInputSchema, TNewOutputSchema, TUnparsedInput>,
+    SafeFnBuilder<
+      TParent,
+      TInputSchema,
+      TMergedInputSchemaInput,
+      TNewOutputSchema,
+      TUnionIfNotT<
+        TMergedOutputSchemaInput,
+        z.input<TNewOutputSchema>,
+        undefined
+      >,
+      TUnparsedInput
+    >,
     "output"
   > {
     return new SafeFnBuilder({
@@ -154,7 +189,9 @@ export class SafeFnBuilder<
   ): RunnableSafeFn<
     TParent,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedOutputSchemaInput,
     TUnparsedInput,
     Awaited<TNewHandlerResult>,
     TSafeFnDefaultCatchHandlerErr
@@ -188,7 +225,9 @@ export class SafeFnBuilder<
   ): RunnableSafeFn<
     TParent,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedOutputSchemaInput,
     TUnparsedInput,
     // YieldErr can be never if the generator never yields an error, [] cause distribution
     [YieldErr] extends [never]

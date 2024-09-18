@@ -17,7 +17,9 @@ export type TInferSafeFnCallbacks<T> =
   T extends RunnableSafeFn<
     infer TParent,
     infer TInputSchema,
+    infer TMergedInputSchemaInput,
     infer TOutputSchema,
+    infer TMergedOutputSchemaInput,
     infer TUnparsedInput,
     infer THandlerRes,
     infer TCatchHandlerRes

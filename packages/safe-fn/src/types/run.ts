@@ -62,7 +62,9 @@ export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
   T extends RunnableSafeFn<
     infer TParent,
     infer TInputSchema,
+    infer TMergedInputSchemaInput,
     infer TOutputSchema,
+    infer TMergedOutputSchemaInput,
     infer TUnparsedInput,
     infer THandlerRes,
     infer TThrownHandlerRes
@@ -158,11 +160,15 @@ type ParentHandlerCatchErrs<TParent extends AnyRunnableSafeFn | undefined> =
         any,
         any,
         any,
+        any,
+        any,
         infer THandlerRes,
         infer TThrownHandlerRes
       >
     | RunnableSafeFn<
         infer TParentParent,
+        any,
+        any,
         any,
         any,
         never,

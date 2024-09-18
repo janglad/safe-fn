@@ -37,7 +37,7 @@ import type {
   TSafeFnOnSuccess,
 } from "./types/callbacks";
 import type { TAnySafeFnHandlerRes } from "./types/handler";
-import type { TODO } from "./types/util";
+import type { AnyObject, TODO } from "./types/util";
 import {
   isFrameworkError,
   mapZodError,
@@ -47,13 +47,15 @@ import {
 } from "./util";
 
 export type AnyRunnableSafeFn =
-  | RunnableSafeFn<any, any, any, any, any, any>
-  | RunnableSafeFn<any, any, any, never, any, any>;
+  | RunnableSafeFn<any, any, any, any, any, any, any, any>
+  | RunnableSafeFn<any, any, any, any, any, never, any, any>;
 
 export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends TSafeFnInput,
+  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
+  TMergedOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput,
   THandlerRes extends TAnySafeFnHandlerRes,
   TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
@@ -121,7 +123,9 @@ export class RunnableSafeFn<
   ): RunnableSafeFn<
     TParent,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedOutputSchemaInput,
     TUnparsedInput,
     THandlerRes,
     TNewThrownHandlerRes

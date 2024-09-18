@@ -32,8 +32,36 @@ export type InferOutputSchema<T> = T extends AnyRunnableSafeFn
  * @returns the unparsed input of the safe function
  */
 export type InferUnparsedInput<T> =
-  T extends RunnableSafeFn<any, any, any, infer TUnparsed, any, any>
+  T extends RunnableSafeFn<any, any, any, any, any, infer TUnparsed, any, any>
     ? TUnparsed
+    : never;
+
+export type InferMergedInputSchemaInput<T> =
+  T extends RunnableSafeFn<
+    any,
+    any,
+    infer MergedInputSchemaInput,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? MergedInputSchemaInput
+    : never;
+
+export type InferMergedOutputSchemaInput<T> =
+  T extends RunnableSafeFn<
+    any,
+    any,
+    any,
+    any,
+    infer MergedOutputSchemaInput,
+    any,
+    any,
+    any
+  >
+    ? MergedOutputSchemaInput
     : never;
 
 /*
