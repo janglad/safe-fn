@@ -1,0 +1,28 @@
+---
+title: Chaining
+---
+
+You can chain SafeFn instances together by using `.use()`.
+
+```ts
+const authedFn = createSafeFn()
+  .safeHandler(async () => {
+    const user = await getUser();
+    if (!user) {
+      return err({
+        code: "UNAUTHORIZED",
+      });
+      return user;
+    }
+  })
+  .catch((e) => ({
+    code: "AUTH_ERROR",
+    cause: e,
+  }));
+
+const getUserTodos = createSafeFn().use(authedFn). ...
+```
+
+If `authedFn` returns an `Err` value, the error is returned and `getUserTodos` is not executed, as such the `Err` type of `getUserTodos` is expanded to include the error type of `authedFn`.
+
+Chaining SafeFns also exposes additional properties to your handler function and callbacks, see the documentation for these for more info.

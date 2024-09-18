@@ -1,0 +1,156 @@
+---
+title: Input and Output
+---
+
+### Input schema
+
+You can set an input schema for your SafeFn by using `input()`. This takes in a Zod schema and will type the arguments for your handler function as well as the required input to execute the SafeFn.
+
+```ts
+const mySafeFunction = SafeFn.new()
+  .input(z.object({ firstName: z.string(), lastName: z.string() }))
+  .handler((args) => {
+    /*        ^ ?
+      { input: { firstName: string; lastName: string };
+        unsafeRawInput: { firstName: string; lastName: string }};
+        ...
+     */
+    return ok({
+      fullName: `${args.input.firstName} ${args.input.lastName}`,
+    });
+  });
+```
+
+When parsing is not successful, your handler function is not called and the error is returned. As such, the following types are added to the return type of the function:
+
+- when using `run()`
+
+```ts
+ResultAsync<{
+  never,
+  {
+    code: "INPUT_PARSING";
+    cause: z.ZodError<{
+      firstName: string;
+    lastName: string;
+  }>;
+  }
+}>;
+```
+
+- when using `createAction()()` (full errors are stripped here as classes can not be sent via a Server Action and stack traces should not be shipped to the client)
+
+```ts
+ActionResult<
+  never,
+  {
+    code: "INPUT_PARSING";
+    cause: {
+      formattedError: z.ZodFormattedError<{
+        firstName: string;
+        lastName: string;
+      }>;
+      flattenedError: z.typeToFlattenedError<
+        {
+          firstName: string;
+          lastName: string;
+        },
+        string
+      >;
+    };
+  }
+>;
+```
+
+{/* TODO: link error handling. Also look into how this is actually handled again lol */}
+
+<Callout type="warn">
+  Other than the expected parse errors, Zod can also throw when using features
+  like `coerce` or passing functions to `transform()`. These will be caught and
+  passed to your uncaught error handler using `catch()`.
+</Callout>
+
+### Unparsed input
+
+Unparsed input is the type of the input that is needed to execute your SafeFn and is passed as an argument to your handler function. When using an input schema, this type is inferred.
+If you're not doing that you can manually set it by passing it as a generic to `unparsedInput<T>()`;
+
+<Callout type="warn">
+  While this adds type safety, it's highly recommended to use an input schema if
+  your function will be exposed as a Server Action or regular API endpoint as
+  types aren't checked at runtime.
+</Callout>
+
+```ts
+const mySafeFunction = SafeFn.new()
+  .unparsedInput<{ firstName: string; lastName: string }>()
+  .output(z.object({ fullName: z.string() }))
+  .handler((args) => {
+    /*        ^ ?
+      { input: undefined;
+        unsafeRawInput: { firstName: string; lastName: string }};
+        ...
+     */
+    return ok({
+      fullName: `${args.unsafeRawInput.firstName} ${args.unsafeRawInput.lastName}`,
+    });
+  });
+```
+
+### Output schema
+
+You can set an output schema for your SafeFn by using `output()`. This takes in a Zod schema and will type the return type of your handler function as well as the output of the SafeFn.
+
+```ts
+const mySafeFunction = SafeFn.new()
+  .input(z.object({ firstName: z.string(), lastName: z.string() }))
+  .output(z.object({ fullName: z.string() }))
+  .handler((args) => {
+    return ok({
+      fullName: `${args.input.firstName} ${args.input.lastName}`,
+    });
+  });
+```
+
+<Callout type="info">
+  When your handler returns an `Err`, output parsing is skipped. If your handler
+  can only return an `Err` result, the possible error types from the output
+  schema are omitted from the return type.
+</Callout>
+
+When output parsing is not successful, an `Err` is returned. The following types are added to the return type:
+
+- when using `run()`
+
+```ts
+ResultAsync<{
+  never,
+  {
+    code: "OUTPUT_PARSING";
+    cause: z.ZodError<{ fullName: string }>;
+  };
+}>;
+```
+
+- when using `createAction()()` (full errors are stripped here as classes can not be sent via a Server Action and stack traces should not be shipped to the client)
+
+```ts
+ActionResult<
+  never,
+  {
+    code: "OUTPUT_PARSING";
+    cause: {
+      formattedError: z.ZodFormattedError<{ fullName: string }>;
+      flattenedError: z.typeToFlattenedError<{ fullName: string }, string>;
+    };
+  }
+>;
+```
+
+{/* TODO: link error handling. Also look into how this is actually handled again lol */}
+
+<Callout type="warn">
+  Other than the expected parse errors, Zod can also throw when using features
+  like `coerce` or passing functions to `transform()`. These will be caught and
+  passed to your uncaught error handler using `catch()`.
+</Callout>

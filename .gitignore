@@ -9,7 +9,6 @@ sandbox.ts
 dist/
 .env
 
-
 #From Fumadocs
 # generated content
 .contentlayer
@@ -35,3 +34,5 @@ yarn-error.log*
 .env*.local
 .vercel
 next-env.d.ts
+
+ts-tracedir
