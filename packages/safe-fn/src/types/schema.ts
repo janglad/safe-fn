@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import type { AnyRunnableSafeFn, RunnableSafeFn } from "../runnable-safe-fn";
-import type { AnyObject, TUnionIfNotT } from "./util";
+import type { AnyObject, TIntersectIfNotT } from "./util";
 
 /*
 ################################
@@ -74,7 +74,7 @@ export type InferMergedParentOutputSchemaInput<T> =
     any,
     any
   >
-    ? TUnionIfNotT<
+    ? TIntersectIfNotT<
         TSchemaInputOrFallback<TOutputSchema, undefined>,
         MergedOutputSchemaInput,
         undefined

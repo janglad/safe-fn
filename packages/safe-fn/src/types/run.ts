@@ -17,7 +17,12 @@ import type {
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
 } from "../types/schema";
-import type { AnyObject, TODO, TPrettify, TUnionIfNotT } from "../types/util";
+import type {
+  AnyObject,
+  TIntersectIfNotT,
+  TODO,
+  TPrettify,
+} from "../types/util";
 import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 
 /*
@@ -197,7 +202,7 @@ type TOutputSchemaError<
         code: "OUTPUT_PARSING";
         cause: TSafeFnParseError<
           TPrettify<
-            TUnionIfNotT<
+            TIntersectIfNotT<
               z.input<TOutputSchema>,
               TMergedParentOutputSchemaInput,
               undefined

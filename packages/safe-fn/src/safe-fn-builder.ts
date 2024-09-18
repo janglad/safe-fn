@@ -26,10 +26,10 @@ import type {
 import type { BuildMergedHandlersErrs } from "./types/run";
 import type {
   AnyObject,
+  TIntersectIfNotT,
   TMaybePromise,
   TODO,
   TPrettify,
-  TUnionIfNotT,
 } from "./types/util";
 
 export const createSafeFn = () => {
@@ -126,7 +126,7 @@ export class SafeFnBuilder<
       TParent,
       TParentMergedHandlerErrs,
       TNewInputSchema,
-      TUnionIfNotT<
+      TIntersectIfNotT<
         TMergedInputSchemaInput,
         z.input<TNewInputSchema>,
         undefined

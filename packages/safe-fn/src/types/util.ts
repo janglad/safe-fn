@@ -22,7 +22,7 @@ export type TMaybePromise<T> = T | Promise<T>;
 /**
  * Return `A` & `B` if `A` is not `T` and `B` is not `T`, otherwise return `A` or `B` depending on if they are `T`.
  */
-export type TUnionIfNotT<A, B, T> = [A] extends [T]
+export type TIntersectIfNotT<A, B, T> = [A] extends [T]
   ? [B] extends [T]
     ? T
     : B
