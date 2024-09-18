@@ -1,4 +1,4 @@
-import type { AnyRunnableSafeFn } from "../runnable-safe-fn";
+import type { TAnyRunnableSafeFn } from "../runnable-safe-fn";
 import type { TSafeFnUnparsedInput } from "./schema";
 
 /*
@@ -36,4 +36,6 @@ export type FirstTupleElOrUndefined<T extends TSafeFnUnparsedInput> =
 
 export type TIsAny<T> = 0 extends 1 & T ? true : false;
 
-export type IsAnyRunnableSafeFn<T> = T extends AnyRunnableSafeFn ? true : false;
+export type IsAnyRunnableSafeFn<T> = T extends TAnyRunnableSafeFn
+  ? true
+  : false;

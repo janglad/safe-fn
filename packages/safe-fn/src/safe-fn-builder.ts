@@ -4,7 +4,7 @@ import { err, Result } from "neverthrow";
 import type { MergeResults } from "./result";
 import {
   RunnableSafeFn,
-  type AnyRunnableSafeFn,
+  type TAnyRunnableSafeFn,
   type TRunnableSafeFn,
   type TRunnableSafeFnPickArgs,
 } from "./runnable-safe-fn";
@@ -45,7 +45,6 @@ export const createSafeFn = () => {
 };
 
 type TSafeFnBuilder<
-  TParent extends AnyRunnableSafeFn | undefined,
   TCtx,
   TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -57,7 +56,6 @@ type TSafeFnBuilder<
   TOmitArgs extends string | number | symbol,
 > = Omit<
   SafeFnBuilder<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -72,7 +70,6 @@ type TSafeFnBuilder<
 >;
 
 export class SafeFnBuilder<
-  TParent extends AnyRunnableSafeFn | undefined,
   TCtx,
   TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -84,7 +81,6 @@ export class SafeFnBuilder<
   TOmitArgs extends string | number | symbol,
 > {
   readonly _internals: TSafeFnInternals<
-    TParent,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -96,7 +92,6 @@ export class SafeFnBuilder<
 
   protected constructor(
     internals: TSafeFnInternals<
-      TParent,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -117,7 +112,6 @@ export class SafeFnBuilder<
 ################################
 */
   static new(): TSafeFnBuilder<
-    undefined,
     undefined,
     [],
     Result<never, never>,
@@ -148,11 +142,10 @@ export class SafeFnBuilder<
     }) as any;
   }
 
-  use<TNewParent extends AnyRunnableSafeFn>(
+  use<TNewParent extends TAnyRunnableSafeFn>(
     parent: TNewParent,
   ): TSafeFnBuilder<
-    TNewParent,
-    InferSafeFnOkData<TNewParent, boolean>,
+    InferSafeFnOkData<TNewParent>,
     [
       ...TInferCtxInput<TNewParent>,
       TSchemaOutputOrFallback<InferInputSchema<TNewParent>, undefined>,
@@ -174,7 +167,6 @@ export class SafeFnBuilder<
   input<TNewInputSchema extends z.ZodTypeAny>(
     schema: TNewInputSchema,
   ): TSafeFnBuilder<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -201,7 +193,6 @@ export class SafeFnBuilder<
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
   unparsedInput<TNewUnparsedInput>(): TSafeFnBuilder<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -217,7 +208,6 @@ export class SafeFnBuilder<
     TOmitArgs | "unparsedInput"
   > {
     return this as unknown as SafeFnBuilder<
-      TParent,
       TCtx,
       TCtxInput,
       TParentMergedHandlerErrs,
@@ -237,7 +227,6 @@ export class SafeFnBuilder<
   output<TNewOutputSchema extends z.ZodTypeAny>(
     schema: TNewOutputSchema,
   ): TSafeFnBuilder<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -261,7 +250,6 @@ export class SafeFnBuilder<
       >,
     ) => TMaybePromise<TNewHandlerResult>,
   ): TRunnableSafeFn<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -301,7 +289,6 @@ export class SafeFnBuilder<
       >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): TRunnableSafeFn<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,

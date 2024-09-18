@@ -2,13 +2,12 @@ import { Err, type Result, type ResultAsync } from "neverthrow";
 import type { z } from "zod";
 import type {
   InferActionErrError,
-  InferActionOkData,
   InferAsyncErrError,
   InferAsyncOkData,
   InferErrError,
 } from "../result";
 import type {
-  AnyRunnableSafeFn,
+  TAnyRunnableSafeFn,
   TRunnableSafeFn,
   TRunnableSafeFnPickArgs,
 } from "../runnable-safe-fn";
@@ -50,7 +49,6 @@ export type InferSafeFnArgs<T> =
     any,
     any,
     any,
-    any,
     infer TUnparsedInput,
     any,
     any,
@@ -66,7 +64,6 @@ export type InferSafeFnArgs<T> =
  */
 export type InferSafeFnReturn<T, TAsAction extends boolean> =
   T extends TRunnableSafeFn<
-    any,
     any,
     any,
     infer TParentMergedHandlerErrs,
@@ -93,7 +90,6 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
 
 export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
   T extends TRunnableSafeFn<
-    any,
     infer TCtx,
     infer TCtxInput,
     infer TParentMergedHandlerErrs,
@@ -125,19 +121,29 @@ export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
  * @param T the runnable safe function
  * @returns the `.value` type of the returned `AsyncResult` assuming it's an `AsyncOk`.
  */
-export type InferSafeFnOkData<
-  T,
-  TAsAction extends boolean,
-> = TAsAction extends true
-  ? InferActionOkData<Awaited<InferSafeFnReturn<T, true>>>
-  : InferAsyncOkData<InferSafeFnReturn<T, false>>;
+export type InferSafeFnOkData<T> =
+  T extends TRunnableSafeFn<
+    any,
+    any,
+    any,
+    any,
+    any,
+    infer TOutputSchema,
+    any,
+    any,
+    infer THandlerRes,
+    any,
+    any
+  >
+    ? TSafeFnReturnData<TOutputSchema, THandlerRes>
+    : never;
 
 /**
  * @param T the runnable safe function
  * @returns the `.error` type of the returned `AsyncResult` assuming it's an `AsyncErr`.
  */
 export type InferSafeFnErrError<
-  T extends AnyRunnableSafeFn,
+  T extends TAnyRunnableSafeFn,
   TAsAction extends boolean,
 > = TAsAction extends true
   ? InferActionErrError<Awaited<InferSafeFnReturn<T, true>>>
@@ -200,14 +206,13 @@ export type TSafeFnReturnError<
     >
   | InferErrError<TParentMergedHandlerErrs>;
 
-export type TBuildMergedHandlersErrs<T extends AnyRunnableSafeFn> = Err<
+export type TBuildMergedHandlersErrs<T extends TAnyRunnableSafeFn> = Err<
   never,
   Thing<T>
 >;
 
 export type Thing<T> =
   T extends TRunnableSafeFn<
-    any,
     any,
     any,
     infer TParentMergedHandlerErrs,
@@ -228,7 +233,6 @@ export type Thing<T> =
 
 type TInferMergedHandlersErr<T> =
   T extends TRunnableSafeFn<
-    any,
     any,
     infer TCtxInput,
     infer TParentMergedHandlerErrs,

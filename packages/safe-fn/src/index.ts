@@ -10,7 +10,7 @@ import {
 } from "./result";
 import { createSafeFn } from "./safe-fn-builder";
 
-import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
+import type { TAnyRunnableSafeFn } from "./runnable-safe-fn";
 
 import type {
   InferSafeFnActionArgs,
@@ -38,7 +38,7 @@ export type {
   ActionResult,
   ActionResultToResult,
   ActionResultToResultAsync,
-  AnyRunnableSafeFn,
+  TAnyRunnableSafeFn as AnyRunnableSafeFn,
   TAnySafeFnAction as AnySafeFnAction,
   InferActionErrError,
   InferActionOkData,

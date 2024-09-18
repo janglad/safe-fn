@@ -1,7 +1,7 @@
 import { err, ok, type Result } from "neverthrow";
 import { assert, describe, expect, test, vi, type Mock } from "vitest";
 import { z, ZodError } from "zod";
-import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
+import type { TAnyRunnableSafeFn } from "./runnable-safe-fn";
 import { createSafeFn, SafeFnBuilder } from "./safe-fn-builder";
 import type { TInferSafeFnCallbacks } from "./types/callbacks";
 import type { TODO } from "./types/util";
@@ -849,17 +849,17 @@ describe("parent", () => {
   const children = [
     {
       name: "regular",
-      createSafeFn: (parent: AnyRunnableSafeFn, handlerMock: Mock) =>
+      createSafeFn: (parent: TAnyRunnableSafeFn, handlerMock: Mock) =>
         createSafeFn().use(parent).handler(handlerMock),
     },
     {
       name: "async",
-      createSafeFn: (parent: AnyRunnableSafeFn, handlerMock: Mock) =>
+      createSafeFn: (parent: TAnyRunnableSafeFn, handlerMock: Mock) =>
         createSafeFn().use(parent).handler(handlerMock),
     },
     {
       name: "generator",
-      createSafeFn: (parent: AnyRunnableSafeFn, handlerMock: Mock) =>
+      createSafeFn: (parent: TAnyRunnableSafeFn, handlerMock: Mock) =>
         createSafeFn()
           .use(parent)
           .safeHandler(async function* (args) {
@@ -874,7 +874,7 @@ describe("parent", () => {
         const parent = createParentSafeFn();
         const handlerMock = vi.fn().mockResolvedValue(ok(""));
         const child = createChildSafeFn(
-          parent as AnyRunnableSafeFn,
+          parent as TAnyRunnableSafeFn,
           handlerMock,
         );
 
@@ -917,19 +917,19 @@ describe("parent", () => {
   const childrenWithMocks = [
     {
       name: "regular",
-      createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
+      createSafeFn: (parent: TAnyRunnableSafeFn, mockHandler: Mock) =>
         createSafeFn().use(parent).handler(mockHandler),
     },
     {
       name: "async",
-      createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
+      createSafeFn: (parent: TAnyRunnableSafeFn, mockHandler: Mock) =>
         createSafeFn()
           .use(parent)
           .handler(async () => mockHandler()),
     },
     {
       name: "generator",
-      createSafeFn: (parent: AnyRunnableSafeFn, mockHandler: Mock) =>
+      createSafeFn: (parent: TAnyRunnableSafeFn, mockHandler: Mock) =>
         createSafeFn()
           .use(parent)
           .safeHandler(async function* () {
@@ -944,7 +944,7 @@ describe("parent", () => {
           const mockHandler = vi.fn().mockResolvedValue(ok(""));
           const parent = createParentSafeFn();
           const child = createChildSafeFn(
-            parent as AnyRunnableSafeFn,
+            parent as TAnyRunnableSafeFn,
             mockHandler,
           );
           const res = await child.run();

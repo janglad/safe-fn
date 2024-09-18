@@ -10,7 +10,6 @@ import {
 import type { TAnySafeFnCatchHandlerRes } from "./types/catch-handler";
 import type { TSafeFnInternals } from "./types/internals";
 import type {
-  TInferSafeFnInternalRunReturnData,
   TSafeFnInternalRunReturn,
   TSafeFnInternalRunReturnData,
   TSafeFnInternalRunReturnError,
@@ -48,8 +47,7 @@ import {
   throwFrameworkErrorOrVoid,
 } from "./util";
 
-export type AnyRunnableSafeFn = TRunnableSafeFn<
-  any,
+export type TAnyRunnableSafeFn = TRunnableSafeFn<
   any,
   any,
   any,
@@ -63,9 +61,22 @@ export type AnyRunnableSafeFn = TRunnableSafeFn<
   "run"
 >;
 
+type AnyRunnableSafeFn = RunnableSafeFn<
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+>;
+
 type InferRunnableSafeFn<T> =
   T extends TRunnableSafeFn<
-    infer TParent,
     infer TCtx,
     infer TCtxInput,
     infer TParentMergedHandlerErrs,
@@ -79,7 +90,6 @@ type InferRunnableSafeFn<T> =
     infer TPickArgs
   >
     ? RunnableSafeFn<
-        TParent,
         TCtx,
         TCtxInput,
         TParentMergedHandlerErrs,
@@ -104,7 +114,6 @@ export type TRunnableSafeFnPickArgs =
   | "createAction";
 
 export type TRunnableSafeFn<
-  TParent extends AnyRunnableSafeFn | undefined,
   TCtx,
   TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -120,7 +129,6 @@ export type TRunnableSafeFn<
   TPickArgs extends TRunnableSafeFnPickArgs,
 > = Pick<
   RunnableSafeFn<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -137,7 +145,6 @@ export type TRunnableSafeFn<
 >;
 
 export class RunnableSafeFn<
-  TParent extends AnyRunnableSafeFn | undefined,
   TCtx,
   TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -153,7 +160,6 @@ export class RunnableSafeFn<
   TPickArgs extends TRunnableSafeFnPickArgs,
 > {
   readonly _internals: TSafeFnInternals<
-    TParent,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -178,7 +184,6 @@ export class RunnableSafeFn<
 
   constructor(
     internals: TSafeFnInternals<
-      TParent,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -228,7 +233,6 @@ export class RunnableSafeFn<
   catch<TNewThrownHandlerRes extends TAnySafeFnCatchHandlerRes>(
     handler: (error: unknown) => TNewThrownHandlerRes,
   ): TRunnableSafeFn<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -253,7 +257,6 @@ export class RunnableSafeFn<
   onStart(
     onStartFn: TSafeFnOnStart<TUnparsedInput>,
   ): TRunnableSafeFn<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -281,7 +284,6 @@ export class RunnableSafeFn<
       THandlerRes
     >,
   ): TRunnableSafeFn<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -313,7 +315,6 @@ export class RunnableSafeFn<
       TThrownHandlerRes
     >,
   ): TRunnableSafeFn<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -345,7 +346,6 @@ export class RunnableSafeFn<
       TThrownHandlerRes
     >,
   ): TRunnableSafeFn<
-    TParent,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -480,8 +480,7 @@ export class RunnableSafeFn<
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;
     const handler = this._internals.handler;
-    const parent = this._internals
-      .parent as unknown as InferRunnableSafeFn<TParent>;
+    const parent = this._internals.parent as AnyRunnableSafeFn | undefined;
     const uncaughtErrorHandler = this._internals.uncaughtErrorHandler;
     const _parseOutput = this._parseOutput.bind(this);
     const _parseInput = this._parseInput.bind(this);
@@ -523,15 +522,9 @@ export class RunnableSafeFn<
       TAsAction
     >;
 
-    type ParentRes =
-      | TInferSafeFnInternalRunReturnData<TParent, TAsAction>
-      | undefined;
-
     const safeTryPromise: Promise<Result<InternalOk, InternalErr>> = safeTry(
       async function* () {
-        const parentRes:
-          | TInferSafeFnInternalRunReturnData<TParent, TAsAction>
-          | undefined =
+        const parentRes: any | undefined =
           parent === undefined
             ? undefined
             : yield* parent
