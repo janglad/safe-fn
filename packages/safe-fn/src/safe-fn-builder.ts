@@ -85,6 +85,7 @@ export class SafeFnBuilder<
 > {
   readonly _internals: TSafeFnInternals<
     TParent,
+    TCtx,
     TCtxInput,
     TInputSchema,
     TOutputSchema,
@@ -96,6 +97,7 @@ export class SafeFnBuilder<
   protected constructor(
     internals: TSafeFnInternals<
       TParent,
+      TCtx,
       TCtxInput,
       TInputSchema,
       TOutputSchema,
@@ -255,7 +257,7 @@ export class SafeFnBuilder<
   handler<TNewHandlerResult extends TSafeFnHandlerReturn<TOutputSchema>>(
     handler: (
       args: TPrettify<
-        TSafeFnHandlerArgs<TCtxInput, TInputSchema, TUnparsedInput, TParent>
+        TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
       >,
     ) => TMaybePromise<TNewHandlerResult>,
   ): TRunnableSafeFn<
@@ -295,7 +297,7 @@ export class SafeFnBuilder<
   >(
     fn: (
       args: TPrettify<
-        TSafeFnHandlerArgs<TCtxInput, TInputSchema, TUnparsedInput, TParent>
+        TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
       >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): TRunnableSafeFn<
@@ -317,7 +319,7 @@ export class SafeFnBuilder<
   > {
     const handler = async (
       args: TPrettify<
-        TSafeFnHandlerArgs<TCtxInput, TInputSchema, TUnparsedInput, TParent>
+        TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
       >,
     ) => {
       return (await fn(args).next()).value;

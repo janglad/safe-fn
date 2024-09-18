@@ -93,7 +93,7 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
 
 export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
   T extends TRunnableSafeFn<
-    infer TParent,
+    any,
     infer TCtx,
     infer TCtxInput,
     infer TParentMergedHandlerErrs,
@@ -107,7 +107,7 @@ export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
     TRunnableSafeFnPickArgs
   >
     ? TSafeFnInternalRunReturnData<
-        TParent,
+        TCtx,
         TCtxInput,
         TParentMergedHandlerErrs,
         TInputSchema,
@@ -207,15 +207,15 @@ export type TBuildMergedHandlersErrs<T extends AnyRunnableSafeFn> = Err<
 
 export type Thing<T> =
   T extends TRunnableSafeFn<
-    infer TParent,
-    infer TCtx,
-    infer TCtxInput,
+    any,
+    any,
+    any,
     infer TParentMergedHandlerErrs,
-    infer TInputSchema,
-    infer TMergedInputSchemaInput,
-    infer TOutputSchema,
-    infer TMergedParentOutputSchemaInput,
-    infer TUnparsedInput,
+    any,
+    any,
+    any,
+    any,
+    any,
     infer THandlerRes,
     infer TThrownHandlerRes,
     any
@@ -336,7 +336,7 @@ export type TSafeFnReturn<
 >;
 
 export type TSafeFnInternalRunReturn<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
   in out TCtxInput extends unknown[],
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
@@ -349,7 +349,7 @@ export type TSafeFnInternalRunReturn<
   in out TAsAction extends boolean,
 > = ResultAsync<
   TSafeFnInternalRunReturnData<
-    TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -362,7 +362,7 @@ export type TSafeFnInternalRunReturn<
     TAsAction
   >,
   TSafeFnInternalRunReturnError<
-    TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -377,7 +377,7 @@ export type TSafeFnInternalRunReturn<
 >;
 
 export interface TSafeFnInternalRunReturnData<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
   in out TCtxInput extends unknown[],
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
@@ -401,16 +401,13 @@ export interface TSafeFnInternalRunReturnData<
     >
   >;
   input: TSchemaOutputOrFallback<TInputSchema, undefined>;
-  // ctx: TParent extends AnyRunnableSafeFn
-  //   ? InferSafeFnOkData<TParent, TAsAction>
-  //   : undefined;
-  ctx: TODO;
+  ctx: TCtx;
   ctxInput: TCtxInput;
   unsafeRawInput: TUnparsedInput;
 }
 
 export interface TSafeFnInternalRunReturnError<
-  in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtx,
   in out TCtxInput extends unknown[],
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
@@ -435,11 +432,7 @@ export interface TSafeFnInternalRunReturnError<
   >;
   private: {
     input: TSchemaInputOrFallback<TInputSchema, undefined> | undefined;
-    ctx:
-      | (TParent extends AnyRunnableSafeFn
-          ? InferSafeFnOkData<TParent, TAsAction>
-          : undefined)
-      | undefined;
+    ctx: TCtx;
     ctxInput: TCtxInput | undefined;
     unsafeRawInput: TUnparsedInput;
     handlerRes: TODO;

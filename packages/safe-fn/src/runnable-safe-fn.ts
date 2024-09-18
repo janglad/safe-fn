@@ -154,6 +154,7 @@ export class RunnableSafeFn<
 > {
   readonly _internals: TSafeFnInternals<
     TParent,
+    TCtx,
     TCtxInput,
     TInputSchema,
     TOutputSchema,
@@ -163,7 +164,7 @@ export class RunnableSafeFn<
   >;
 
   readonly _callBacks: TSafeFnCallBacks<
-    TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -178,6 +179,7 @@ export class RunnableSafeFn<
   constructor(
     internals: TSafeFnInternals<
       TParent,
+      TCtx,
       TCtxInput,
       TInputSchema,
       TOutputSchema,
@@ -186,7 +188,7 @@ export class RunnableSafeFn<
       TThrownHandlerRes
     >,
     callBacks: TSafeFnCallBacks<
-      TParent,
+      TCtx,
       TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
@@ -271,7 +273,7 @@ export class RunnableSafeFn<
   }
   onSuccess(
     onSuccessFn: TSafeFnOnSuccess<
-      TParent,
+      TCtx,
       TCtxInput,
       TInputSchema,
       TOutputSchema,
@@ -299,7 +301,7 @@ export class RunnableSafeFn<
   }
   onError(
     onErrorFn: TSafeFnOnError<
-      TParent,
+      TCtx,
       TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
@@ -331,7 +333,7 @@ export class RunnableSafeFn<
   }
   onComplete(
     onCompleteFn: TSafeFnOnComplete<
-      TParent,
+      TCtx,
       TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
@@ -463,7 +465,7 @@ export class RunnableSafeFn<
     args: TSafeFnRunArgs<TUnparsedInput>[0],
     tAsAction: TAsAction,
   ): TSafeFnInternalRunReturn<
-    TParent,
+    TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
@@ -495,7 +497,7 @@ export class RunnableSafeFn<
           });
 
     type InternalOk = TSafeFnInternalRunReturnData<
-      TParent,
+      TCtx,
       TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
@@ -508,7 +510,7 @@ export class RunnableSafeFn<
       TAsAction
     >;
     type InternalErr = TSafeFnInternalRunReturnError<
-      TParent,
+      TCtx,
       TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
@@ -649,7 +651,7 @@ export class RunnableSafeFn<
     ) as TODO;
 
     const internalRes: TSafeFnInternalRunReturn<
-      TParent,
+      TCtx,
       TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
@@ -680,10 +682,10 @@ export class RunnableSafeFn<
       };
     }).andThen((res) => {
       return res;
-    });
+    }) as TODO;
 
     const withCallbacks = runCallbacks({
-      resultAsync: internalRes,
+      resultAsync: internalRes as TODO,
       asAction: tAsAction,
       callbacks: _callBacks,
       hotOnStartCallback: onStartCallback,
