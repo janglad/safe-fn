@@ -136,4 +136,4 @@ export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
         ]
       : [];
 
-type TIsAny<T> = 0 extends 1 & T ? true : false;
+export type TIsAny<T> = 0 extends 1 & T ? true : false;

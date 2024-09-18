@@ -35,3 +35,5 @@ export type TUnionIfNotT<A, B, T> = [A] extends [T]
  * @returns an empty tuple if the type is `never`, otherwise the type itself
  */
 export type TToTuple<T> = [T] extends [never] ? [] : [T];
+
+export type TIsNever<T> = [T] extends [never] ? true : false;

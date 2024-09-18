@@ -49,6 +49,7 @@ import {
 export type AnyRunnableSafeFn =
   | RunnableSafeFn<any, any, any, any, any, any>
   | RunnableSafeFn<any, any, any, never, any, any>;
+
 export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends TSafeFnInput,
@@ -129,15 +130,8 @@ export class RunnableSafeFn<
       {
         ...this._internals,
         uncaughtErrorHandler: handler,
-      },
-      this._callBacks as unknown as TSafeFnCallBacks<
-        TParent,
-        TInputSchema,
-        TOutputSchema,
-        TUnparsedInput,
-        THandlerRes,
-        TNewThrownHandlerRes
-      >,
+      } as TODO,
+      this._callBacks as TODO,
     );
   }
 
@@ -371,7 +365,7 @@ export class RunnableSafeFn<
                           e.private.input,
                         ] as TODO,
                         handlerRes: undefined,
-                      },
+                      } as TODO,
                     }) satisfies InternalErr,
                 )
                 .safeUnwrap()) as TInferSafeFnInternalRunReturnData<
@@ -386,14 +380,14 @@ export class RunnableSafeFn<
                 .mapErr(
                   (e) =>
                     ({
-                      public: e,
+                      public: e as TODO,
                       private: {
                         ctx: parentRes?.value,
                         ctxInput: parentRes?.ctxInput || [],
                         unsafeRawInput: args as TUnparsedInput,
                         input: undefined,
                         handlerRes: undefined,
-                      },
+                      } as TODO,
                     }) satisfies InternalErr,
                 )
                 .safeUnwrap();
@@ -405,7 +399,7 @@ export class RunnableSafeFn<
               unsafeRawInput: args as TODO,
               ctx: parentRes?.value,
               ctxInput: parentRes?.ctxInput || [],
-            });
+            } as TODO);
             if (!res) {
               // This should never happen, will cause Typescript to error out.
               throw new Error("Handler did not return a result");
@@ -424,7 +418,7 @@ export class RunnableSafeFn<
                   unsafeRawInput: args as TUnparsedInput,
                   handlerRes: undefined,
                 },
-              }) satisfies InternalErr,
+              }) as TODO satisfies InternalErr,
           )
           .safeUnwrap();
 
@@ -443,7 +437,7 @@ export class RunnableSafeFn<
                         handlerRes,
                         unsafeRawInput: args as TUnparsedInput,
                       },
-                    }) satisfies InternalErr,
+                    }) as TODO satisfies InternalErr,
                 )
                 .safeUnwrap();
 

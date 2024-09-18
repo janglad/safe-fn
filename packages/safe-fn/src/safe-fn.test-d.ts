@@ -936,6 +936,8 @@ describe("runnableSafeFn", () => {
         assert(!resAsync.isOk());
         assert(!resSafe.isOk());
 
+        resAsync.error.code;
+
         expectTypeOf(resSync.error).toEqualTypeOf<
           | TSafeFnDefaultCatchHandlerErr["error"]
           | {
@@ -1015,11 +1017,9 @@ describe("runnableSafeFn", () => {
           | TSafeFnDefaultCatchHandlerErr["error"]
           | {
               code: "INPUT_PARSING";
-              cause: z.ZodError<SchemaTransformedInput>;
-            }
-          | {
-              code: "INPUT_PARSING";
-              cause: z.ZodError<ChildSchemaInput>;
+              cause: z.ZodError<
+                TPrettify<SchemaTransformedInput & ChildSchemaInput>
+              >;
             };
 
         type ExpectedActionErrError =
@@ -1027,19 +1027,11 @@ describe("runnableSafeFn", () => {
           | {
               code: "INPUT_PARSING";
               cause: {
-                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
-                flattenedError: z.typeToFlattenedError<
-                  SchemaTransformedInput,
-                  string
+                formattedError: z.ZodFormattedError<
+                  TPrettify<SchemaTransformedInput & ChildSchemaInput>
                 >;
-              };
-            }
-          | {
-              code: "INPUT_PARSING";
-              cause: {
-                formattedError: z.ZodFormattedError<ChildSchemaInput>;
                 flattenedError: z.typeToFlattenedError<
-                  ChildSchemaInput,
+                  TPrettify<SchemaTransformedInput & ChildSchemaInput>,
                   string
                 >;
               };
@@ -1106,11 +1098,9 @@ describe("runnableSafeFn", () => {
           | TSafeFnDefaultCatchHandlerErr["error"]
           | {
               code: "INPUT_PARSING";
-              cause: z.ZodError<SchemaTransformedInput>;
-            }
-          | {
-              code: "INPUT_PARSING";
-              cause: z.ZodError<ChildSchemaInput>;
+              cause: z.ZodError<
+                TPrettify<SchemaTransformedInput & ChildSchemaInput>
+              >;
             };
 
         type ExpectedActionErrError =
@@ -1118,19 +1108,11 @@ describe("runnableSafeFn", () => {
           | {
               code: "INPUT_PARSING";
               cause: {
-                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
-                flattenedError: z.typeToFlattenedError<
-                  SchemaTransformedInput,
-                  string
+                formattedError: z.ZodFormattedError<
+                  TPrettify<SchemaTransformedInput & ChildSchemaInput>
                 >;
-              };
-            }
-          | {
-              code: "INPUT_PARSING";
-              cause: {
-                formattedError: z.ZodFormattedError<ChildSchemaInput>;
                 flattenedError: z.typeToFlattenedError<
-                  ChildSchemaInput,
+                  TPrettify<SchemaTransformedInput & ChildSchemaInput>,
                   string
                 >;
               };

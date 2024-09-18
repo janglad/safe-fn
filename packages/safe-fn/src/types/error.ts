@@ -51,6 +51,16 @@ export type TSafeFnParseError<
       flattenedError: z.typeToFlattenedError<z.input<TSchema>>;
     }
   : z.ZodError<z.input<TSchema>>;
+// Temp
+export type TSafeFnParseErrorNoZod<
+  TSchemaInput,
+  TAsAction extends boolean,
+> = TAsAction extends true
+  ? {
+      formattedError: z.ZodFormattedError<TSchemaInput>;
+      flattenedError: z.typeToFlattenedError<TSchemaInput>;
+    }
+  : z.ZodError<TSchemaInput>;
 
 export type TSafeFnInputParseError<
   TInputSchema extends TSafeFnInput,

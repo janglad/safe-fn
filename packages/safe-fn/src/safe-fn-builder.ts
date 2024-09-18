@@ -20,7 +20,12 @@ import type {
   TSchemaInputOrFallback,
 } from "./types/schema";
 
-import type { TMaybePromise, TPrettify, TUnionIfNotT } from "./types/util";
+import type {
+  TMaybePromise,
+  TODO,
+  TPrettify,
+  TUnionIfNotT,
+} from "./types/util";
 
 export const createSafeFn = () => {
   return SafeFnBuilder.new();
@@ -88,7 +93,7 @@ export class SafeFnBuilder<
     InferUnparsedInput<TNewParent>
   > {
     return new SafeFnBuilder({
-      ...this._internals,
+      ...(this._internals as TODO),
       parent: parent as any,
     }) as any;
   }
@@ -105,9 +110,9 @@ export class SafeFnBuilder<
     "input" | "unparsedInput"
   > {
     return new SafeFnBuilder({
-      ...this._internals,
-      inputSchema: schema,
-    } as any);
+      ...(this._internals as TODO),
+      inputSchema: schema as TODO,
+    } as any) as TODO;
   }
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
@@ -136,8 +141,8 @@ export class SafeFnBuilder<
   > {
     return new SafeFnBuilder({
       ...this._internals,
-      outputSchema: schema,
-    } as any);
+      outputSchema: schema as TODO,
+    } as any) as TODO;
   }
 
   handler<TNewHandlerResult extends TSafeFnHandlerReturn<TOutputSchema>>(
@@ -158,14 +163,14 @@ export class SafeFnBuilder<
       {
         ...this._internals,
         handler,
-      },
+      } as TODO,
       {
         onStart: undefined,
         onSuccess: undefined,
         onError: undefined,
         onComplete: undefined,
-      },
-    );
+      } as TODO,
+    ) as TODO;
   }
 
   safeHandler<
@@ -203,7 +208,7 @@ export class SafeFnBuilder<
       {
         ...this._internals,
         handler,
-      },
+      } as TODO,
       {
         onStart: undefined,
         onSuccess: undefined,

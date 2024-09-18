@@ -96,12 +96,12 @@ export const runCallbacks = <
         throwFrameworkErrorOrVoid,
       )({
         asAction: args.asAction,
-        error: res.error.public as TODO,
+        error: res.error.public,
         ctx: res.error.private.ctx,
         ctxInput: res.error.private.ctxInput,
         input: res.error.private.input,
         unsafeRawInput: res.error.private.unsafeRawInput as TODO,
-      });
+      } as TODO);
       callbackPromises.push(onErrorPromise);
     }
 
@@ -118,7 +118,7 @@ export const runCallbacks = <
         ctx: res.match(
           (value) => value.ctx,
           (err) => err.private.ctx,
-        ) as TODO,
+        ),
         input: res.match(
           (value) => value.input,
           (err) => err.private.input,
