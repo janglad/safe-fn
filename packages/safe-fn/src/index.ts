@@ -52,5 +52,5 @@ export type {
   InferSafeFnErrError,
   InferSafeFnOkData,
   InferSafeFnReturn,
-  InferUnparsedInputTuple as InferUnparsedInput,
+  InferUnparsedInputTuple,
 };
