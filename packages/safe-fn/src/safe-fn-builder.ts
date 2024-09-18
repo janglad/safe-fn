@@ -38,7 +38,7 @@ export class SafeFnBuilder<
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
-  TMergedOutputSchemaInput extends AnyObject | undefined,
+  TMergedParentOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput,
 > {
   readonly _internals: TSafeFnInternals<
@@ -124,7 +124,7 @@ export class SafeFnBuilder<
         undefined
       >,
       TOutputSchema,
-      TMergedOutputSchemaInput,
+      TMergedParentOutputSchemaInput,
       TUnionIfNotT<z.input<TNewInputSchema>, TUnparsedInput, never>
     >,
     "input" | "unparsedInput"
@@ -142,7 +142,7 @@ export class SafeFnBuilder<
       TInputSchema,
       TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedOutputSchemaInput,
+      TMergedParentOutputSchemaInput,
       TUnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
     >,
     "input" | "unparsedInput"
@@ -152,7 +152,7 @@ export class SafeFnBuilder<
       TInputSchema,
       TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedOutputSchemaInput,
+      TMergedParentOutputSchemaInput,
       TUnionIfNotT<TNewUnparsedInput, TUnparsedInput, never>
     >;
   }
@@ -165,11 +165,7 @@ export class SafeFnBuilder<
       TInputSchema,
       TMergedInputSchemaInput,
       TNewOutputSchema,
-      TUnionIfNotT<
-        TMergedOutputSchemaInput,
-        z.input<TNewOutputSchema>,
-        undefined
-      >,
+      TMergedParentOutputSchemaInput,
       TUnparsedInput
     >,
     "output"
@@ -191,7 +187,7 @@ export class SafeFnBuilder<
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
-    TMergedOutputSchemaInput,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     Awaited<TNewHandlerResult>,
     TSafeFnDefaultCatchHandlerErr
@@ -227,7 +223,7 @@ export class SafeFnBuilder<
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
-    TMergedOutputSchemaInput,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     // YieldErr can be never if the generator never yields an error, [] cause distribution
     [YieldErr] extends [never]

@@ -36,33 +36,53 @@ export type InferUnparsedInput<T> =
     ? TUnparsed
     : never;
 
-export type InferMergedInputSchemaInput<T> =
-  T extends RunnableSafeFn<
-    any,
-    any,
-    infer MergedInputSchemaInput,
-    any,
-    any,
-    any,
-    any,
-    any
-  >
-    ? MergedInputSchemaInput
-    : never;
+export type InferMergedInputSchemaInput<T> = T extends
+  | RunnableSafeFn<
+      any,
+      any,
+      infer MergedInputSchemaInput,
+      any,
+      any,
+      any,
+      any,
+      any
+    >
+  | RunnableSafeFn<
+      any,
+      any,
+      infer MergedInputSchemaInput,
+      any,
+      any,
+      never,
+      any,
+      any
+    >
+  ? MergedInputSchemaInput
+  : never;
 
-export type InferMergedOutputSchemaInput<T> =
-  T extends RunnableSafeFn<
-    any,
-    any,
-    any,
-    any,
-    infer MergedOutputSchemaInput,
-    any,
-    any,
-    any
-  >
-    ? MergedOutputSchemaInput
-    : never;
+export type InferMergedOutputSchemaInput<T> = T extends
+  | RunnableSafeFn<
+      any,
+      any,
+      any,
+      any,
+      infer MergedOutputSchemaInput,
+      any,
+      any,
+      any
+    >
+  | RunnableSafeFn<
+      any,
+      any,
+      any,
+      any,
+      infer MergedOutputSchemaInput,
+      never,
+      any,
+      any
+    >
+  ? MergedOutputSchemaInput
+  : never;
 
 /*
 ################################

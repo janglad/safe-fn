@@ -10,7 +10,7 @@ import type {
   TSafeFnParseError,
 } from "./types/error";
 import type { TSafeFnInternalRunReturn } from "./types/run";
-import type { TODO } from "./types/util";
+import type { AnyObject, TODO } from "./types/util";
 
 const NEXT_JS_ERROR_MESSAGES = ["NEXT_REDIRECT", "NEXT_NOT_FOUND"];
 
@@ -35,6 +35,7 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 export const runCallbacks = <
   TParent extends AnyRunnableSafeFn | undefined,
   TInputSchema extends TSafeFnInput,
+  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnOutput,
   TUnparsedInput,
   THandlerRes extends TAnySafeFnHandlerRes,
@@ -43,6 +44,7 @@ export const runCallbacks = <
   TRes extends TSafeFnInternalRunReturn<
     TParent,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
@@ -51,6 +53,7 @@ export const runCallbacks = <
   > = TSafeFnInternalRunReturn<
     TParent,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
@@ -63,6 +66,7 @@ export const runCallbacks = <
   callbacks: TSafeFnCallBacks<
     TParent,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,

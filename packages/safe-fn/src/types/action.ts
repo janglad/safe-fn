@@ -7,7 +7,8 @@ import type { AnyRunnableSafeFn } from "../runnable-safe-fn";
 import type { TSafeFnReturn, TSafeFnRunArgs } from "../types/run";
 import type { TAnySafeFnCatchHandlerRes } from "./error";
 import type { TAnySafeFnHandlerRes } from "./handler";
-import type { TSafeFnInput, TSafeFnOutput } from "./schema";
+import type { TSafeFnOutput } from "./schema";
+import type { AnyObject } from "./util";
 
 /*
 ################################
@@ -64,7 +65,7 @@ export type TSafeFnActionArgs<TUnparsedInput> = TSafeFnRunArgs<TUnparsedInput>;
 
 export type TSafeFnActionReturn<
   in out TParent extends AnyRunnableSafeFn | undefined,
-  in out TInputSchema extends TSafeFnInput,
+  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
@@ -72,7 +73,7 @@ export type TSafeFnActionReturn<
   ResultAsyncToActionResult<
     TSafeFnReturn<
       TParent,
-      TInputSchema,
+      TMergedInputSchemaInput,
       TOutputSchema,
       THandlerRes,
       TCatchHandlerRes,
@@ -82,7 +83,7 @@ export type TSafeFnActionReturn<
 >;
 export type TSafeFnAction<
   in out TParent extends AnyRunnableSafeFn | undefined,
-  in out TInputSchema extends TSafeFnInput,
+  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput,
   in out THandlerRes extends TAnySafeFnHandlerRes,
@@ -91,7 +92,7 @@ export type TSafeFnAction<
   ...args: TSafeFnActionArgs<TUnparsedInput>
 ) => TSafeFnActionReturn<
   TParent,
-  TInputSchema,
+  TMergedInputSchemaInput,
   TOutputSchema,
   THandlerRes,
   TCatchHandlerRes

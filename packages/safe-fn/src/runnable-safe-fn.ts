@@ -55,7 +55,7 @@ export class RunnableSafeFn<
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
-  TMergedOutputSchemaInput extends AnyObject | undefined,
+  TMergedParentOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput,
   THandlerRes extends TAnySafeFnHandlerRes,
   TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
@@ -71,6 +71,7 @@ export class RunnableSafeFn<
   readonly _callBacks: TSafeFnCallBacks<
     TParent,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
@@ -88,6 +89,7 @@ export class RunnableSafeFn<
     callBacks: TSafeFnCallBacks<
       TParent,
       TInputSchema,
+      TMergedInputSchemaInput,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
@@ -100,7 +102,7 @@ export class RunnableSafeFn<
 
   createAction(): TSafeFnAction<
     TParent,
-    TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
@@ -125,7 +127,7 @@ export class RunnableSafeFn<
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
-    TMergedOutputSchemaInput,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     THandlerRes,
     TNewThrownHandlerRes
@@ -163,6 +165,7 @@ export class RunnableSafeFn<
     onErrorFn: TSafeFnOnError<
       TParent,
       TInputSchema,
+      TMergedInputSchemaInput,
       TUnparsedInput,
       THandlerRes,
       TThrownHandlerRes
@@ -177,6 +180,7 @@ export class RunnableSafeFn<
     onCompleteFn: TSafeFnOnComplete<
       TParent,
       TInputSchema,
+      TMergedInputSchemaInput,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
@@ -200,7 +204,7 @@ export class RunnableSafeFn<
     ...args: TSafeFnRunArgs<TUnparsedInput>
   ): TSafeFnReturn<
     TParent,
-    TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
     THandlerRes,
     TThrownHandlerRes,
@@ -291,6 +295,7 @@ export class RunnableSafeFn<
   ): TSafeFnInternalRunReturn<
     TParent,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
     TUnparsedInput,
     THandlerRes,
@@ -318,6 +323,7 @@ export class RunnableSafeFn<
     type InternalOk = TSafeFnInternalRunReturnData<
       TParent,
       TInputSchema,
+      TMergedInputSchemaInput,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
@@ -327,6 +333,7 @@ export class RunnableSafeFn<
     type InternalErr = TSafeFnInternalRunReturnError<
       TParent,
       TInputSchema,
+      TMergedInputSchemaInput,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
@@ -353,7 +360,7 @@ export class RunnableSafeFn<
                       public: e.public as InferAsyncErrError<
                         TSafeFnReturn<
                           TParent,
-                          TInputSchema,
+                          TMergedInputSchemaInput,
                           TOutputSchema,
                           THandlerRes,
                           TThrownHandlerRes,
@@ -462,6 +469,7 @@ export class RunnableSafeFn<
     const internalRes: TSafeFnInternalRunReturn<
       TParent,
       TInputSchema,
+      TMergedInputSchemaInput,
       TOutputSchema,
       TUnparsedInput,
       THandlerRes,
@@ -503,7 +511,7 @@ export class RunnableSafeFn<
     ...args: TSafeFnActionArgs<TUnparsedInput>
   ): TSafeFnActionReturn<
     TParent,
-    TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
     THandlerRes,
     TThrownHandlerRes
