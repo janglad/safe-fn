@@ -1,5 +1,5 @@
 import type { AnyRunnableSafeFn } from "../runnable-safe-fn";
-import type { TAnySafeFnCatchHandlerRes } from "./error";
+import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 import type { TSafeFnHandlerArgs, TSafeFnHandlerReturn } from "./handler";
 import type { TSafeFnInput, TSafeFnUnparsedInput } from "./schema";
 import type { TMaybePromise, TPrettify } from "./util";

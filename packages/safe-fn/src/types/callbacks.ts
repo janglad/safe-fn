@@ -1,6 +1,6 @@
 import type { Err, Ok, Result } from "neverthrow";
 import type { AnyRunnableSafeFn, RunnableSafeFn } from "../runnable-safe-fn";
-import type { TAnySafeFnCatchHandlerRes } from "./error";
+import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 import type { TAnySafeFnHandlerRes, TSafeFnHandlerArgs } from "./handler";
 import type { TSafeFnReturnData, TSafeFnReturnError } from "./run";
 import type {

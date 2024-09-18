@@ -7,7 +7,7 @@ import { RunnableSafeFn, type AnyRunnableSafeFn } from "./runnable-safe-fn";
 import type {
   TSafeFnDefaultCatchHandler,
   TSafeFnDefaultCatchHandlerErr,
-} from "./types/error";
+} from "./types/catch-handler";
 import type {
   TSafeFnDefaultHandlerFn,
   TSafeFnHandlerArgs,

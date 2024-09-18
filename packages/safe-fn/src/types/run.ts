@@ -8,7 +8,6 @@ import type {
   InferErrError,
 } from "../result";
 import type { AnyRunnableSafeFn, RunnableSafeFn } from "../runnable-safe-fn";
-import type { TAnySafeFnCatchHandlerRes } from "../types/error";
 import type { TAnySafeFnHandlerRes, TCtxInput } from "../types/handler";
 import type {
   TSafeFnInput,
@@ -19,6 +18,7 @@ import type {
   TSchemaOutputOrFallback,
 } from "../types/schema";
 import type { AnyObject, TODO, TPrettify, TUnionIfNotT } from "../types/util";
+import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 
 /*
 ################################

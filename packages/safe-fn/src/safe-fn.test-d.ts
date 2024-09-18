@@ -3,7 +3,7 @@ import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 import { type ActionResult } from "./result";
 import { createSafeFn } from "./safe-fn-builder";
-import type { TSafeFnDefaultCatchHandlerErr } from "./types/error";
+import type { TSafeFnDefaultCatchHandlerErr } from "./types/catch-handler";
 import type {
   TSafeFnInputParseError,
   TSafeFnOutputParseError,

@@ -10,7 +10,7 @@ import type {
   TSafeFnUnparsedInput,
 } from "./types/schema";
 
-import type { TAnySafeFnCatchHandlerRes } from "./types/error";
+import type { TAnySafeFnCatchHandlerRes } from "./types/catch-handler";
 import type { TSafeFnInternalRunReturn } from "./types/run";
 import type { AnyObject, TODO } from "./types/util";
 

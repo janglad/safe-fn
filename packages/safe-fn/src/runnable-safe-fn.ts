@@ -7,7 +7,7 @@ import {
   type InferOkData,
 } from "./result";
 
-import type { TAnySafeFnCatchHandlerRes } from "./types/error";
+import type { TAnySafeFnCatchHandlerRes } from "./types/catch-handler";
 import type { TSafeFnInternals } from "./types/internals";
 import type {
   TInferSafeFnInternalRunReturnData,

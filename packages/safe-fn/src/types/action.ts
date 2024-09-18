@@ -5,7 +5,7 @@ import type {
   ResultAsyncToActionResult,
 } from "../result";
 import type { TSafeFnReturn, TSafeFnRunArgs } from "../types/run";
-import type { TAnySafeFnCatchHandlerRes } from "./error";
+import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 import type { TAnySafeFnHandlerRes } from "./handler";
 import type { TSafeFnOutput, TSafeFnUnparsedInput } from "./schema";
 import type { AnyObject } from "./util";
