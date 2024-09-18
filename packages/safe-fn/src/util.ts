@@ -204,5 +204,5 @@ export const mapZodError = <T>(
   return {
     formattedError: err.format(),
     flattenedError: err.flatten(),
-  } satisfies TSafeFnParseError<any, true>;
+  } satisfies TSafeFnParseError<TODO, true>;
 };

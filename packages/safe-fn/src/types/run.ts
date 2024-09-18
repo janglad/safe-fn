@@ -12,7 +12,7 @@ import type { TAnySafeFnHandlerRes, TCtxInput } from "../types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
-  TSafeFnParseErrorNoZod,
+  TSafeFnParseError,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
@@ -186,7 +186,7 @@ type TOutputSchemaError<
     ? TMergedParentOutputSchemaInput extends AnyObject
       ? {
           code: "OUTPUT_PARSING";
-          cause: TSafeFnParseErrorNoZod<
+          cause: TSafeFnParseError<
             TPrettify<TMergedParentOutputSchemaInput>,
             TAsAction
           >;
@@ -195,7 +195,7 @@ type TOutputSchemaError<
         never
     : {
         code: "OUTPUT_PARSING";
-        cause: TSafeFnParseErrorNoZod<
+        cause: TSafeFnParseError<
           TPrettify<
             TUnionIfNotT<
               z.input<TOutputSchema>,
@@ -209,7 +209,7 @@ type TOutputSchemaError<
   : TMergedParentOutputSchemaInput extends AnyObject
     ? {
         code: "OUTPUT_PARSING";
-        cause: TSafeFnParseErrorNoZod<
+        cause: TSafeFnParseError<
           TPrettify<TMergedParentOutputSchemaInput>,
           TAsAction
         >;
@@ -222,10 +222,7 @@ type TInputSchemaError<
 > = TMergedInputSchemaInput extends AnyObject
   ? {
       code: "INPUT_PARSING";
-      cause: TSafeFnParseErrorNoZod<
-        TPrettify<TMergedInputSchemaInput>,
-        TAsAction
-      >;
+      cause: TSafeFnParseError<TPrettify<TMergedInputSchemaInput>, TAsAction>;
     }
   : never;
 
