@@ -1,16 +1,18 @@
-import { ResultAsync, err, ok } from "neverthrow";
+import { Result, ResultAsync, err, ok } from "neverthrow";
 import { z } from "zod";
 import type { AnyRunnableSafeFn } from "./runnable-safe-fn";
 import type { TSafeFnCallBacks } from "./types/callbacks";
 import type { TAnySafeFnHandlerRes } from "./types/handler";
-import type { TSafeFnInput, TSafeFnOutput } from "./types/schema";
-
 import type {
-  TAnySafeFnCatchHandlerRes,
+  TSafeFnInput,
+  TSafeFnOutput,
   TSafeFnParseError,
-} from "./types/error";
+  TSafeFnUnparsedInput,
+} from "./types/schema";
+
+import type { TAnySafeFnCatchHandlerRes } from "./types/catch-handler";
 import type { TSafeFnInternalRunReturn } from "./types/run";
-import type { TODO } from "./types/util";
+import type { AnyObject, TODO } from "./types/util";
 
 const NEXT_JS_ERROR_MESSAGES = ["NEXT_REDIRECT", "NEXT_NOT_FOUND"];
 
@@ -34,24 +36,33 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 
 export const runCallbacks = <
   TParent extends AnyRunnableSafeFn | undefined,
+  TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
+  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnOutput,
-  TUnparsedInput,
+  TMergedParentOutputSchemaInput extends AnyObject | undefined,
+  TUnparsedInput extends TSafeFnUnparsedInput,
   THandlerRes extends TAnySafeFnHandlerRes,
   TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
   TRes extends TSafeFnInternalRunReturn<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     THandlerRes,
     TCatchHandlerRes,
     NoInfer<TAsAction>
   > = TSafeFnInternalRunReturn<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     THandlerRes,
     TCatchHandlerRes,
@@ -62,8 +73,11 @@ export const runCallbacks = <
   asAction: TAsAction;
   callbacks: TSafeFnCallBacks<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     THandlerRes,
     TCatchHandlerRes
@@ -96,12 +110,12 @@ export const runCallbacks = <
         throwFrameworkErrorOrVoid,
       )({
         asAction: args.asAction,
-        error: res.error.public as TODO,
+        error: res.error.public,
         ctx: res.error.private.ctx,
         ctxInput: res.error.private.ctxInput,
         input: res.error.private.input,
         unsafeRawInput: res.error.private.unsafeRawInput as TODO,
-      });
+      } as TODO);
       callbackPromises.push(onErrorPromise);
     }
 
@@ -118,7 +132,7 @@ export const runCallbacks = <
         ctx: res.match(
           (value) => value.ctx,
           (err) => err.private.ctx,
-        ) as TODO,
+        ),
         input: res.match(
           (value) => value.input,
           (err) => err.private.input,
@@ -190,5 +204,5 @@ export const mapZodError = <T>(
   return {
     formattedError: err.format(),
     flattenedError: err.flatten(),
-  } satisfies TSafeFnParseError<any, true>;
+  } satisfies TSafeFnParseError<TODO, true>;
 };

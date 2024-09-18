@@ -1,4 +1,5 @@
-import type { Result, ResultAsync } from "neverthrow";
+import { Err, type Result, type ResultAsync } from "neverthrow";
+import type { z } from "zod";
 import type {
   InferActionErrError,
   InferActionOkData,
@@ -7,19 +8,22 @@ import type {
   InferErrError,
 } from "../result";
 import type { AnyRunnableSafeFn, RunnableSafeFn } from "../runnable-safe-fn";
-import type {
-  TAnySafeFnCatchHandlerRes,
-  TSafeFnInputParseError,
-  TSafeFnOutputParseError,
-} from "../types/error";
 import type { TAnySafeFnHandlerRes, TCtxInput } from "../types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
+  TSafeFnParseError,
+  TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
 } from "../types/schema";
-import type { TDistributeUnion, TODO, TToTuple } from "../types/util";
+import type {
+  AnyObject,
+  TIntersectIfNotT,
+  TODO,
+  TPrettify,
+} from "../types/util";
+import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 
 /*
 ################################
@@ -53,16 +57,22 @@ export type InferSafeFnReturn<
 export type TInferSafeFnInternalRunReturnData<T, TAsAction extends boolean> =
   T extends RunnableSafeFn<
     infer TParent,
+    infer TParentMergedHandlerErrs,
     infer TInputSchema,
+    infer TMergedInputSchemaInput,
     infer TOutputSchema,
+    infer TMergedParentOutputSchemaInput,
     infer TUnparsedInput,
     infer THandlerRes,
     infer TThrownHandlerRes
   >
     ? TSafeFnInternalRunReturnData<
         TParent,
+        TParentMergedHandlerErrs,
         TInputSchema,
+        TMergedInputSchemaInput,
         TOutputSchema,
+        TMergedParentOutputSchemaInput,
         TUnparsedInput,
         THandlerRes,
         TThrownHandlerRes,
@@ -130,22 +140,96 @@ export type TSafeFnReturnData<
  * - A `SafeFnOutputParseError` if the output schema is defined and the output could not be parsed
  */
 export type TSafeFnReturnError<
-  TParent extends AnyRunnableSafeFn | undefined,
-  TInputSchema extends TSafeFnInput,
+  TParentMergedHandlerErrs extends Result<never, unknown>,
+  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnOutput,
+  TMergedParentOutputSchemaInput extends AnyObject | undefined,
   THandlerRes extends TAnySafeFnHandlerRes,
   TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
 > =
   | InferErrError<THandlerRes>
   | InferErrError<TCatchHandlerRes>
-  | TSafeFnInputParseError<TInputSchema, TAsAction>
-  | (THandlerRes extends Result<never, any>
-      ? never
-      : TSafeFnOutputParseError<TOutputSchema, TAsAction>)
-  | (TParent extends AnyRunnableSafeFn
-      ? InferSafeFnErrError<TParent, TAsAction>
-      : never);
+  | TInputSchemaError<TMergedInputSchemaInput, TAsAction>
+  | TOutputSchemaError<
+      TOutputSchema,
+      TMergedParentOutputSchemaInput,
+      THandlerRes,
+      TAsAction
+    >
+  | InferErrError<TParentMergedHandlerErrs>;
+
+export type TBuildMergedHandlersErrs<T extends AnyRunnableSafeFn> = Err<
+  never,
+  | InferErrError<Awaited<ReturnType<T["_internals"]["handler"]>>>
+  | InferErrError<Awaited<ReturnType<T["_internals"]["uncaughtErrorHandler"]>>>
+  | InferErrError<TInferMergedHandlersErr<T["_internals"]["parent"]>>
+>;
+
+type TInferMergedHandlersErr<T> =
+  T extends RunnableSafeFn<
+    any,
+    infer TParentMergedHandlerErrs,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TParentMergedHandlerErrs
+    : never;
+
+type TOutputSchemaError<
+  TOutputSchema extends TSafeFnOutput,
+  TMergedParentOutputSchemaInput extends AnyObject | undefined,
+  THandlerRes extends TAnySafeFnHandlerRes,
+  TAsAction extends boolean,
+> = TOutputSchema extends z.ZodTypeAny
+  ? THandlerRes extends Result<never, any>
+    ? TMergedParentOutputSchemaInput extends AnyObject
+      ? {
+          code: "OUTPUT_PARSING";
+          cause: TSafeFnParseError<
+            TPrettify<TMergedParentOutputSchemaInput>,
+            TAsAction
+          >;
+        }
+      : // Handler can't return, no parents have output schemas
+        never
+    : {
+        code: "OUTPUT_PARSING";
+        cause: TSafeFnParseError<
+          TPrettify<
+            TIntersectIfNotT<
+              z.input<TOutputSchema>,
+              TMergedParentOutputSchemaInput,
+              undefined
+            >
+          >,
+          TAsAction
+        >;
+      }
+  : TMergedParentOutputSchemaInput extends AnyObject
+    ? {
+        code: "OUTPUT_PARSING";
+        cause: TSafeFnParseError<
+          TPrettify<TMergedParentOutputSchemaInput>,
+          TAsAction
+        >;
+      }
+    : // No output schema, parents have no output schemas
+      never;
+type TInputSchemaError<
+  TMergedInputSchemaInput extends AnyObject | undefined,
+  TAsAction extends boolean,
+> = TMergedInputSchemaInput extends AnyObject
+  ? {
+      code: "INPUT_PARSING";
+      cause: TSafeFnParseError<TPrettify<TMergedInputSchemaInput>, TAsAction>;
+    }
+  : never;
 
 /**
  * @param TUnparsedInput the unparsed input of the safe function
@@ -155,7 +239,7 @@ export type TSafeFnReturnError<
  * Note this is an array and can be spread into the args.
  */
 
-export type TSafeFnRunArgs<TUnparsedInput> = TToTuple<TUnparsedInput>;
+export type TSafeFnRunArgs<T extends TSafeFnUnparsedInput> = T;
 
 /**
  * @param TParent the parent safe function or undefined
@@ -168,30 +252,33 @@ export type TSafeFnRunArgs<TUnparsedInput> = TToTuple<TUnparsedInput>;
  *
  */
 export type TSafeFnReturn<
-  in out TParent extends AnyRunnableSafeFn | undefined,
-  in out TInputSchema extends TSafeFnInput,
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
+  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
+  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
   in out TAsAction extends boolean,
 > = ResultAsync<
   TSafeFnReturnData<TOutputSchema, THandlerRes>,
-  TDistributeUnion<
-    TSafeFnReturnError<
-      TParent,
-      TInputSchema,
-      TOutputSchema,
-      THandlerRes,
-      TCatchHandlerRes,
-      TAsAction
-    >
+  TSafeFnReturnError<
+    TParentMergedHandlerErrs,
+    TMergedInputSchemaInput,
+    TOutputSchema,
+    TMergedParentOutputSchemaInput,
+    THandlerRes,
+    TCatchHandlerRes,
+    TAsAction
   >
 >;
 
 export type TSafeFnInternalRunReturn<
   TParent extends AnyRunnableSafeFn | undefined,
+  TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
+  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnOutput,
+  TMergedParentOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput,
   THandlerRes extends TAnySafeFnHandlerRes,
   TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
@@ -199,8 +286,11 @@ export type TSafeFnInternalRunReturn<
 > = ResultAsync<
   TSafeFnInternalRunReturnData<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     THandlerRes,
     TCatchHandlerRes,
@@ -208,8 +298,11 @@ export type TSafeFnInternalRunReturn<
   >,
   TSafeFnInternalRunReturnError<
     TParent,
+    TParentMergedHandlerErrs,
     TInputSchema,
+    TMergedInputSchemaInput,
     TOutputSchema,
+    TMergedParentOutputSchemaInput,
     TUnparsedInput,
     THandlerRes,
     TCatchHandlerRes,
@@ -219,8 +312,11 @@ export type TSafeFnInternalRunReturn<
 
 export interface TSafeFnInternalRunReturnData<
   in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
+  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
+  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput,
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
@@ -228,26 +324,31 @@ export interface TSafeFnInternalRunReturnData<
 > {
   value: InferAsyncOkData<
     TSafeFnReturn<
-      TParent,
-      TInputSchema,
+      TParentMergedHandlerErrs,
+      TMergedInputSchemaInput,
       TOutputSchema,
+      TMergedParentOutputSchemaInput,
       THandlerRes,
       TCatchHandlerRes,
       TAsAction
     >
   >;
   input: TSchemaOutputOrFallback<TInputSchema, undefined>;
-  ctx: TParent extends AnyRunnableSafeFn
-    ? InferSafeFnOkData<TParent, TAsAction>
-    : undefined;
+  // ctx: TParent extends AnyRunnableSafeFn
+  //   ? InferSafeFnOkData<TParent, TAsAction>
+  //   : undefined;
+  ctx: TODO;
   ctxInput: TCtxInput<TParent>;
   unsafeRawInput: TUnparsedInput;
 }
 
 export interface TSafeFnInternalRunReturnError<
   in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
+  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
+  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput,
   in out THandlerRes extends TAnySafeFnHandlerRes,
   in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
@@ -255,9 +356,10 @@ export interface TSafeFnInternalRunReturnError<
 > {
   public: InferAsyncErrError<
     TSafeFnReturn<
-      TParent,
-      TInputSchema,
+      TParentMergedHandlerErrs,
+      TMergedInputSchemaInput,
       TOutputSchema,
+      TMergedParentOutputSchemaInput,
       THandlerRes,
       TCatchHandlerRes,
       TAsAction

@@ -28,7 +28,7 @@ import type {
 import type {
   InferInputSchema,
   InferOutputSchema,
-  InferUnparsedInput,
+  InferUnparsedInputTuple,
 } from "./types/schema";
 
 export { actionResultToResult, createSafeFn };
@@ -52,5 +52,5 @@ export type {
   InferSafeFnErrError,
   InferSafeFnOkData,
   InferSafeFnReturn,
-  InferUnparsedInput,
+  InferUnparsedInputTuple,
 };
