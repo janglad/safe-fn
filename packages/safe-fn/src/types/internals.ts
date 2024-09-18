@@ -29,21 +29,3 @@ export interface TSafeFnInternals<
   ) => TMaybePromise<THandlerReturn>;
   uncaughtErrorHandler: (error: unknown) => TThrownHandlerRes;
 }
-
-// export type TInferSafeFnParent<T> =
-//   T extends TRunnableSafeFn<
-//     infer TParent,
-//     any,
-//     any,
-//     any,
-//     any,
-//     any,
-//     any,
-//     any,
-//     any,
-//     any,
-//     any,
-//     any
-//   >
-//     ? TParent
-//     : never;
