@@ -153,13 +153,10 @@ export type TSafeFnUnparsedInput = [unknown] | [];
  * @param TFallback the fallback type if the schema is undefined
  * @returns the output type of the schema if it is defined, otherwise `TFallback`
  */
-export type TSchemaInputOrFallback<TSchema extends TSafeFnInput, TFallback> = [
-  TSchema,
-] extends [never]
-  ? TFallback
-  : TSchema extends z.ZodTypeAny
-    ? z.input<TSchema>
-    : TFallback;
+export type TSchemaInputOrFallback<
+  TSchema extends TSafeFnInput,
+  TFallback,
+> = TSchema extends z.ZodTypeAny ? z.input<TSchema> : TFallback;
 
 /**
  * @param TSchema a Zod schema or undefined
@@ -169,11 +166,7 @@ export type TSchemaInputOrFallback<TSchema extends TSafeFnInput, TFallback> = [
 export type TSchemaOutputOrFallback<
   TSchema extends TSafeFnOutput,
   TFallback,
-> = [TSchema] extends [never]
-  ? TFallback
-  : TSchema extends z.ZodTypeAny
-    ? z.output<TSchema>
-    : TFallback;
+> = TSchema extends z.ZodTypeAny ? z.output<TSchema> : TFallback;
 
 export type TSafeFnParseError<
   TSchemaInput extends AnyObject,
