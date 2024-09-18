@@ -148,6 +148,7 @@ export class RunnableSafeFn<
 > {
   readonly _internals: TSafeFnInternals<
     TParent,
+    TCtxInput,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -157,6 +158,7 @@ export class RunnableSafeFn<
 
   readonly _callBacks: TSafeFnCallBacks<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -170,6 +172,7 @@ export class RunnableSafeFn<
   constructor(
     internals: TSafeFnInternals<
       TParent,
+      TCtxInput,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -178,6 +181,7 @@ export class RunnableSafeFn<
     >,
     callBacks: TSafeFnCallBacks<
       TParent,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -260,6 +264,7 @@ export class RunnableSafeFn<
   onSuccess(
     onSuccessFn: TSafeFnOnSuccess<
       TParent,
+      TCtxInput,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -286,6 +291,7 @@ export class RunnableSafeFn<
   onError(
     onErrorFn: TSafeFnOnError<
       TParent,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -316,6 +322,7 @@ export class RunnableSafeFn<
   onComplete(
     onCompleteFn: TSafeFnOnComplete<
       TParent,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -446,6 +453,7 @@ export class RunnableSafeFn<
     tAsAction: TAsAction,
   ): TSafeFnInternalRunReturn<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -477,6 +485,7 @@ export class RunnableSafeFn<
 
     type InternalOk = TSafeFnInternalRunReturnData<
       TParent,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -489,6 +498,7 @@ export class RunnableSafeFn<
     >;
     type InternalErr = TSafeFnInternalRunReturnError<
       TParent,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,
@@ -543,7 +553,7 @@ export class RunnableSafeFn<
                       } as TODO,
                     }) satisfies InternalErr,
                 )
-                .safeUnwrap();
+                .safeUnwrap() as TODO;
 
         const parsedInput: TSchemaOutputOrFallback<TInputSchema, undefined> =
           inputSchema === undefined
@@ -621,14 +631,15 @@ export class RunnableSafeFn<
           value,
           input: parsedInput,
           ctx: parentRes?.value,
-          ctxInput: parentRes?.ctxInput || [],
+          ctxInput: (parentRes?.ctxInput as TODO) || [],
           unsafeRawInput: args as TUnparsedInput,
         } satisfies InternalOk);
       },
-    );
+    ) as TODO;
 
     const internalRes: TSafeFnInternalRunReturn<
       TParent,
+      TCtxInput,
       TParentMergedHandlerErrs,
       TInputSchema,
       TMergedInputSchemaInput,

@@ -12,6 +12,7 @@ import type { TMaybePromise, TPrettify } from "./util";
 */
 export interface TSafeFnInternals<
   in out TParent extends AnyRunnableSafeFn | undefined,
+  in out TCtxInput extends unknown[],
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnInput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
@@ -22,7 +23,9 @@ export interface TSafeFnInternals<
   inputSchema: TInputSchema;
   outputSchema: TOutputSchema;
   handler: (
-    input: TPrettify<TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>>,
+    input: TPrettify<
+      TSafeFnHandlerArgs<TCtxInput, TInputSchema, TUnparsedInput, TParent>
+    >,
   ) => TMaybePromise<THandlerReturn>;
   uncaughtErrorHandler: (error: unknown) => TThrownHandlerRes;
 }

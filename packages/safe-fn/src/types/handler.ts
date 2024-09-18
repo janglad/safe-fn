@@ -1,21 +1,14 @@
 import { type Result } from "neverthrow";
 import type { AnyRunnableSafeFn } from "../runnable-safe-fn";
-import type { TInferSafeFnParent } from "./internals";
 import type { InferSafeFnOkData } from "./run";
 import type {
-  InferInputSchema,
   TSafeFnInput,
   TSafeFnOutput,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
 } from "./schema";
-import type {
-  FirstTupleElOrUndefined,
-  TIsAny,
-  TOrFallback,
-  TPrettify,
-} from "./util";
+import type { FirstTupleElOrUndefined, TOrFallback, TPrettify } from "./util";
 
 /*
 ################################
@@ -40,15 +33,15 @@ export type TSafeFnDefaultHandlerFn = () => Result<
   }
 >;
 
-export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
-  TIsAny<TParent> extends true
-    ? any[]
-    : TParent extends AnyRunnableSafeFn
-      ? [
-          ...TCtxInput<TInferSafeFnParent<TParent>>,
-          TSchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
-        ]
-      : [];
+// export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
+//   TIsAny<TParent> extends true
+//     ? any[]
+//     : TParent extends AnyRunnableSafeFn
+//       ? [
+//           ...TCtxInput<TInferSafeFnParent<TParent>>,
+//           TSchemaOutputOrFallback<InferInputSchema<TParent>, undefined>,
+//         ]
+//       : [];
 
 /**
  * @param TInputSchema a Zod schema or undefined
@@ -57,6 +50,7 @@ export type TCtxInput<TParent extends AnyRunnableSafeFn | undefined> =
  * @returns the type of the arguments available in the passed handler function.
  */
 export interface TSafeFnHandlerArgs<
+  in out TCtxInput extends unknown[],
   in out TInputSchema extends TSafeFnInput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
   in out TParent extends AnyRunnableSafeFn | undefined,
@@ -69,7 +63,7 @@ export interface TSafeFnHandlerArgs<
    */
   unsafeRawInput: TPrettify<FirstTupleElOrUndefined<TUnparsedInput>>;
   ctx: TOrFallback<InferSafeFnOkData<TParent, false>, undefined>;
-  ctxInput: TCtxInput<TParent>;
+  ctxInput: TCtxInput;
 }
 
 /**

@@ -1398,7 +1398,7 @@ describe("runnableSafeFn", () => {
 const test1 = createSafeFn()
   .input(
     z.object({
-      test: z.string(),
+      one: z.string(),
     }),
   )
   .output(
@@ -1418,7 +1418,11 @@ const schema = z.object({
 
 const test2 = createSafeFn()
   .use(test1)
-  .input(z.object({}))
+  .input(
+    z.object({
+      two: z.string(),
+    }),
+  )
   .output(
     z.object({
       two: z.string(),
@@ -1432,7 +1436,11 @@ const test2 = createSafeFn()
 
 const test3 = createSafeFn()
   .use(test2)
-  .input(z.object({}))
+  .input(
+    z.object({
+      three: z.string(),
+    }),
+  )
   .output(
     z.object({
       three: z.string(),
@@ -1446,7 +1454,11 @@ const test3 = createSafeFn()
 
 const test4 = createSafeFn()
   .use(test3)
-  .input(z.object({}))
+  .input(
+    z.object({
+      four: z.string(),
+    }),
+  )
   .output(
     z.object({
       four: z.string(),

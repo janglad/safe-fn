@@ -36,6 +36,7 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 
 export const runCallbacks = <
   TParent extends AnyRunnableSafeFn | undefined,
+  TCtxInput extends unknown[],
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
   TMergedInputSchemaInput extends AnyObject | undefined,
@@ -47,6 +48,7 @@ export const runCallbacks = <
   TAsAction extends boolean,
   TRes extends TSafeFnInternalRunReturn<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -58,6 +60,7 @@ export const runCallbacks = <
     NoInfer<TAsAction>
   > = TSafeFnInternalRunReturn<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
@@ -73,6 +76,7 @@ export const runCallbacks = <
   asAction: TAsAction;
   callbacks: TSafeFnCallBacks<
     TParent,
+    TCtxInput,
     TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,

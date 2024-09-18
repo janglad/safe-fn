@@ -20,6 +20,7 @@ import type {
 } from "./types/handler";
 import type { TSafeFnInternals } from "./types/internals";
 import type {
+  InferInputSchema,
   InferMergedInputSchemaInput,
   InferMergedParentOutputSchemaInput,
   InferUnparsedInputTuple,
@@ -27,6 +28,7 @@ import type {
   TSafeFnInput,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
+  TSchemaOutputOrFallback,
 } from "./types/schema";
 
 import type { TBuildMergedHandlersErrs } from "./types/run";
@@ -80,6 +82,7 @@ export class SafeFnBuilder<
 > {
   readonly _internals: TSafeFnInternals<
     TParent,
+    TCtxInput,
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
@@ -90,6 +93,7 @@ export class SafeFnBuilder<
   protected constructor(
     internals: TSafeFnInternals<
       TParent,
+      TCtxInput,
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
@@ -142,7 +146,10 @@ export class SafeFnBuilder<
     parent: TNewParent,
   ): TSafeFnBuilder<
     TNewParent,
-    TInferCtxInput<TNewParent>,
+    [
+      ...TInferCtxInput<TNewParent>,
+      TSchemaOutputOrFallback<InferInputSchema<TNewParent>, undefined>,
+    ],
     TBuildMergedHandlersErrs<TNewParent>,
     TInputSchema,
     InferMergedInputSchemaInput<TNewParent>,
@@ -239,7 +246,7 @@ export class SafeFnBuilder<
   handler<TNewHandlerResult extends TSafeFnHandlerReturn<TOutputSchema>>(
     handler: (
       args: TPrettify<
-        TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+        TSafeFnHandlerArgs<TCtxInput, TInputSchema, TUnparsedInput, TParent>
       >,
     ) => TMaybePromise<TNewHandlerResult>,
   ): TRunnableSafeFn<
@@ -278,7 +285,7 @@ export class SafeFnBuilder<
   >(
     fn: (
       args: TPrettify<
-        TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+        TSafeFnHandlerArgs<TCtxInput, TInputSchema, TUnparsedInput, TParent>
       >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): TRunnableSafeFn<
@@ -299,7 +306,7 @@ export class SafeFnBuilder<
   > {
     const handler = async (
       args: TPrettify<
-        TSafeFnHandlerArgs<TInputSchema, TUnparsedInput, TParent>
+        TSafeFnHandlerArgs<TCtxInput, TInputSchema, TUnparsedInput, TParent>
       >,
     ) => {
       return (await fn(args).next()).value;
