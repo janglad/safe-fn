@@ -12,8 +12,6 @@ export type TPrettify<T> = {
   [K in keyof T]: T[K];
 } & {};
 
-export type TIsUnknown<T> = unknown extends T ? true : false;
-
 export type TOrFallback<T, TFallback, TFilter = never> = [T] extends [TFilter]
   ? TFallback
   : T;

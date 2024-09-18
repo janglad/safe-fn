@@ -64,8 +64,10 @@ export class RunnableSafeFn<
   TParent extends AnyRunnableSafeFn | undefined,
   TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
+  /* Includes input schema of `this` */
   TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
+  /* Does not include output schema of `this` to be able to differentiate when handler only returns an error */
   TMergedParentOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput extends TSafeFnUnparsedInput,
   THandlerRes extends TSafeFnHandlerReturn<TOutputSchema>,

@@ -23,7 +23,7 @@ import type {
   TSchemaInputOrFallback,
 } from "./types/schema";
 
-import type { BuildMergedHandlersErrs } from "./types/run";
+import type { TBuildMergedHandlersErrs } from "./types/run";
 import type {
   AnyObject,
   TIntersectIfNotT,
@@ -106,7 +106,7 @@ export class SafeFnBuilder<
     parent: TNewParent,
   ): SafeFnBuilder<
     TNewParent,
-    BuildMergedHandlersErrs<TNewParent>,
+    TBuildMergedHandlersErrs<TNewParent>,
     TInputSchema,
     InferMergedInputSchemaInput<TNewParent>,
     TOutputSchema,

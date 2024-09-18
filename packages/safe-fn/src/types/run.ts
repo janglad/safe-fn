@@ -159,14 +159,14 @@ export type TSafeFnReturnError<
     >
   | InferErrError<TParentMergedHandlerErrs>;
 
-export type BuildMergedHandlersErrs<T extends AnyRunnableSafeFn> = Err<
+export type TBuildMergedHandlersErrs<T extends AnyRunnableSafeFn> = Err<
   never,
   | InferErrError<Awaited<ReturnType<T["_internals"]["handler"]>>>
   | InferErrError<Awaited<ReturnType<T["_internals"]["uncaughtErrorHandler"]>>>
-  | InferErrError<InferMergedHandlersErr<T["_internals"]["parent"]>>
+  | InferErrError<TInferMergedHandlersErr<T["_internals"]["parent"]>>
 >;
 
-type InferMergedHandlersErr<T> =
+type TInferMergedHandlersErr<T> =
   T extends RunnableSafeFn<
     any,
     infer TParentMergedHandlerErrs,
