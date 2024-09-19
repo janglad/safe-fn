@@ -5,7 +5,7 @@ title: As an action
 When you're intending to call the SafeFn from the client, such as via a server action or through an API route, you can use the `createAction()` method.
 This returns a function that returns an `ActionResult`. This is done as NeverThrow's `Result` type cannot be serialized and sent to the client.
 {/* TODO: link to docs about this */}
-When using `safe-fn-react`, this is automatically converted back to a `ResultAsync` for you.
+When using the [`useServerAction()` hook from `safe-fn-react`](/docs/run/hook), this is automatically converted back to a `ResultAsync` for you.
 
 ```ts
 const mySafeFn = SafeFn.new().handler(() => {
@@ -15,7 +15,7 @@ const mySafeFn = SafeFn.new().handler(() => {
 const action = mySafeFn.createAction();
 ```
 
-The arguments required is the `unparsedInput` of the SafeFn. This is either inferred from the input schema, or passed via `unparsedInput<T>()`.
+The required argument is either the input type of the input schema if you defined one, or the type set through `.unparsedInput<T>()`. This is merged that of the parent SafeFn if there is one.
 
 ```ts
 const mySafeFn = SafeFn.new()
@@ -28,20 +28,6 @@ const res = mySafeFn.createAction()({ firstName: "World" });
 // Error:'firstName' does not exist in type '{ name: string; }' [!code highlight]
 ```
 
-Whereas running the function using `run()` will return a full `ZodError` when there is an input/output parsing error,
-calling the function returned by `createAction()` will return a simplified error:
+## Return type
 
-```ts
-{
-    code: "INPUT_PARSING" | "OUTPUT_PARSING";
-    cause: {
-        formattedError: z.ZodformattedError<...>
-        flattenedError: z.typeToFlattenedError<...>
-    }
-}
-
-```
-
-This is both done because Error instances cannot be serialized and because the stack trace should not be sent to the client.
-
-{/* TODO: add section about exposed isAction variable, mappErr options */}
+See [the dedicated page](/docs/run/return-type) for the return type of `createAction()`.
