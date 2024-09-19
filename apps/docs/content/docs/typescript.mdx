@@ -20,6 +20,14 @@ type MyActionErr = ActionErr<{
   code: "DB_ERROR";
   cause: string;
 }>;
+
+const myActionErr: MyActionErr = {
+  ok: false,
+  error: {
+    code: "DB_ERROR";
+    cause: string;
+  };
+};
 ```
 
 ### ActionOk
@@ -31,6 +39,14 @@ type MyActionOk = ActionOk<{
   name: string;
   age: number;
 }>;
+
+const myActionOk: MyActionOk = {
+  ok: true,
+  value: {
+    name: "John",
+    age: 20,
+  },
+};
 ```
 
 ### ActionResult
@@ -48,7 +64,7 @@ type MyActionResult = ActionResult<MyActionOk, MyActionErr>;
 Infers the arguments that need to be passed to the function returned by `createAction()`.
 
 ```ts
-const myAction = SafeFn.new()
+const myAction = createSafeFn()
   .input(z.object({ name: z.string() }))
   .handler(...)
   .createAction();
@@ -61,7 +77,7 @@ type MyActionArgs = InferSafeFnActionArgs<typeof myAction>;
 Infers the error type of an action.
 
 ```ts
-const myAction = SafeFn.new()
+const myAction = createSafeFn()
   .handler(...)
   .catch(() => err("ooh no" as const))
   .createAction();
@@ -74,7 +90,9 @@ type MyActionError = InferSafeFnActionError<typeof myAction>;
 Infers the ok type of an action.
 
 ```ts
-const myAction = SafeFn.new().handler(() => ok("Yay!" as const));
+const myAction = createSafeFn()
+  .handler(() => ok("Yay!" as const))
+  .createAction();
 type MyActionOk = InferSafeFnActionOkData<typeof myAction>;
 //   ^ "Yay!"
 ```
@@ -85,7 +103,7 @@ Infers the return type of an action when calling it directly.
 When using the `useServerAction` hook, this is automatically converted into NeverThrow's types.
 
 ```ts
-const myAction = SafeFn.new()
+const myAction = createSafeFn()
   .handler(() => "Yay!" as const)
   .catch(() => "ooh no" as const);
 type MyActionReturn = InferSafeFnActionReturn<typeof myAction>;
@@ -99,7 +117,7 @@ Infers the return type of an action.
 Infers the arguments that need to be passed into `.run()`
 
 ```ts
-const mySafeFn = SafeFn.new()
+const mySafeFn = createSafeFn()
   .input(z.object({ name: z.string() }))
   .handler(...)
 type MySafeFnArgs = InferSafeFnArgs<typeof mySafeFn>;
@@ -109,12 +127,13 @@ type MySafeFnArgs = InferSafeFnArgs<typeof mySafeFn>;
 ### InferSafeFnErrError
 
 Infers the error type of a SafeFn when using `.run()`.
+Boolean parameter is used to specify if the function is run as an action or not.
 
 ```ts
-const mySafeFn = SafeFn.new()
+const mySafeFn = createSafeFn()
   .handler(...)
   .catch(() => "ooh no" as const);
-type MySafeFnError = InferSafeFnErrError<typeof mySafeFn>;
+type MySafeFnError = InferSafeFnErrError<typeof mySafeFn, true>;
 //   ^ "ooh no"
 ```
 
@@ -123,22 +142,26 @@ type MySafeFnError = InferSafeFnErrError<typeof mySafeFn>;
 Infers the ok type of a SafeFn when using `.run()`.
 
 ```ts
-const mySafeFn = SafeFn.new().handler(() => ok("Yay!" as const));
+const mySafeFn = createSafeFn().handler(() => ok("Yay!" as const));
 type MySafeFnOk = InferSafeFnOkData<typeof mySafeFn>;
 //   ^ "Yay!"
 ```
 
 ### InferSafeFnReturn
 
-Infers the return type of a SafeFn when using `.run()`.
+Infers the return type of a SafeFn when using `.run()`. Boolean parameter is used to specify if the function is run as an action or not.
 This is the `ResultAsync` type, this can be converted into a `Result` type by wrapping it in `Await`
 
 ```ts
-const mySafeFn = SafeFn.new()
+const mySafeFn = createSafeFn()
   .handler(() => "Yay!" as const)
   .catch(() => "ooh no" as const);
-type MySafeFnReturn = InferSafeFnReturn<typeof mySafeFn>;
+type MySafeFnReturn = InferSafeFnReturn<typeof mySafeFn, false>;
 //   ^ ResultAsync<"Yay!", "ooh no">
 type MyAwaitedSafeFnReturn = Awaited<MySafeFnReturn>;
 //   ^ Result<"Yay!", "ooh no">
+type MySafeFnActionReturn = InferSafeFnReturn<typeof mySafeFn, true>;
+//   ^ Promise<ActionResult<"Yay!", "ooh no">>
+type MyAwaitedActionSafeFnReturn = Awaited<MySafeFnReturn>;
+//   ^ ActionResult<"Yay!", "ooh no">
 ```

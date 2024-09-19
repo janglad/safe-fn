@@ -1,11 +1,12 @@
 {
   "title": "Creating a SafeFn",
   "pages": [
-    "instantiate",
+    "getting-started",
     "chaining",
     "input-output",
     "handler",
     "uncaught-errors",
     "callbacks"
-  ]
+  ],
+  "defaultOpen": true
 }

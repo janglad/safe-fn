@@ -2,8 +2,35 @@
 title: useServerAction hook
 ---
 
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+{/* <!-- prettier-ignore --> */}
+  <Tab value="npm">
+  ```bash 
+  npm i safe-fn-react
+  ```
+  </Tab>
+  
+  <Tab value="pnpm">
+  ```bash 
+  pnpm add safe-fn-react
+  ```
+  </Tab>
+  <Tab value="yarn">
+  ```bash 
+  yarn add safe-fn-react
+  ```
+  </Tab>
+  <Tab value="bun">
+  ```bash 
+  bun add safe-fn-react
+  ```
+  </Tab>
+</Tabs>
+
 The `useServerAction()` hook makes calling a SafeFn from the client easy.
-It handles transitioning, exposes loading states and converts the `ActionResult` object back into a `Result`.
+It handles transitioning, exposes loading states and converts the `Promise<ActionResult>` object back into a `ResultAsync`.
 
 ```ts title="server/... .ts"
 const mySafeFn = SafeFn.new().handler(() => {
@@ -22,17 +49,6 @@ const { execute, result, isPending, isSuccess } = useServerAction(
 );
 ```
 
-## Returns
-
-An object with the following properties:
-
-- `execute()`: A function that takes in the arguments to run the action (same as `run()`,
-  the type either inferred through setting an input schema or passing it through `unparsedInput<T>()`) and return a `ResultAsync` of the action's return type.
-- `result`: the `Result` of running `execute()`.
-- `isPending`: a boolean representing if the action is currently executing or transitioning.
-- `isSuccess`: a boolean representing if the action completed successfully.
-  {/* - TODO: update this when adding the other properties */}
-
 ## Arguments
 
 ### SafeFn Action
@@ -41,16 +57,19 @@ The `action` argument is the resulting function from calling `createAction()` on
 
 ### Callbacks
 
-The `useServerAction()` hook optionally takes in the following callbacks functions that will run on the client:
+The `useServerAction()` hook optionally takes in the following callbacks functions that will run on the client, and the properties of the argument object they can take:
 
 - `onStart()` - Called when `execute()` is called.
-  - Takes in the raw input passed into `execute()`.
+  - `unsafeRawInput`: The raw input passed into `execute()`.
 - `onSuccess()` - Called when the `execute()` returns an `Ok`.
-  - Takes in the raw input passed into `execute()` and the value returned from the action.
+  - `unsafeRawInput`: The raw input passed into `execute()`.
+  - `value`: The value returned from the action. [See here for the type](/docs/run/return-type).
 - `onError()` - Called when the `execute()` returns an `Err`.
-  - Takes in the raw input passed into `execute()` and the error returned from the action.
+  - `unsafeRawInput`: The raw input passed into `execute()`.
+  - `error`: the error returned from the action. [See here for the type](/docs/run/return-type).
 - `onComplete()` - Called when the `execute()` returns.
-  - Takes in the raw input passed into `execute()` and the result returned from the action.
+  - `unsafeRawInput`: The raw input passed into `execute()`.
+  - `result`: The result returned from the action. [See here for the type](/docs/run/return-type).
 
 <Callout type="info">
   These callbacks are not awaited. This means `onStart()` does not block the
@@ -61,3 +80,11 @@ The `useServerAction()` hook optionally takes in the following callbacks functio
 {/* Explain impacts of redirecting on callbacks */}
 
 ## Returns
+
+An object with the following properties:
+
+- `execute()`: A function that takes in the argument to run the action, the same as the argument for `run()`.
+- `result`: the `Result` of running `execute()`. See [the dedicated page](/docs/run/return-type) for the type of this.
+- `isPending`: a boolean representing if the action is currently executing or transitioning.
+- `isSuccess`: a boolean representing if the action completed successfully.
+  {/* - TODO: update this when adding the other properties */}

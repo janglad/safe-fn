@@ -5,7 +5,7 @@ title: Directly
 You can run a SafeFn directly by using the `run()` method. This will execute the SafeFn, returning a `ResultAsync` and is intended to be used on the server.
 
 ```ts
-const mySafeFn = SafeFn.new().handler(() => {
+const mySafeFn = createSafeFn().handler(() => {
   return ok("Success");
 });
 
@@ -13,7 +13,7 @@ const res = mySafeFn.run();
 //   ^? ResultAsync<"Success", { code: "UNCAUGHT_ERROR", ... }>
 ```
 
-The arguments required is the `unparsedInput` of the SafeFn. This is either inferred from the input schema, or passed via `unparsedInput<T>()`.
+The required argument is either the input type of the input schema if you defined one, or the type set through `.unparsedInput<T>()`. This is merged that of the parent SafeFn if there is one.
 
 ```ts
 const mySafeFn = SafeFn.new()
@@ -31,3 +31,7 @@ const res = mySafeFn.run({ firstName: "World" });
   action or through an API route, it's recommended to use the
   [`createAction()`](/docs/run/action) method.
 </Callout>
+
+## Return type
+
+See [the dedicated page](/docs/run/return-type) for the return type of `run()`.

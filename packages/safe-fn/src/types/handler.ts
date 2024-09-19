@@ -31,12 +31,6 @@ export type TSafeFnDefaultHandlerFn = () => Result<
   }
 >;
 
-/**
- * @param TInputSchema a Zod schema or undefined
- * @param TUnparsedInput the unparsed input type. This is inferred from TInputSchema. When none is provided, this is `never` by default or overridden by using `unparsedInput<>()`
- * @param TParent the parent safe function or undefined
- * @returns the type of the arguments available in the passed handler function.
- */
 export interface TSafeFnHandlerArgs<
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
@@ -54,11 +48,6 @@ export interface TSafeFnHandlerArgs<
   ctxInput: TCtxInput;
 }
 
-/**
- * Type used to constrain the return type of the handler function.
- * @param TOutputSchema a Zod schema or undefined
- * @returns the output type expected for the handler function. If the schema is undefined, this is `any`. Otherwise this is the input (`z.infer<typeof outputSchema`) of the output schema.
- */
 export type TSafeFnHandlerReturn<TOutputSchema extends TSafeFnOutput> = Result<
   TSchemaInputOrFallback<TOutputSchema, any>,
   any

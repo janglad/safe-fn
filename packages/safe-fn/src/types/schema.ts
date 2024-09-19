@@ -10,9 +10,11 @@ import type { AnyObject, TIntersectIfNotT } from "./util";
 ################################
 */
 /**
- * Infer the input schema of a runnable safe function.
- * @param T the runnable safe function
- * @returns the input schema of the safe function
+ Type params: 
+ - `T`: the SafeFn
+
+ Returned type: 
+ - the input schema of the SafeFn
  */
 export type InferInputSchema<T> =
   T extends TRunnableSafeFn<
@@ -32,9 +34,11 @@ export type InferInputSchema<T> =
     : never;
 
 /**
- * Infer the output schema of a runnable safe function.
- * @param T the runnable safe function
- * @returns the output schema of the safe function
+ * Type params:
+ * - `T`: the SafeFn
+ *
+ * Returned type:
+ * - the output schema of the SafeFn
  */
 export type InferOutputSchema<T> =
   T extends TRunnableSafeFn<
@@ -54,9 +58,11 @@ export type InferOutputSchema<T> =
     : never;
 
 /**
- * Infer the unparsed input of a runnable safe function.
- * @param T the runnable safe function
- * @returns the unparsed input of the safe function
+ * Type params:
+ * - `T`: the SafeFn
+ *
+ * Returned type:
+ * - the unparsed input of the SafeFn
  */
 export type InferUnparsedInputTuple<T> =
   T extends TRunnableSafeFn<
@@ -75,7 +81,7 @@ export type InferUnparsedInputTuple<T> =
     ? TUnparsed
     : never;
 
-export type InferMergedInputSchemaInput<T> =
+export type TInferMergedInputSchemaInput<T> =
   T extends TRunnableSafeFn<
     any,
     any,
@@ -92,7 +98,7 @@ export type InferMergedInputSchemaInput<T> =
     ? MergedInputSchemaInput
     : never;
 
-export type InferMergedParentOutputSchemaInput<T> =
+export type TInferMergedParentOutputSchemaInput<T> =
   T extends TRunnableSafeFn<
     any,
     any,
@@ -137,32 +143,18 @@ export type TInferCtxInput<T> =
 ||                            ||
 ################################
 */
-/**
- * A Zod schema that is used to parse the input of the safe function, or undefined.
- */
+
 export type TSafeFnInput = z.ZodTypeAny | undefined;
-/**
- * A Zod schema that is used to parse the output of the `handler()` and return the final value on `run()`, or undefined.
- */
+
 export type TSafeFnOutput = z.ZodTypeAny | undefined;
 
 export type TSafeFnUnparsedInput = [unknown] | [];
 
-/**
- * @param TSchema a Zod schema or undefined
- * @param TFallback the fallback type if the schema is undefined
- * @returns the output type of the schema if it is defined, otherwise `TFallback`
- */
 export type TSchemaInputOrFallback<
   TSchema extends TSafeFnInput,
   TFallback,
 > = TSchema extends z.ZodTypeAny ? z.input<TSchema> : TFallback;
 
-/**
- * @param TSchema a Zod schema or undefined
- * @param TFallback the fallback type if the schema is undefined
- * @returns the output type of the schema if it is defined, otherwise `TFallback`
- */
 export type TSchemaOutputOrFallback<
   TSchema extends TSafeFnOutput,
   TFallback,
