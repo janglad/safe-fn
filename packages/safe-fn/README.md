@@ -18,62 +18,140 @@ The docs [can be found here](https://safe-fn.dev).
 
 ## Quick example
 
-```ts
-"use server";
+Take the simple case of a function that creates a todo for a user (very original I know).
+We first need to make sure the user is signed in, then validate the input of the todo, store it in the database if it's valid and then return it.
 
+All of this needs to be done while taking care of errors that might occur in any of these steps.
+
+```ts
 const withAuth = createSafeFn().handler(async () => {
-  const user = await auth.getUser();
+  const user = await auth.getSignedInUser();
   if (!user) {
     return err({
-      code: "UNAUTHORIZED",
+      code: "NOT_AUTHORIZED",
     });
   }
   return ok(user);
 });
-
 const createTodo = createSafeFn()
   .use(withAuth)
   .input(
     z.object({
-      title: z.string(),
-      description: z.string().min(10),
+      title: z.string().min(2),
+      description: z.string().min(2),
     }),
   )
-  .output(
+  .handler(async (args) => {
+    const user = args.ctx;
+    const todo = await db.todo.create({
+      title: args.input.title,
+      description: args.input.description,
+      userId: user.id,
+    });
+    return ok(todo);
+  });
+```
+
+Considering both of these functions can throw we should probably add some error handling as such:
+
+```ts
+const withAuth = SafeFn.new()
+  ...
+  .catch((e) => {
+    return err({
+      code: "AUTH_ERROR",
+    });
+  });
+
+const createTodo = SafeFn.new(withAuth)
+  ...
+  .catch((e) => {
+    return err({
+      code: "DB_ERROR",
+    });
+  });
+```
+
+This results in a fully typed function with the following return type:
+
+```ts
+type res = ResultAsync<
+  {
+    id: string;
+    title: string;
+    description: string;
+  },
+  | {
+      code: "DB_ERROR";
+    }
+  | { code: "AUTH_ERROR" }
+  | { code: "NOT_AUTHORIZED" }
+  | {
+      code: "INPUT_PARSING";
+      cause: z.ZodError<{ title: string; description: string }>;
+    }
+>;
+```
+
+we can easily call this function using the `run()` method:
+
+```ts
+const res = await createTodo({...})
+
+if (res.isOk()){
+  ...
+} else if (res.isErr()){
+  if (res.error.code === "AUTH_ERROR"){
+    ...
+  }
+}
+```
+
+or on the client by creating an action and calling it with `useServerAction()`, in this example we're adding a platform specific callback to handle revalidation:
+
+```ts title="server/... .ts"
+"use server";
+
+const createTodoAction = createTodo()
+  .onSuccess(async (args) => {
+    revalidatePath(`/todos/${args.value.id}`);
+  })
+  .createAction();
+```
+
+```tsx title="client/... .tsx"
+const { execute, result, isPending } = useServerAction(createTodoAction);
+```
+
+However, the magic of the integration of NeverThrow really comes out if your other functions are also returning a `Result` or `ResultAsync`. Instead of passing a regular function via `handler()` you can also use `safeHandler()`.
+This builds on Neverthrow's `safeTry()` and takes in a generator function. This generator function receives the same args as `handler()`, but it allows you to `yield *` other results using `.safeUnwrap()`.
+This is meant to emulate Rust's `?` operator and allows a very ergonomic way to write "return early if this fails, otherwise continue" logic.
+
+This function has the same return type as the `handler()` example above.
+
+```ts
+const withAuth = createSafeFn().safeHandler(async function* () {
+  const user = yield* auth.getSignedInUser().safeUnwrap();
+  return ok(user);
+});
+
+const createTodoAction = createSafeFn()
+  .use(withAuth)
+  .input(
     z.object({
-      id: z.string().uuid(),
-      title: z.string(),
-      description: z.string(),
+      title: z.string().min(2),
+      description: z.string().min(2),
     }),
   )
   .safeHandler(async function* (args) {
     const user = args.ctx;
-
-    // Assuming createTodo returns a ResultAsync. yield* means that in the case of an Ok result todo gets assigned the value, otherwise the entire function short circuits and returns the error.
-    const todo = yield* createTodo({
-      title: args.input.title,
-      description: args.input.description,
-      userId: user.id,
-    }).safeUnwrap();
-
+    const todo = yield* db.todo
+      .create({
+        title: args.input.title,
+        description: args.input.description,
+        userId: user.id,
+      })
+      .safeUnwrap();
     return ok(todo);
-  })
-  .onError(async (e) => {
-    await logError(e);
-  })
-  .onSuccess(async (res) => {
-    revalidatePath(`/todos/${res.value.id}`);
   });
-
-export const createTodoAction = createTodo.createAction();
-```
-
-```tsx
-"use client";
-
-const { execute, isPending, error, data } = useServerAction(createTodoAction, {
-  onSuccess: (args) => {
-    toast.success("Todo created successfully");
-  },
-});
 ```
