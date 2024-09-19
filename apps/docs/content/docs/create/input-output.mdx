@@ -88,10 +88,11 @@ If you don't want to parse the input, but still want to type it you can use `unp
   types aren't checked at runtime.
 </Callout>
 <Callout type="warn">
-  When [chaining](/docs/create/chaining) the type for `unsafeRawInput` can lie!
-  Since the input is not parsed and the type is expanded with the
-  `unsafeRawInput` of the child, the parent function will be called with
-  properties that only appear in the type of the child function!
+  When [chaining](/docs/create/chaining) the type for `unsafeRawInput` can lie
+  if you use this SafeFn as a parent for another! Since the input is not parsed
+  and the child SafeFn might require additional input that will be passed in at
+  runtime, the parent function will be called with properties that only appear
+  in the type of the child function!
 </Callout>
 
 ```ts
