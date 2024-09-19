@@ -7,5 +7,6 @@
     "handler",
     "uncaught-errors",
     "callbacks"
-  ]
+  ],
+  "defaultOpen": true
 }
