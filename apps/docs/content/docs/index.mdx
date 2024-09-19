@@ -2,24 +2,50 @@
 title: Introduction
 ---
 
-import { Tab, Tabs } from "fumadocs-ui/components/tabs";
-
 ## Why SafeFn?
 
-SafeFn is a library to easily build **fully** typed functions with validated input and output, procedure chaining, callbacks and more. Ideal for functions that are at the edge of your applications, like Server Actions!
+SafeFn is a library to easily build **fully** typed functions with validated input and output, procedure chaining, callbacks and more. This is ideal for functions that are at the edge of your applications, like Server Actions!
 
-It's heavily inspired by ZSA, Next-Safe-Action and TRPC in its API deisgn but integrates NeverThrow to handle errors in a typesafe manner.
-While Neverthrow can be deeply integrated with this library, it's also possible to use it without any knowledge of it. The only requirement is that your handler returns either an `Ok` or `Err`.
+Existing solutions like ZSA and Next-Safe-Action are great, but often fall short when it comes to properly handling errors. SafeFn integrates [NeverThrow](https://github.com/supermacro/neverthrow) to handle errors in a typesafe manner.
+While SafeFn really shines when used together with NeverThrow, incremental adoption is easy as the only requirement is that your handler returns a `Result` created through NeverThrow's `ok()` or `err()`.
 
-## Quick examples
+Besides the typesafety, SafeFn also aims to improve on existing solutions by allowing for flexible composition and configuration of functions.
 
-Take the simple example of a function that creates a todo for a user (original I know).
-We first need to make sure the user is signed in, then validate the input of the todo, store it in the database if it's valid and then return it. We also need to handle errors that might occur in any of these steps.
+## NeverThrow
 
-This can be written as follows
+For a quick introduction to NeverThrow, check out [this Twitter thread by Matt Pocock](https://x.com/mattpocockuk/status/1825552684994457946). Their docs can be found [here](https://github.com/supermacro/neverthrow).
+
+Put very briefly, NeverThrow provides a `Result` type which enables typed errors. A result can be created through the `ok()` and `err()` functions, and can be consumed through `result.value` and `result.error`.
 
 ```ts
-const authedAction = SafeFn.new().handler(async () => {
+function someGoodSomeBad() {
+  if (Math.random() > 0.5) {
+    return ok("Yay!" as const);
+  } else {
+    return err("Boo!" as const);
+  }
+}
+
+const res = someGoodSomeBad();
+
+if (res.isOk()) {
+  console.log(res.value);
+  //               ^? "Yay!"
+} else {
+  console.log(res.error);
+  //               ^? "Boo!"
+}
+```
+
+## Quick SafeFn examples
+
+Take the simple case of a function that creates a todo for a user (very original I know).
+We first need to make sure the user is signed in, then validate the input of the todo, store it in the database if it's valid and then return it.
+
+All of this needs to be done while taking care of errors that might occur in any of these steps.
+
+```ts
+const withAuth = createSafeFn().handler(async () => {
   const user = await auth.getSignedInUser();
   if (!user) {
     return err({
@@ -28,7 +54,8 @@ const authedAction = SafeFn.new().handler(async () => {
   }
   return ok(user);
 });
-const createTodoAction = SafeFn.new(authedAction)
+const createTodo = createSafeFn()
+  .use(withAuth)
   .input(
     z.object({
       title: z.string().min(2),
@@ -49,38 +76,16 @@ const createTodoAction = SafeFn.new(authedAction)
 Considering both of these functions can throw we should probably add some error handling as such:
 
 ```ts
-const authedAction = SafeFn.new()
-  .handler(async () => {
-    const user = await auth.getSignedInUser();
-    if (!user) {
-      return err({
-        code: "NOT_AUTHORIZED",
-      });
-    }
-    return ok(user);
-  })
+const withAuth = SafeFn.new()
+  ...
   .catch((e) => {
     return err({
       code: "AUTH_ERROR",
     });
   });
 
-const createTodoAction = SafeFn.new(authedAction)
-  .input(
-    z.object({
-      title: z.string().min(2),
-      description: z.string().min(2),
-    }),
-  )
-  .handler(async (args) => {
-    const user = args.ctx;
-    const todo = await db.todo.create({
-      title: args.input.title,
-      description: args.input.description,
-      userId: user.id,
-    });
-    return ok(todo);
-  })
+const createTodo = SafeFn.new(withAuth)
+  ...
   .catch((e) => {
     return err({
       code: "DB_ERROR",
@@ -88,7 +93,7 @@ const createTodoAction = SafeFn.new(authedAction)
   });
 ```
 
-This results in a fully typed function. Running this function using `run()` results in the following `ResultAsync` typed
+This results in a fully typed function with the following return type:
 
 ```ts
 type res = ResultAsync<
@@ -109,19 +114,50 @@ type res = ResultAsync<
 >;
 ```
 
-However, the magic of the integration of NeverThrow really comes out if your other functions are also using it and returning a `Result` or `ResultAsync`. Instead of passing a regular function via `handler()` you can also use `safeHandler()`.
+we can easily call this function using the `run()` method:
+
+```ts
+const res = await createTodo({...})
+
+if (res.isOk()){
+  ...
+} else if (res.isErr()){
+  if (res.error.code === "AUTH_ERROR"){
+    ...
+  }
+}
+```
+
+or on the client by creating an action and calling it with `useServerAction()`, in this example we're adding a platform specific callback to handle revalidation:
+
+```ts title="server/... .ts"
+"use server";
+
+const createTodoAction = createTodo()
+  .onSuccess(async (args) => {
+    revalidatePath(`/todos/${args.value.id}`);
+  })
+  .createAction();
+```
+
+```tsx title="client/... .tsx"
+const { execute, result, isPending } = useServerAction(createTodoAction);
+```
+
+However, the magic of the integration of NeverThrow really comes out if your other functions are also returning a `Result` or `ResultAsync`. Instead of passing a regular function via `handler()` you can also use `safeHandler()`.
 This builds on Neverthrow's `safeTry()` and takes in a generator function. This generator function receives the same args as `handler()`, but it allows you to `yield *` other results using `.safeUnwrap()`.
 This is meant to emulate Rust's `?` operator and allows a very ergonomic way to write "return early if this fails, otherwise continue" logic.
 
 This function has the same return type as the `handler()` example above.
 
 ```ts
-const authedAction = SafeFn.new().safeHandler(async function* () {
+const withAuth = createSafeFn().safeHandler(async function* () {
   const user = yield* auth.getSignedInUser().safeUnwrap();
   return ok(user);
 });
 
-const createTodoAction = SafeFn.new(authedAction2)
+const createTodoAction = createSafeFn()
+  .use(withAuth)
   .input(
     z.object({
       title: z.string().min(2),
@@ -140,34 +176,3 @@ const createTodoAction = SafeFn.new(authedAction2)
     return ok(todo);
   });
 ```
-
-## Installation
-
-<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
-{/* <!-- prettier-ignore --> */}
-  <Tab value="npm">
-  ```bash 
-  npm i safe-fn zod neverthrow
-  ```
-  </Tab>
-  
-  <Tab value="pnpm">
-  ```bash 
-  pnpm add safe-fn zod neverthrow
-  ```
-  </Tab>
-  <Tab value="yarn">
-  ```bash 
-  yarn add safe-fn zod neverthrow
-  ```
-  </Tab>
-  <Tab value="bun">
-  ```bash 
-  bun add safe-fn zod neverthrow
-  ```
-  </Tab>
-</Tabs>
-
-<Cards>
-  <Card title="Creating a SafeFn" href="/docs/create/instantiate" />
-</Cards>

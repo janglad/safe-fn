@@ -1,0 +1,43 @@
+---
+title: Getting started
+---
+
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+
+## Installation
+
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+{/* <!-- prettier-ignore --> */}
+  <Tab value="npm">
+  ```bash 
+  npm i safe-fn zod neverthrow
+  ```
+  </Tab>
+  
+  <Tab value="pnpm">
+  ```bash 
+  pnpm add safe-fn zod neverthrow
+  ```
+  </Tab>
+  <Tab value="yarn">
+  ```bash 
+  yarn add safe-fn zod neverthrow
+  ```
+  </Tab>
+  <Tab value="bun">
+  ```bash 
+  bun add safe-fn zod neverthrow
+  ```
+  </Tab>
+</Tabs>
+
+## Instantiating
+
+{/* TODO: chaining page */}
+You can create a SafeFn by using the `.new()` method. Here you can optionally pass in a parent handler (see chaining)
+
+```ts
+import { createSafeFn } from "safe-fn";
+
+const myySafeFunction = createSafeFn();
+```
