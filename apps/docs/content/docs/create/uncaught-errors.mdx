@@ -23,11 +23,9 @@ const res = await mySafeFn.run();
 ```
 
 <Callout type="info">
-  Next.js relies on throwing errors for `redirect()` and `notFound()`. These
-  errors are filtered out and will still be thrown and thus not hit your catch
-  handler.
+  I'd recommended to always shape your errors as an object with a `code` key, to
+  make it easy to narrow the type of them down when handling them.
 </Callout>
-<Callout type="info">
 
 If you don't provide an uncaught error handler, the default error handler will be used:
 
@@ -42,4 +40,8 @@ If you don't provide an uncaught error handler, the default error handler will b
 };
 ```
 
+<Callout type="info">
+  Next.js relies on throwing errors for `redirect()` and `notFound()`. These
+  errors are filtered out and will still be thrown and thus not hit your catch
+  handler.
 </Callout>
