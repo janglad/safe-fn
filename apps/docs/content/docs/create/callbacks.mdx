@@ -17,13 +17,14 @@ title: Callback functions
 The examples bellow use the following SafeFn
 
 ```ts
-const parent = SafeFn.new()
+const parent = createSafeFn()
   .input(z.object({ firstName: z.string(), lastName: z.string() }))
   .handler((args) => {
     return ok(`${args.input.firstName} ${args.input.lastName}`);
   });
 
-const child = SafeFn.new(parent)
+const child = createSafeFn()
+  .use(parent)
   .output(z.object({ message: z.string() }))
   .handler((args) => {
     return ok({
@@ -70,6 +71,10 @@ Starts execution right when you run your SafeFn and takes in the following param
     value: {
         message: string;
     };
+    ctxInput :[{
+      firstName: string;
+      lastName: string;
+    }]
     */
   })
 ```
@@ -98,12 +103,16 @@ Starts execution after output parsing has completed if you defined a schema, oth
         lastName: string;
     }
    ctx: string | undefined;
+   ctxInput :[{
+      firstName: string;
+      lastName: string;
+    }]
    error: {code: "INPUT_PARSING" ...} | ...
     */
   })
 ```
 
-Starts execution after the first encountered `Err` return while executing your SafeFn. This can be anywhere between input parsing and output parsing. Takes in the following parameters:
+Starts execution after the first encountered `Err` return while executing your SafeFn. Takes in the following parameters:
 
 - `asAction`: wether the safe-fn was run as an action (`createAction()()`) or not (`run()`). This can be helpful the narrow down the type of `error`.
 - `unsafeRawInput`: the raw input passed when running your SafeFn. Keep in mind this can contain additional properties when using one SafeFn as the parent of another!
@@ -129,6 +138,10 @@ Starts execution after the first encountered `Err` return while executing your S
         lastName: string;
     }
    ctx: string | undefined;
+    ctxInput :[{
+      firstName: string;
+      lastName: string;
+    }]
    result: Result<string, {code: "INPUT_PARSING" ...} ...>
     */
   })
