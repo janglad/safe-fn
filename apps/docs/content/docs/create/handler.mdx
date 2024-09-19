@@ -2,35 +2,44 @@
 title: Handler functions
 ---
 
-SafeFn has two types of handler functions, `handler()` and `safeHandler()`. These both take in an object with the following properties:
+SafeFn has two types of handler functions, `handler()` and `safeHandler()`.
 
-- `args.input`: The result of parsing the input schema.
-- `args.unsafeRawInput`: The unparsed input of your function.
-- `args.ctx`: The `Ok` return value of the parent handler function or undefined if no parent handler function is set.
-- `args.ctxInput`: An array of all the parsed input of the parent handler functions. This could be handy in a pinch, altho ideally you'd just use the `ctx` property to pass the actual data you want.
+### Args
 
-### Handler
+Both `handler()` and `safeHandler()` take in an object with the following properties:
 
-`handler()` takes in a function that will be called when your SafeFn is executed. This function should return a `Result<TData,TError>` or `Promise<Result<TData,TError>>`.
-If you set an output schema, the `TData` type is constrained to the parsed output type of your schema. Otherwise, you can return any `Result` type.
+- `input`: The result of parsing the input schema if you defined one, otherwise `undefined`.
+- `unsafeRawInput`: The unparsed input of your function. Either inferred through `input()` or set through `unparsedInput()`, and merged with the `unsafeRawInput` of the parent SafeFn if one is defined. `undefined` if there's no input schema, no `unparsedInput()` set, and no parent is set or a parent without input is used.
+- `ctx`: The `Ok` return value of the parent handler function or undefined if no parent handler function is set.
+- `ctxInput`: An array of all the parsed input of the parent handler functions. This could be handy in a pinch, altho ideally you'd return the data from the parent function directly and access it through `ctx`.
 
-The returned types from `run()` and `createAction()()` are updated with the inferred return type of your handler function.
+<Callout type="warn">
+  When [chaining](/docs/create/chaining) the type for `unsafeRawInput` can lie
+  if you use this SafeFn as a parent for another! Since the input is not parsed
+  and the child SafeFn might require additional input that will be passed in at
+  runtime, the parent function will be called with properties that only appear
+  in the type of the child function!
+</Callout>
+
+## Handler
+
+`handler()` takes in a function that will be called when your SafeFn is executed. This function should return a `Result` which can be created through Neverthrow's `ok()` and `err()` functions. If you defined an output schema, the `Ok` return must match the shape of the input of that schema.
 
 ```ts
 const mySafeFunction = SafeFn.new()
   .unparsedInput<{ firstName: string; lastName: string }>()
   .output(z.object({ fullName: z.string() }))
   .handler((args) => {
-    // Error: Type Ok<{ name: string; }> is not assignable to type Ok<{ fullName: string; }> // [!code highlight]
+    // Error: Type { name: string; } is not assignable to type { fullName: string; } // [!code highlight]
     return ok({
-      fullName: `${args.unsafeRawInput.firstName} ${args.unsafeRawInput.lastName}`,
+      name: `${args.unsafeRawInput.firstName} ${args.unsafeRawInput.lastName}`,
     });
   });
 ```
 
-### Safe Handler
+## Safe Handler
 
-Instead of using `handler()`, you can also use `safeHandler()`. This offers the same functionality as NeverThrow's `safeTry()` and requires an async generator function.
+Instead of using `handler()`, you can also use `safeHandler()`. This offers the same functionality as NeverThrow's `safeTry()` and takes in an async generator function.
 This is probably the route you want to take if the rest of your codebase is built with NeverThrow, as it allows ergonomic "return if error" handling.
 
 Consider the following example:
@@ -47,6 +56,7 @@ declare function getTodoById(
 
 const getLastUserTodoTitle = SafeFn.new().handler(async () => {
   const todoList = await getUserTodoList();
+
   if (todoList.isErr()) {
     return todoList;
   }
@@ -56,7 +66,9 @@ const getLastUserTodoTitle = SafeFn.new().handler(async () => {
     });
   }
   const lastTodoId = todoList.value[todoList.value.length - 1];
+
   const todo = await getTodoById(lastTodoId);
+
   if (todo.isErr()) {
     return todo;
   }
@@ -67,16 +79,9 @@ const getLastUserTodoTitle = SafeFn.new().handler(async () => {
 This can be rewritten using `safeHandler()` as follows:
 
 ```ts
-// Fake function declarations
-declare function getUserTodoList(): ResultAsync<string[], { code: "DB_ERROR" }>;
-declare function getTodoById(
-  id: string,
-): ResultAsync<
-  { id: string; title: string; description: string },
-  { code: "DB_ERROR" }
->;
-
 const getLastUserTodoTitle = SafeFn.new().handler(async function* () {
+  // Read as: run getUserTodolist() and assign the result value to todoList if it's okay,
+  // otherwise short-circuit the entire function and return error.
   const todoList = yield* getUserTodoList().safeUnwrap();
   if (!todoList.length) {
     return err({
