@@ -22,10 +22,10 @@ import type {
 import type { TSafeFnInternals } from "./types/internals";
 import type {
   InferInputSchema,
-  InferMergedInputSchemaInput,
-  InferMergedParentOutputSchemaInput,
   InferUnparsedInputTuple,
   TInferCtxInput,
+  TInferMergedInputSchemaInput,
+  TInferMergedParentOutputSchemaInput,
   TSafeFnInput,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
@@ -153,9 +153,9 @@ export class SafeFnBuilder<
     ],
     TBuildMergedHandlersErrs<TNewParent>,
     TInputSchema,
-    InferMergedInputSchemaInput<TNewParent>,
+    TInferMergedInputSchemaInput<TNewParent>,
     TOutputSchema,
-    InferMergedParentOutputSchemaInput<TNewParent>,
+    TInferMergedParentOutputSchemaInput<TNewParent>,
     InferUnparsedInputTuple<TNewParent>,
     TOmitArgs | "use"
   > {
