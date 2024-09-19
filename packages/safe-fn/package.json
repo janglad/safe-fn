@@ -5,6 +5,11 @@
   "publishConfig": {
     "access": "public"
   },
+  "homepage": "https://safe-fn.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/janglad/safe-fn.git"
+  },
   "keywords": [
     "safe-fn",
     "safe function",
@@ -13,7 +18,7 @@
     "server-action"
   ],
   "author": "janglad",
-  "license": "ISC",
+  "license": "MIT",
   "files": [
     "dist/**"
   ],

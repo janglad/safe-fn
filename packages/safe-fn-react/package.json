@@ -8,6 +8,12 @@
   "files": [
     "dist/**"
   ],
+  "homepage": "https://safe-fn.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/janglad/safe-fn.git"
+  },
+  "license": "MIT",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
