@@ -26,7 +26,7 @@ Both `handler()` and `safeHandler()` take in an object with the following proper
 `handler()` takes in a function that will be called when your SafeFn is executed. This function should return a `Result` which can be created through Neverthrow's `ok()` and `err()` functions. If you defined an output schema, the `Ok` return must match the shape of the input of that schema.
 
 ```ts
-const mySafeFunction = SafeFn.new()
+const mySafeFunction = createSafeFn()
   .unparsedInput<{ firstName: string; lastName: string }>()
   .output(z.object({ fullName: z.string() }))
   .handler((args) => {
@@ -54,7 +54,7 @@ declare function getTodoById(
   { code: "DB_ERROR" }
 >;
 
-const getLastUserTodoTitle = SafeFn.new().handler(async () => {
+const getLastUserTodoTitle = createSafeFn().handler(async () => {
   const todoList = await getUserTodoList();
 
   if (todoList.isErr()) {
@@ -79,7 +79,7 @@ const getLastUserTodoTitle = SafeFn.new().handler(async () => {
 This can be rewritten using `safeHandler()` as follows:
 
 ```ts
-const getLastUserTodoTitle = SafeFn.new().handler(async function* () {
+const getLastUserTodoTitle = createSafeFn().handler(async function* () {
   // Read as: run getUserTodolist() and assign the result value to todoList if it's okay,
   // otherwise short-circuit the entire function and return error.
   const todoList = yield* getUserTodoList().safeUnwrap();
