@@ -1,5 +1,11 @@
 # @safe-fn/safe-fn
 
+## 0.3.0
+
+### Minor Changes
+
+- 9fbfa68: .
+
 ## 0.2.1
 
 ### Patch Changes

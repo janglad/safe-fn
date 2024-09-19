@@ -1,5 +1,16 @@
 # safe-fn-react
 
+## 0.2.0
+
+### Minor Changes
+
+- 9fbfa68: .
+
+### Patch Changes
+
+- Updated dependencies [9fbfa68]
+  - safe-fn@0.3.0
+
 ## 0.1.3
 
 ### Patch Changes
