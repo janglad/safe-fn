@@ -2,7 +2,7 @@
 title: Chaining
 ---
 
-You can chain SafeFn instances together by using `.use()`.
+You can create procedure chains by using `.use()`. This is a function that takes in a SafeFn.
 
 ```ts
 const authedFn = createSafeFn()
@@ -23,6 +23,6 @@ const authedFn = createSafeFn()
 const getUserTodos = createSafeFn().use(authedFn). ...
 ```
 
-If `authedFn` returns an `Err` value, the error is returned and `getUserTodos` is not executed, as such the `Err` type of `getUserTodos` is expanded to include the error type of `authedFn`.
+This parent SafeFn will run before the child it's defined on (including all callbacks). If it returns an `Err`, the function is short circuited and input parsing/the handler on the child will not be executed. As such, the return type of the child safe-fn now includes the possible `Err` values of the parent.
 
-Chaining SafeFns also exposes additional properties to your handler function and callbacks, see the documentation for these for more info.
+Setting a parent SafeFn also changes the available arguments for [handler](/docs/create/handler) and [callback](/docs/create/callbacks) functions, as outlined on their pages.
