@@ -2,11 +2,11 @@
 title: Handling errors
 ---
 
-As this library is built arround NeverThrow, ideally you should handle errors in your function and return them as values. However, sometimes you just want to throw a value or an unexpected, uncaught throw happens.
-To handle this you can provide you can provide an uncaught error handler via `catch()`, which receives the error as an argument and should return an `Err` value.
+As this library is built around NeverThrow, ideally you should handle errors in your function and return them as values. However, some functions could throw unexpectedly.
+To handle this you can provide you can provide an uncaught error handler via `catch()`, which receives the uncaught error as an argument and should return an `Err` value.
 
 ```ts
-const mySafeFn = SafeFn.new()
+const mySafeFn = createSafeFn()
   .handler(() => {
     if (Math.random() > 0.5) {
       throw new Error();
@@ -14,20 +14,20 @@ const mySafeFn = SafeFn.new()
     return ok("Success");
   })
   .catch((e) => {
-    //    ^? (parameter) e: unknown
+    //    ^? (parameter) e: unknown (not typed as Error as anything can be thrown in JS) // [!code highlight]
     return err("Ooh no!");
   });
 
 const res = await mySafeFn.run();
-//   ^? Result<"Success", "Ooh no!">
+//   ^? Result<"Success", "Ooh no!"> // [!code highlight]
 ```
 
 <Callout type="info">
-  Some frameworks like Next.js rely on throwing errors to trigger actions like
-  redirects. These are still thrown. A custom filter function for this is on the
-  roadmap. If you'd like to add an error to the default filter, please open an
-  issue.
+  Next.js relies on throwing errors for `redirect()` and `notFound()`. These
+  errors are filtered out and will still be thrown and thus not hit your catch
+  handler.
 </Callout>
+<Callout type="info">
 
 If you don't provide an uncaught error handler, the default error handler will be used:
 
@@ -41,3 +41,5 @@ If you don't provide an uncaught error handler, the default error handler will b
   } as const);
 };
 ```
+
+</Callout>
