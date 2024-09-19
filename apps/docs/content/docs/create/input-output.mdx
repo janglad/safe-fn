@@ -4,7 +4,7 @@ title: Input and Output
 
 ### Input schema
 
-You can set an input schema for your SafeFn by using `input()`. This takes in a Zod schema and will type the arguments for your handler function as well as the required input to execute the SafeFn.
+You can set an input schema for your SafeFn by using `input()`. This takes in a Zod schema and will type the `input` and `unsafeRawInput` arguments for your handler and callback functions as well as the required input to execute the SafeFn.
 
 ```ts
 const mySafeFunction = SafeFn.new()
@@ -62,23 +62,36 @@ ActionResult<
 >;
 ```
 
-{/* TODO: link error handling. Also look into how this is actually handled again lol */}
+<Callout type="info">
+  When using a [parent](/docs/create/chaining), the schema of the Zod error is
+  merged with the possible input parsing errors from all parent SafeFns. This is
+  done as it's hard to discriminate on the Zod errors otherwise, and all schema
+  properties are optional in it anyway.
+</Callout>
 
 <Callout type="warn">
-  Other than the expected parse errors, Zod can also throw when using features
-  like `coerce` or passing functions to `transform()`. These will be caught and
-  passed to your uncaught error handler using `catch()`.
+  Other than the expected parse errors, Zod can also throw unexpectedly when
+  using features like `coerce` or passing functions to `transform()`. These will
+  be caught and passed to your uncaught error handler using
+  [`catch()`](/docs/create/uncaught-errors).
 </Callout>
+
+{/* TODO: rename this to unsafeRawInput */}
 
 ### Unparsed input
 
-Unparsed input is the type of the input that is needed to execute your SafeFn and is passed as an argument to your handler function. When using an input schema, this type is inferred.
-If you're not doing that you can manually set it by passing it as a generic to `unparsedInput<T>()`;
+If you don't want to parse the input, but still want to type it you can use `unparsedInput<T>()`. This function returns the same instance, but allows you to easily set the `unsafeRawInput` through a generic argument. This types the `unsafeRawInput` argument of your handler and callback functions, as well as the input that's needed to run your SafeFn.
 
 <Callout type="warn">
   While this adds type safety, it's highly recommended to use an input schema if
   your function will be exposed as a Server Action or regular API endpoint as
   types aren't checked at runtime.
+</Callout>
+<Callout type="warn">
+  When [chaining](/docs/create/chaining) the type for `unsafeRawInput` can lie!
+  Since the input is not parsed and the type is expanded with the
+  `unsafeRawInput` of the child, the parent function will be called with
+  properties that only appear in the type of the child function!
 </Callout>
 
 ```ts
@@ -99,7 +112,7 @@ const mySafeFunction = SafeFn.new()
 
 ### Output schema
 
-You can set an output schema for your SafeFn by using `output()`. This takes in a Zod schema and will type the return type of your handler function as well as the output of the SafeFn.
+You can set an output schema for your SafeFn by using `output()`. This takes in a Zod schema and will type the required return type of your handler function, as well as the return type when running your SafeFn.
 
 ```ts
 const mySafeFunction = SafeFn.new()
@@ -147,10 +160,16 @@ ActionResult<
 >;
 ```
 
-{/* TODO: link error handling. Also look into how this is actually handled again lol */}
+<Callout type="info">
+  When using a [parent](/docs/create/chaining), the schema of the Zod error is
+  merged with the possible output parsing errors from all parent SafeFns. This
+  is done as it's hard to discriminate on the Zod errors otherwise, and all
+  schema properties are optional in it anyway.
+</Callout>
 
 <Callout type="warn">
-  Other than the expected parse errors, Zod can also throw when using features
-  like `coerce` or passing functions to `transform()`. These will be caught and
-  passed to your uncaught error handler using `catch()`.
+  Other than the expected parse errors, Zod can also throw unexpectedly when
+  using features like `coerce` or passing functions to `transform()`. These will
+  be caught and passed to your uncaught error handler using
+  [`catch()`](/docs/create/uncaught-errors).
 </Callout>
