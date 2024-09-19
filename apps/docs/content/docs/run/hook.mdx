@@ -2,6 +2,33 @@
 title: useServerAction hook
 ---
 
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+{/* <!-- prettier-ignore --> */}
+  <Tab value="npm">
+  ```bash 
+  npm i safe-fn-react
+  ```
+  </Tab>
+  
+  <Tab value="pnpm">
+  ```bash 
+  pnpm add safe-fn-react
+  ```
+  </Tab>
+  <Tab value="yarn">
+  ```bash 
+  yarn add safe-fn-react
+  ```
+  </Tab>
+  <Tab value="bun">
+  ```bash 
+  bun add safe-fn-react
+  ```
+  </Tab>
+</Tabs>
+
 The `useServerAction()` hook makes calling a SafeFn from the client easy.
 It handles transitioning, exposes loading states and converts the `Promise<ActionResult>` object back into a `ResultAsync`.
 
