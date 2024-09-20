@@ -34,23 +34,29 @@ export type MergeResultAsync<T1, T2> =
  *
  * Can be converted to a `Result` using `actionResultToResult()`
  */
-export type ActionResult<T, E> = ActionOk<T> | ActionErr<E>;
+export type ActionResult<T, E> = ActionOk<T, E> | ActionErr<T, E>;
 
-export type ActionOk<T> = {
+export type ActionOk<T, E> = {
   ok: true;
   value: T;
 };
-export const actionOk = <T>(value: T): ActionOk<T> => ({ ok: true, value });
+export const actionOk = <T>(value: T): ActionOk<T, never> => ({
+  ok: true,
+  value,
+});
 export type InferActionOkData<T> =
-  T extends ActionOk<infer TData> ? TData : never;
+  T extends ActionOk<infer TData, any> ? TData : never;
 
-export type ActionErr<E> = {
+export type ActionErr<T, E> = {
   ok: false;
   error: E;
 };
-export const actionErr = <E>(error: E): ActionErr<E> => ({ ok: false, error });
+export const actionErr = <E>(error: E): ActionErr<never, E> => ({
+  ok: false,
+  error,
+});
 export type InferActionErrError<T> =
-  T extends ActionErr<infer TError> ? TError : never;
+  T extends ActionErr<any, infer TError> ? TError : never;
 /**
  * Converts a `ResultAsync<T,E>` to a `<ActionResult<T,E>`.
  */
