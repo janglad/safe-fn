@@ -603,7 +603,7 @@ describe("runnable-safe-fn", () => {
           unsafeRawInput: { name: "John", age: 100 },
           ctx: "Parent!",
           ctxInput: [{ age: 100 }],
-          result: ok("Ok!"),
+          result: ok("Ok!") as TODO,
         } satisfies CallbackArgs["onComplete"]);
       });
     });

@@ -1,4 +1,4 @@
-import { ok, Result, ResultAsync, safeTry } from "neverthrow";
+import { ok, type Result, ResultAsync, safeTry } from "neverthrow";
 
 import {
   actionErr,

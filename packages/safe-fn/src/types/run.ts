@@ -1,4 +1,4 @@
-import { Err, type Result, type ResultAsync } from "neverthrow";
+import type { Result, ResultAsync } from "neverthrow";
 import type { z } from "zod";
 import type {
   InferActionErrError,
@@ -175,7 +175,7 @@ export type TSafeFnReturnError<
     >
   | InferErrError<TParentMergedHandlerErrs>;
 
-export type TBuildMergedHandlersErrs<T extends TAnyRunnableSafeFn> = Err<
+export type TBuildMergedHandlersErrs<T extends TAnyRunnableSafeFn> = Result<
   never,
   Thing<T>
 >;

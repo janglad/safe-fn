@@ -1,5 +1,3 @@
-import type { Err } from "neverthrow";
-
 /*
 ################################
 ||                            ||
@@ -8,10 +6,12 @@ import type { Err } from "neverthrow";
 ################################
 */
 
+import type { Result } from "neverthrow";
+
 /**
  * Convenience type for any catch handler result.
  */
-export type TAnySafeFnCatchHandlerRes = Err<never, any>;
+export type TAnySafeFnCatchHandlerRes = Result<never, any>;
 
 /**
  * Convenience type for any catch handler function.
@@ -27,11 +27,12 @@ export type TSafeFnDefaultCatchHandler = (
   error: unknown,
 ) => TSafeFnDefaultCatchHandlerErr;
 
-export interface TSafeFnDefaultCatchHandlerErr
-  extends Err<
-    never,
-    {
-      code: "UNCAUGHT_ERROR";
-      cause: "An uncaught error occurred. You can implement a custom error handler by using `catch()`";
-    }
-  > {}
+export type TSafeFnDefaultCatchHandlerErr = Result<
+  never,
+  TSafeFnDefaultCatchHandlerErrError
+>;
+
+export interface TSafeFnDefaultCatchHandlerErrError {
+  code: "UNCAUGHT_ERROR";
+  cause: "An uncaught error occurred. You can implement a custom error handler by using `catch()`";
+}

@@ -1,4 +1,4 @@
-import type { Err, Ok, Result } from "neverthrow";
+import type { Result } from "neverthrow";
 import type { TRunnableSafeFn } from "../runnable-safe-fn";
 import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 import type {
@@ -333,7 +333,7 @@ interface TSafeFnOnCompleteSuccessArgs<
   in out THandlerRes extends TAnySafeFnHandlerRes,
 > extends TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput> {
   asAction: boolean;
-  result: Ok<TSafeFnReturnData<TOutputSchema, THandlerRes>, never>;
+  result: Result<TSafeFnReturnData<TOutputSchema, THandlerRes>, never>;
 }
 
 interface TSafeFnOnCompleteErrorActionArgs<
@@ -351,7 +351,7 @@ interface TSafeFnOnCompleteErrorActionArgs<
     TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
   asAction: true;
-  result: Err<
+  result: Result<
     never,
     TSafeFnReturnError<
       TParentMergedHandlerErrs,
@@ -380,7 +380,7 @@ interface TSafeFnOnCompleteErrorNonActionArgs<
     TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
   asAction: false;
-  result: Err<
+  result: Result<
     never,
     TSafeFnReturnError<
       TParentMergedHandlerErrs,
