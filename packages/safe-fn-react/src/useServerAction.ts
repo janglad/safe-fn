@@ -80,7 +80,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
         callbackCatch,
       )({
         unsafeRawInput: argsRef.current,
-        value: result.value as Awaited<InferSafeFnActionOkData<TAction>>,
+        value: result.value as InferSafeFnActionOkData<TAction>,
       });
     } else if (
       result !== undefined &&
@@ -102,7 +102,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
         callbackCatch,
       )({
         unsafeRawInput: argsRef.current,
-        result: result as Awaited<InferSafeFnActionReturn<TAction>> | undefined,
+        result: result as InferSafeFnActionReturn<TAction> | undefined,
       });
     }
 

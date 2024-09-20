@@ -1,9 +1,9 @@
-import { Err, err, Ok, ok, type Result } from "neverthrow";
+import { err, ok, type Result } from "neverthrow";
 import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 import { type ActionResult } from "./result";
 import { createSafeFn } from "./safe-fn-builder";
-import type { TSafeFnDefaultCatchHandlerErr } from "./types/catch-handler";
+import type { TSafeFnDefaultCatchHandlerErrError } from "./types/catch-handler";
 import type {
   TSafeFnInputParseError,
   TSafeFnOutputParseError,
@@ -690,15 +690,15 @@ describe("runnableSafeFn", () => {
         assert(resultAsync.isErr());
         assert(resultSafe.isErr());
 
-        expectTypeOf(resultSync.error).toEqualTypeOf<
-          TSafeFnDefaultCatchHandlerErr["error"]
-        >();
-        expectTypeOf(resultAsync.error).toEqualTypeOf<
-          TSafeFnDefaultCatchHandlerErr["error"]
-        >();
-        expectTypeOf(resultSafe.error).toEqualTypeOf<
-          TSafeFnDefaultCatchHandlerErr["error"]
-        >();
+        expectTypeOf(
+          resultSync.error,
+        ).toEqualTypeOf<TSafeFnDefaultCatchHandlerErrError>();
+        expectTypeOf(
+          resultAsync.error,
+        ).toEqualTypeOf<TSafeFnDefaultCatchHandlerErrError>();
+        expectTypeOf(
+          resultSafe.error,
+        ).toEqualTypeOf<TSafeFnDefaultCatchHandlerErrError>();
       });
 
       test("should type Err as custom when catch handler is provided", async () => {
@@ -745,13 +745,13 @@ describe("runnableSafeFn", () => {
         assert(resultSafe.isErr());
 
         expectTypeOf(resultSync.error).toEqualTypeOf<
-          "hello" | TSafeFnDefaultCatchHandlerErr["error"]
+          "hello" | TSafeFnDefaultCatchHandlerErrError
         >();
         expectTypeOf(resultAsync.error).toEqualTypeOf<
-          "hello" | TSafeFnDefaultCatchHandlerErr["error"]
+          "hello" | TSafeFnDefaultCatchHandlerErrError
         >();
         expectTypeOf(resultSafe.error).toEqualTypeOf<
-          "hello" | TSafeFnDefaultCatchHandlerErr["error"]
+          "hello" | TSafeFnDefaultCatchHandlerErrError
         >();
       });
 
@@ -795,13 +795,13 @@ describe("runnableSafeFn", () => {
         const resultSafe = await safeFnSafe.run();
 
         expectTypeOf(resultSync).toEqualTypeOf<
-          Result<never, "hello" | TSafeFnDefaultCatchHandlerErr["error"]>
+          Result<never, "hello" | TSafeFnDefaultCatchHandlerErrError>
         >();
         expectTypeOf(resultAsync).toEqualTypeOf<
-          Result<never, "hello" | TSafeFnDefaultCatchHandlerErr["error"]>
+          Result<never, "hello" | TSafeFnDefaultCatchHandlerErrError>
         >();
         expectTypeOf(resultSafe).toEqualTypeOf<
-          Result<never, "hello" | TSafeFnDefaultCatchHandlerErr["error"]>
+          Result<never, "hello" | TSafeFnDefaultCatchHandlerErrError>
         >();
       });
 
@@ -845,7 +845,7 @@ describe("runnableSafeFn", () => {
 
         type ExpectedResult = Result<
           "hello",
-          "world" | TSafeFnDefaultCatchHandlerErr["error"]
+          "world" | TSafeFnDefaultCatchHandlerErrError
         >;
 
         expectTypeOf(resultSync).toEqualTypeOf<ExpectedResult>();
@@ -889,13 +889,13 @@ describe("runnableSafeFn", () => {
         assert(resSafe.isErr());
 
         expectTypeOf(resSync.error).toEqualTypeOf<
-          "hello" | "world" | TSafeFnDefaultCatchHandlerErr["error"]
+          "hello" | "world" | TSafeFnDefaultCatchHandlerErrError
         >();
         expectTypeOf(resAsync.error).toEqualTypeOf<
-          "hello" | "world" | TSafeFnDefaultCatchHandlerErr["error"]
+          "hello" | "world" | TSafeFnDefaultCatchHandlerErrError
         >();
         expectTypeOf(resSafe.error).toEqualTypeOf<
-          "hello" | "world" | TSafeFnDefaultCatchHandlerErr["error"]
+          "hello" | "world" | TSafeFnDefaultCatchHandlerErrError
         >();
       });
 
@@ -939,21 +939,21 @@ describe("runnableSafeFn", () => {
         resAsync.error.code;
 
         expectTypeOf(resSync.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: z.ZodError<SchemaTransformedInput>;
             }
         >();
         expectTypeOf(resAsync.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: z.ZodError<SchemaTransformedInput>;
             }
         >();
         expectTypeOf(resSafe.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: z.ZodError<SchemaTransformedInput>;
@@ -969,7 +969,7 @@ describe("runnableSafeFn", () => {
         assert(resNestedChildSync.isErr());
 
         expectTypeOf(resNestedChildSync.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: z.ZodError<SchemaTransformedInput>;
@@ -1014,7 +1014,7 @@ describe("runnableSafeFn", () => {
         type ExpectedCtx = "hello" | undefined;
         type ExpectedCtxInput = [SchemaTransformedOutput] | undefined;
         type ExpectedRunErrError =
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: z.ZodError<
@@ -1023,7 +1023,7 @@ describe("runnableSafeFn", () => {
             };
 
         type ExpectedActionErrError =
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: {
@@ -1095,7 +1095,7 @@ describe("runnableSafeFn", () => {
         type ExpectedCtxInput = [SchemaTransformedOutput];
         type ExpectedOkData = "world";
         type ExpectedRunErrError =
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: z.ZodError<
@@ -1104,7 +1104,7 @@ describe("runnableSafeFn", () => {
             };
 
         type ExpectedActionErrError =
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: {
@@ -1125,7 +1125,7 @@ describe("runnableSafeFn", () => {
               input: ExpectedInput;
               ctx: ExpectedCtx;
               ctxInput: ExpectedCtxInput;
-              result: Ok<ExpectedOkData, never>;
+              result: Result<ExpectedOkData, never>;
             }
           | {
               asAction: true;
@@ -1133,7 +1133,7 @@ describe("runnableSafeFn", () => {
               input: ExpectedInput | undefined;
               ctx: ExpectedCtx | undefined;
               ctxInput: ExpectedCtxInput | undefined;
-              result: Err<never, ExpectedActionErrError>;
+              result: Result<never, ExpectedActionErrError>;
             }
           | {
               asAction: false;
@@ -1141,7 +1141,7 @@ describe("runnableSafeFn", () => {
               input: ExpectedInput | undefined;
               ctx: ExpectedCtx | undefined;
               ctxInput: ExpectedCtxInput | undefined;
-              result: Err<never, ExpectedRunErrError>;
+              result: Result<never, ExpectedRunErrError>;
             }
         >;
         expectTypeOf<ExpectedArgs>().toEqualTypeOf<OnCompleteArgs>();
@@ -1331,12 +1331,14 @@ describe("runnableSafeFn", () => {
         // @ts-expect-error - input is not compatible
         const resSafe = await safeFnSafeParent.createAction()();
 
+        const testAction = safeFnSyncParent.createAction();
+
         assert(!resSync.ok);
         assert(!resAsync.ok);
         assert(!resSafe.ok);
 
         expectTypeOf(resSync.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: {
@@ -1349,7 +1351,7 @@ describe("runnableSafeFn", () => {
             }
         >();
         expectTypeOf(resAsync.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: {
@@ -1362,7 +1364,7 @@ describe("runnableSafeFn", () => {
             }
         >();
         expectTypeOf(resSafe.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: {
@@ -1384,7 +1386,7 @@ describe("runnableSafeFn", () => {
         assert(resNestedChildSync.isErr());
 
         expectTypeOf(resNestedChildSync.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErr["error"]
+          | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
               cause: z.ZodError<SchemaTransformedInput>;

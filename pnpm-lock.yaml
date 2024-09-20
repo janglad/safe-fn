@@ -98,8 +98,8 @@ importers:
         specifier: ^2.0.5
         version: 2.0.5(vitest@2.0.5)
       neverthrow:
-        specifier: ^7.1.0
-        version: 7.1.0
+        specifier: ^8.0.0
+        version: 8.0.0
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
@@ -132,8 +132,8 @@ importers:
         specifier: ^8.57.0
         version: 8.57.0
       neverthrow:
-        specifier: ^7.1.0
-        version: 7.1.0
+        specifier: ^8.0.0
+        version: 8.0.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -144,8 +144,8 @@ importers:
   packages/type-tests:
     dependencies:
       neverthrow:
-        specifier: ^7.1.0
-        version: 7.1.0
+        specifier: ^8.0.0
+        version: 8.0.0
       safe-fn:
         specifier: workspace:^
         version: link:../safe-fn
@@ -3334,8 +3334,8 @@ packages:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
 
-  neverthrow@7.1.0:
-    resolution: {integrity: sha512-TQ+ucrkixq0lUL+KYcGBjiuyHKvJ/Vb7i6QsaPdTLjlqmHq8WuoWGg17VQnmcx23hKi5w0OTQuHP4HD9cyO0Vg==}
+  neverthrow@8.0.0:
+    resolution: {integrity: sha512-SX2Z50+U27I+CF3NwHE9J8MB6+bYRRub3U+1nAKxnL6c+2vW2l/WsYEC0e3Wqg8DwiJvrquqE0YhxlVTzGJGsg==}
     engines: {node: '>=18'}
 
   next-themes@0.3.0:
@@ -8283,7 +8283,7 @@ snapshots:
 
   negotiator@0.6.3: {}
 
-  neverthrow@7.1.0: {}
+  neverthrow@8.0.0: {}
 
   next-themes@0.3.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:

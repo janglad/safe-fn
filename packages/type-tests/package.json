@@ -11,7 +11,7 @@
     "bench-types": "tsc --noEmit --diagnostics"
   },
   "dependencies": {
-    "neverthrow": "^7.1.0",
+    "neverthrow": "^8.0.0",
     "safe-fn": "workspace:^",
     "zod": "^3.23.8"
   }
