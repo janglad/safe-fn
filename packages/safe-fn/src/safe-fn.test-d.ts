@@ -1331,6 +1331,8 @@ describe("runnableSafeFn", () => {
         // @ts-expect-error - input is not compatible
         const resSafe = await safeFnSafeParent.createAction()();
 
+        const testAction = safeFnSyncParent.createAction();
+
         assert(!resSync.ok);
         assert(!resAsync.ok);
         assert(!resSafe.ok);

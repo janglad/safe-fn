@@ -80,7 +80,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
         callbackCatch,
       )({
         unsafeRawInput: argsRef.current,
-        value: result.value as Awaited<InferSafeFnActionOkData<TAction>>,
+        value: result.value as InferSafeFnActionOkData<TAction>,
       });
     } else if (
       result !== undefined &&
@@ -102,7 +102,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
         callbackCatch,
       )({
         unsafeRawInput: argsRef.current,
-        result: result as Awaited<InferSafeFnActionReturn<TAction>> | undefined,
+        result: result as InferSafeFnActionReturn<TAction> | undefined,
       });
     }
 
@@ -121,7 +121,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
       }) as Promise<ActionReturnResult>;
       return ResultAsync.fromPromise(promise, (e) => {
         console.error("Unknown error", e);
-      }).andThen((res) => res as any) as unknown as ActionReturnResultAsync;
+      }).andThen((res) => res) as ActionReturnResultAsync;
     },
     [_execute],
   );
@@ -149,17 +149,3 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
     execute,
   };
 };
-
-// const test = createSafeFn()
-//   .unparsedInput<{ name: string }>()
-//   .safeHandler(async function* (args) {
-//     await new Promise((resolve) => setTimeout(resolve, 1000));
-//     return ok({ name: args.unsafeRawInput.name });
-//   })
-//   .createAction();
-
-// const { execute, isPending, isSuccess, result } = useServerAction(test, {});
-
-// type test1 = InferSafeFnActionReturn<typeof test>;
-// type test2 = ActionResultToResult<test1>;
-// type test3 = ActionResultToResultAsync<test1>;
