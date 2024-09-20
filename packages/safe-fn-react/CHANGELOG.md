@@ -1,5 +1,17 @@
 # safe-fn-react
 
+## 0.3.0
+
+### Minor Changes
+
+- 4fcaeff: - Force upgrade to Neverthrow@8 due to types not being compataible
+  - Fix hook typings
+
+### Patch Changes
+
+- Updated dependencies [4fcaeff]
+  - safe-fn@0.4.0
+
 ## 0.2.0
 
 ### Minor Changes
