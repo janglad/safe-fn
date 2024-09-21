@@ -1,10 +1,12 @@
 import { z } from "zod";
 
 import { err, type Result } from "neverthrow";
-import type { MergeResults } from "./result";
+import type { InferErrError, InferOkData, MergeResults } from "./result";
 import {
   RunnableSafeFn,
   type TAnyRunnableSafeFn,
+  type TInferSafeFnActionErr,
+  type TInferSafeFnRunErr,
   type TRunnableSafeFn,
   type TRunnableSafeFnPickArgs,
 } from "./runnable-safe-fn";
@@ -28,6 +30,8 @@ import type {
   TInferMergedInputSchemaInput,
   TInferMergedParentOutputSchemaInput,
   TSafeFnInput,
+  TSafeFnInputParseError,
+  TSafeFnOutputParseError,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
@@ -47,9 +51,9 @@ export const createSafeFn = () => {
 };
 
 type TSafeFnBuilder<
-  TData,
-  TRunErr,
-  TActionErr,
+  in out TData,
+  in out TRunErr,
+  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -160,8 +164,8 @@ export class SafeFnBuilder<
     parent: TNewParent,
   ): TSafeFnBuilder<
     TData,
-    TRunErr,
-    TActionErr,
+    TInferSafeFnRunErr<TNewParent>,
+    TInferSafeFnActionErr<TNewParent>,
     InferSafeFnOkData<TNewParent>,
     [
       ...TInferCtxInput<TNewParent>,
@@ -185,8 +189,8 @@ export class SafeFnBuilder<
     schema: TNewInputSchema,
   ): TSafeFnBuilder<
     TData,
-    TRunErr,
-    TActionErr,
+    TRunErr | TSafeFnInputParseError<TNewInputSchema, false>,
+    TActionErr | TSafeFnInputParseError<TNewInputSchema, true>,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -254,8 +258,8 @@ export class SafeFnBuilder<
     schema: TNewOutputSchema,
   ): TSafeFnBuilder<
     TData,
-    TRunErr,
-    TActionErr,
+    TRunErr | TSafeFnOutputParseError<TNewOutputSchema, false>,
+    TActionErr | TSafeFnOutputParseError<TNewOutputSchema, true>,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -279,9 +283,9 @@ export class SafeFnBuilder<
       >,
     ) => TMaybePromise<TNewHandlerResult>,
   ): TRunnableSafeFn<
-    TData,
-    TRunErr,
-    TActionErr,
+    InferOkData<TNewHandlerResult>,
+    TRunErr | InferErrError<TNewHandlerResult>,
+    TActionErr | InferErrError<TNewHandlerResult>,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -321,9 +325,9 @@ export class SafeFnBuilder<
       >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): TRunnableSafeFn<
-    TData,
-    TRunErr,
-    TActionErr,
+    InferOkData<GeneratorResult>,
+    TRunErr | InferErrError<GeneratorResult> | InferErrError<YieldErr>,
+    TActionErr | InferErrError<GeneratorResult> | InferErrError<YieldErr>,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,

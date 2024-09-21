@@ -857,14 +857,30 @@ describe("runnableSafeFn", () => {
       test("should merge Err types from parent handler and catch handler", async () => {
         const safeFn = createSafeFn();
         const parentSync = safeFn
-          .handler(() => err("hello" as const))
+          .handler(() => {
+            let bool = true;
+            if (bool) {
+              return err("hello" as const);
+            }
+            return ok("world" as const);
+          })
           .catch(() => err("world" as const));
         const parentAsync = safeFn
-          .handler(async () => err("hello" as const))
+          .handler(async () => {
+            let bool = true;
+            if (bool) {
+              return err("hello" as const);
+            }
+            return ok("world" as const);
+          })
           .catch(() => err("world" as const));
         const parentSafe = safeFn
           .safeHandler(async function* () {
-            return err("hello" as const);
+            let bool = true;
+            if (bool) {
+              return err("hello" as const);
+            }
+            return ok("world" as const);
           })
           .catch(() => err("world" as const));
 

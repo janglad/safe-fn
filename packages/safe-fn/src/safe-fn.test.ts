@@ -691,7 +691,13 @@ describe("runnable-safe-fn", () => {
 
       const parent = createSafeFn()
         .input(parentInputSchema)
-        .handler(() => err("Parent!" as const));
+        .handler(() => {
+          let bool = true;
+          if (bool) {
+            return err("Parent!" as const);
+          }
+          return ok("");
+        });
 
       const safeFn = createSafeFn()
         .use(parent)
@@ -743,7 +749,7 @@ describe("runnable-safe-fn", () => {
           unsafeRawInput: { name: "John", age: 100 },
           ctx: undefined,
           ctxInput: [{ age: 100 }],
-          result: err("Parent!"),
+          result: err("Parent!") as TODO,
         } satisfies CallbackArgs["onComplete"]);
       });
     });

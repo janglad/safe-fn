@@ -107,22 +107,23 @@ export type TInferSafeFnActionErr<T> =
     ? TActionErr
     : never;
 
-export type TAnyRunnableSafeFn = TRunnableSafeFn<
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  "run"
->;
+export interface TAnyRunnableSafeFn
+  extends TRunnableSafeFn<
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  > {}
 
 type AnyRunnableSafeFn = RunnableSafeFn<
   any,
@@ -151,9 +152,9 @@ export type TRunnableSafeFnPickArgs =
   | "createAction";
 
 export type TRunnableSafeFn<
-  TData,
-  TRunErr,
-  TActionErr,
+  in out TData,
+  in out TRunErr,
+  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -188,9 +189,9 @@ export type TRunnableSafeFn<
 >;
 
 export class RunnableSafeFn<
-  TData,
-  TRunErr,
-  TActionErr,
+  in out TData,
+  in out TRunErr,
+  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
