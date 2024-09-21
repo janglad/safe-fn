@@ -35,6 +35,13 @@ type SchemaTransformedInput = z.input<typeof schemaTransformed>;
 type SchemaTransformedOutput = z.output<typeof schemaTransformed>;
 
 describe("SafeFnBuilder", () => {
+  describe("use", () => {
+    test("should not allow chaining when parent can not return ok", () => {
+      const parent = createSafeFn().handler(() => err("test"));
+      // @ts-expect-error
+      const child = createSafeFn().use(parent);
+    });
+  });
   describe("handler", () => {
     const safeFnPrimitiveInput = createSafeFn().input(schemaPrimitive);
     const safeFnObjectInput = createSafeFn().input(schemaObject);
