@@ -29,6 +29,7 @@ import type {
   TSchemaOutputOrFallback,
 } from "./types/schema";
 
+import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   TSafeFnAction,
   TSafeFnActionArgs,
@@ -431,7 +432,7 @@ export class RunnableSafeFn<
   run(
     ...args: TSafeFnRunArgs<TUnparsedInput>
   ): TSafeFnReturn<TData, TRunErr, TActionErr, TOutputSchema, false> {
-    return this._run(args[0], false)
+    return this._run(args[0], false, false)
       .map((res) => res.value)
       .mapErr((e) => e.public);
   }
@@ -512,7 +513,8 @@ export class RunnableSafeFn<
 
   _run<TAsAction extends boolean>(
     args: TSafeFnRunArgs<TUnparsedInput>[0],
-    tAsAction: TAsAction,
+    asAction: TAsAction,
+    asProcedure: boolean,
   ): TSafeFnInternalRunReturn<
     TData,
     TRunErr,
@@ -571,7 +573,7 @@ export class RunnableSafeFn<
           parent === undefined
             ? undefined
             : yield* parent
-                ._run(args, tAsAction)
+                ._run(args, asAction, true)
                 .map((res) => ({
                   ...res,
                   ctxInput: [...res.ctxInput, res.input],
@@ -605,7 +607,7 @@ export class RunnableSafeFn<
         const parsedInput: TSchemaOutputOrFallback<TInputSchema, undefined> =
           inputSchema === undefined
             ? (undefined as TSchemaOutputOrFallback<TInputSchema, undefined>)
-            : yield* _parseInput(args, tAsAction)
+            : yield* _parseInput(args, asAction)
                 .mapErr(
                   (e) =>
                     ({
@@ -654,7 +656,7 @@ export class RunnableSafeFn<
         const parsedOutput: TSchemaOutputOrFallback<TOutputSchema, undefined> =
           outputSchema === undefined
             ? (undefined as TSchemaOutputOrFallback<TOutputSchema, undefined>)
-            : yield* _parseOutput(handlerRes, tAsAction)
+            : yield* _parseOutput(handlerRes, asAction)
                 .mapErr(
                   (e) =>
                     ({
@@ -698,9 +700,16 @@ export class RunnableSafeFn<
       if (isFrameworkError(error)) {
         throw error;
       }
+
       const handledErr = uncaughtErrorHandler(error);
       if (handledErr.isOk()) {
         throw new Error("uncaught error handler returned ok");
+      }
+      if (
+        asProcedure &&
+        uncaughtErrorHandler === SafeFnBuilder.safeFnDefaultUncaughtErrorHandler
+      ) {
+        throw error;
       }
       return {
         public: handledErr.error,
@@ -718,7 +727,7 @@ export class RunnableSafeFn<
 
     const withCallbacks = runCallbacks({
       resultAsync: internalRes as TODO,
-      asAction: tAsAction,
+      asAction,
       callbacks: _callBacks,
       hotOnStartCallback: onStartCallback,
     });
@@ -729,7 +738,7 @@ export class RunnableSafeFn<
   async _runAsAction(
     ...args: TSafeFnActionArgs<TUnparsedInput>
   ): TSafeFnActionReturn<TData, TRunErr, TActionErr, TOutputSchema> {
-    const res = await this._run(args[0], true)
+    const res = await this._run(args[0], true, false)
       .map((res) => res.value)
       .mapErr((e) => e.public);
 

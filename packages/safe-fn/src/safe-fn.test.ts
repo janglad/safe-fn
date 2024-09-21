@@ -466,6 +466,82 @@ describe("runnable-safe-fn", () => {
         expect(res.error.cause.message).toBe("error");
       });
     });
+
+    test("should use default catch handler", async () => {
+      const safeFn = createSafeFn().handler(() => {
+        throw new Error("error");
+      });
+      const res = await safeFn.run();
+      expect(res).toBeErr();
+      assert(res.isErr());
+      expect(res.error.code).toBe("UNCAUGHT_ERROR");
+      assert(res.error.code === "UNCAUGHT_ERROR");
+    });
+
+    test("should use child catch handler on parent if parent uses default", async () => {
+      const parent = createSafeFn().handler(() => {
+        let bool = true;
+        if (bool) {
+          throw new Error("error");
+        }
+        return ok("");
+      });
+
+      const child = createSafeFn()
+        .use(parent)
+        .handler(() => {
+          return ok("");
+        })
+        .catch((e) =>
+          err({
+            code: "TEST_ERROR",
+            cause: e,
+          } as const),
+        );
+
+      const res = await child.run();
+      assert(res.isErr());
+      expect(res.error.code).toBe("TEST_ERROR");
+      assert(res.error.code === "TEST_ERROR");
+      expect(res.error.cause).toBeInstanceOf(Error);
+      assert(res.error.cause instanceof Error);
+      expect(res.error.cause.message).toBe("error");
+    });
+    test("should use parent catch handler on parent if parent defines one", async () => {
+      const parent = createSafeFn()
+        .handler(() => {
+          let bool = true;
+          if (bool) {
+            throw new Error("error");
+          }
+          return ok("");
+        })
+        .catch((e) =>
+          err({
+            code: "PARENT_ERROR",
+            cause: e,
+          } as const),
+        );
+
+      const child = createSafeFn()
+        .use(parent)
+        .handler(() => {
+          return ok("");
+        })
+        .catch((e) =>
+          err({
+            code: "TEST_ERROR",
+            cause: e,
+          } as const),
+        );
+
+      const res = await child.run();
+      assert(res.isErr());
+      expect(res.error.code).toBe("PARENT_ERROR");
+      expect(res.error.cause).toBeInstanceOf(Error);
+      assert(res.error.cause instanceof Error);
+      expect(res.error.cause.message).toBe("error");
+    });
   });
 
   describe("return error", async () => {

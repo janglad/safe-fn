@@ -12,7 +12,6 @@ import {
 } from "./runnable-safe-fn";
 
 import type {
-  TSafeFnDefaultCatchHandler,
   TSafeFnDefaultCatchHandlerErr,
   TSafeFnDefaultCatchHandlerErrError,
 } from "./types/catch-handler";
@@ -119,6 +118,15 @@ export class SafeFnBuilder<
     this._internals = internals;
   }
 
+  static safeFnDefaultUncaughtErrorHandler = (error: unknown) => {
+    console.error(error);
+    return err({
+      code: "UNCAUGHT_ERROR",
+      cause:
+        "An uncaught error occurred. You can implement a custom error handler by using `catch()`",
+    } as const);
+  };
+
   /*
 ################################
 ||                            ||
@@ -148,15 +156,7 @@ export class SafeFnBuilder<
         err({
           code: "NO_HANDLER",
         } as const)) satisfies TSafeFnDefaultHandlerFn,
-      uncaughtErrorHandler: ((error: unknown) => {
-        // TODO: Keep track of asAction both at compile and run time, switch error input based on that.
-        console.error(error);
-        return err({
-          code: "UNCAUGHT_ERROR",
-          cause:
-            "An uncaught error occurred. You can implement a custom error handler by using `catch()`",
-        } as const);
-      }) satisfies TSafeFnDefaultCatchHandler,
+      uncaughtErrorHandler: this.safeFnDefaultUncaughtErrorHandler,
     }) as any;
   }
 
