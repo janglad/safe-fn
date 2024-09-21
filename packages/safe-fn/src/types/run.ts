@@ -1,9 +1,8 @@
-import type { Result, ResultAsync } from "neverthrow";
+import type { ResultAsync } from "neverthrow";
 import type {
   InferActionErrError,
   InferAsyncErrError,
   InferAsyncOkData,
-  InferErrError,
 } from "../result";
 import type { TAnyRunnableSafeFn, TRunnableSafeFn } from "../runnable-safe-fn";
 import type { AnyCtxInput } from "../types/handler";
@@ -145,31 +144,6 @@ export type TSafeFnReturnError<
 
 export type TSafeFnRunError<TRunErr, TOutputSchema> = TRunErr;
 export type TSafeFnActionError<TActionErr, TOutputSchema> = TActionErr;
-
-export type TBuildMergedHandlersErrs<T extends TAnyRunnableSafeFn> = Result<
-  never,
-  Thing<T>
->;
-
-type Thing<T> =
-  T extends TRunnableSafeFn<
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    infer THandlerRes,
-    infer TThrownHandlerRes,
-    any
-  >
-    ? InferErrError<THandlerRes> | InferErrError<TThrownHandlerRes>
-    : // | InferErrError<TParentMergedHandlerErrs>
-      never;
 
 export type TSafeFnRunArgs<T extends TSafeFnUnparsedInput> = T;
 
