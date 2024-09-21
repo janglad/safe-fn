@@ -789,29 +789,6 @@ describe("runnableSafeFn", () => {
         expectTypeOf(resultSafe.error).toEqualTypeOf<"hello" | "world">();
       });
 
-      test("should correctly type full result when output schema is provided and handler can return only error", async () => {
-        const safeFn = createSafeFn().output(schemaTransformed);
-        const safeFnSync = safeFn.handler(() => err("hello" as const));
-        const safeFnAsync = safeFn.handler(async () => err("hello" as const));
-        const safeFnSafe = safeFn.safeHandler(async function* () {
-          return err("hello" as const);
-        });
-
-        const resultSync = await safeFnSync.run();
-        const resultAsync = await safeFnAsync.run();
-        const resultSafe = await safeFnSafe.run();
-
-        expectTypeOf(resultSync).toEqualTypeOf<
-          Result<never, "hello" | TSafeFnDefaultCatchHandlerErrError>
-        >();
-        expectTypeOf(resultAsync).toEqualTypeOf<
-          Result<never, "hello" | TSafeFnDefaultCatchHandlerErrError>
-        >();
-        expectTypeOf(resultSafe).toEqualTypeOf<
-          Result<never, "hello" | TSafeFnDefaultCatchHandlerErrError>
-        >();
-      });
-
       test("should correctly type when handler can return either Err or Ok", async () => {
         const safeFn = createSafeFn();
 

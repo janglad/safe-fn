@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import { z } from "zod";
 import type { TRunnableSafeFn } from "../runnable-safe-fn";
 import type { AnyObject, TIntersectIfNotT } from "./util";
 
@@ -197,6 +197,32 @@ export type TSafeFnInputParseError<
       cause: TSafeFnParseError<z.input<TInputSchema>, TAsAction>;
     }
   : never;
+
+export interface TSafeFnInputParseRunError<TSchemaInput> {
+  code: "INPUT_PARSING";
+  cause: z.ZodError<TSchemaInput>;
+}
+
+export interface TSafeFnInputParseActionError<TSchemaInput> {
+  code: "INPUT_PARSING";
+  cause: {
+    formattedError: z.ZodFormattedError<TSchemaInput>;
+    flattenedError: z.typeToFlattenedError<TSchemaInput>;
+  };
+}
+
+export interface TSafeFnOutputParseRunError<TSchemaInput> {
+  code: "OUTPUT_PARSING";
+  cause: z.ZodError<TSchemaInput>;
+}
+
+export interface TSafeFnOutputParseActionError<TSchemaInput> {
+  code: "OUTPUT_PARSING";
+  cause: {
+    formattedError: z.ZodFormattedError<TSchemaInput>;
+    flattenedError: z.typeToFlattenedError<TSchemaInput>;
+  };
+}
 
 export type TSafeFnOutputParseError<
   TOutputSchema extends TSafeFnOutput,

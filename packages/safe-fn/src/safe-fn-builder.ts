@@ -29,8 +29,10 @@ import type {
   TInferMergedInputSchemaInput,
   TInferMergedParentOutputSchemaInput,
   TSafeFnInput,
-  TSafeFnInputParseError,
-  TSafeFnOutputParseError,
+  TSafeFnInputParseActionError,
+  TSafeFnInputParseRunError,
+  TSafeFnOutputParseActionError,
+  TSafeFnOutputParseRunError,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
@@ -189,8 +191,22 @@ export class SafeFnBuilder<
     schema: TNewInputSchema,
   ): TSafeFnBuilder<
     TData,
-    TRunErr | TSafeFnInputParseError<TNewInputSchema, false>,
-    TActionErr | TSafeFnInputParseError<TNewInputSchema, true>,
+    | Exclude<TRunErr, { code: "INPUT_PARSING" }>
+    | TSafeFnInputParseRunError<
+        TIntersectIfNotT<
+          TMergedInputSchemaInput,
+          z.input<TNewInputSchema>,
+          undefined
+        >
+      >,
+    | Exclude<TActionErr, { code: "INPUT_PARSING" }>
+    | TSafeFnInputParseActionError<
+        TIntersectIfNotT<
+          TMergedInputSchemaInput,
+          z.input<TNewInputSchema>,
+          undefined
+        >
+      >,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -258,8 +274,22 @@ export class SafeFnBuilder<
     schema: TNewOutputSchema,
   ): TSafeFnBuilder<
     TData,
-    TRunErr | TSafeFnOutputParseError<TNewOutputSchema, false>,
-    TActionErr | TSafeFnOutputParseError<TNewOutputSchema, true>,
+    | Exclude<TRunErr, { code: "OUTPUT_PARSING" }>
+    | TSafeFnOutputParseRunError<
+        TIntersectIfNotT<
+          TMergedParentOutputSchemaInput,
+          z.input<TNewOutputSchema>,
+          undefined
+        >
+      >,
+    | Exclude<TActionErr, { code: "OUTPUT_PARSING" }>
+    | TSafeFnOutputParseActionError<
+        TIntersectIfNotT<
+          TMergedParentOutputSchemaInput,
+          z.input<TNewOutputSchema>,
+          undefined
+        >
+      >,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
