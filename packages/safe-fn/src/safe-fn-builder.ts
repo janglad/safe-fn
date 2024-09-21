@@ -82,9 +82,9 @@ type TSafeFnBuilder<
 >;
 
 export class SafeFnBuilder<
-  TData,
-  TRunErr,
-  TActionErr,
+  in out TData,
+  in out TRunErr,
+  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,

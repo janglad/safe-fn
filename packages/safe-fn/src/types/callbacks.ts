@@ -1,18 +1,17 @@
 import type { Result } from "neverthrow";
 import type { TRunnableSafeFn } from "../runnable-safe-fn";
-import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
+import type { AnyCtxInput, TSafeFnHandlerArgs } from "./handler";
 import type {
-  AnyCtxInput,
-  TAnySafeFnHandlerRes,
-  TSafeFnHandlerArgs,
-} from "./handler";
-import type { TSafeFnReturnData, TSafeFnReturnError } from "./run";
+  TSafeFnActionError,
+  TSafeFnReturnData,
+  TSafeFnRunError,
+} from "./run";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
   TSafeFnUnparsedInput,
 } from "./schema";
-import type { AnyObject, FirstTupleElOrUndefined, TPrettify } from "./util";
+import type { FirstTupleElOrUndefined, TPrettify } from "./util";
 
 /*
 ################################
@@ -28,79 +27,70 @@ export type TInferSafeFnCallbacks<T> =
     infer TActionErr,
     infer TCtx,
     infer TCtxInput,
-    infer TParentMergedHandlerErrs,
+    any,
     infer TInputSchema,
-    infer TMergedInputSchemaInput,
+    any,
     infer TOutputSchema,
-    infer TMergedParentOutputSchemaInput,
+    any,
     infer TUnparsedInput,
-    infer THandlerRes,
-    infer TCatchHandlerRes,
+    any,
+    any,
     any
   >
     ? TSafeFnCallBacks<
+        TData,
+        TRunErr,
+        TActionErr,
         TCtx,
         TCtxInput,
-        TParentMergedHandlerErrs,
         TInputSchema,
-        TMergedInputSchemaInput,
         TOutputSchema,
-        TMergedParentOutputSchemaInput,
-        TUnparsedInput,
-        THandlerRes,
-        TCatchHandlerRes
+        TUnparsedInput
       >
     : never;
 
 export interface TSafeFnCallBacks<
+  in out TData,
+  in out TRunErr,
+  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
-  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
-  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TAnySafeFnHandlerRes,
-  in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > {
   onStart: TSafeFnOnStart<TUnparsedInput> | undefined;
   onSuccess:
     | TSafeFnOnSuccess<
+        TData,
         TCtx,
         TCtxInput,
         TInputSchema,
         TOutputSchema,
-        TUnparsedInput,
-        THandlerRes
+        TUnparsedInput
       >
     | undefined;
   onError:
     | TSafeFnOnError<
+        TRunErr,
+        TActionErr,
         TCtx,
         TCtxInput,
-        TParentMergedHandlerErrs,
         TInputSchema,
-        TMergedInputSchemaInput,
         TOutputSchema,
-        TMergedParentOutputSchemaInput,
-        TUnparsedInput,
-        THandlerRes,
-        TCatchHandlerRes
+        TUnparsedInput
       >
     | undefined;
   onComplete:
     | TSafeFnOnComplete<
+        TData,
+        TRunErr,
+        TActionErr,
         TCtx,
         TCtxInput,
-        TParentMergedHandlerErrs,
         TInputSchema,
-        TMergedInputSchemaInput,
         TOutputSchema,
-        TMergedParentOutputSchemaInput,
-        TUnparsedInput,
-        THandlerRes,
-        TCatchHandlerRes
+        TUnparsedInput
       >
     | undefined;
 }
@@ -110,31 +100,31 @@ export type TSafeFnOnStart<in out TUnparsedInput extends TSafeFnUnparsedInput> =
   }) => Promise<void>;
 
 export interface TSafeFnOnSuccessArgs<
+  in out TData,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TAnySafeFnHandlerRes,
 > extends TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput> {
-  value: TSafeFnReturnData<TOutputSchema, THandlerRes>;
+  value: TSafeFnReturnData<TData, TOutputSchema>;
 }
 
 export type TSafeFnOnSuccess<
+  in out TData,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TAnySafeFnHandlerRes,
 > = (
   args: TSafeFnOnSuccessArgs<
+    TData,
     TCtx,
     TCtxInput,
     TInputSchema,
     TOutputSchema,
-    TUnparsedInput,
-    THandlerRes
+    TUnparsedInput
   >,
 ) => Promise<void>;
 
@@ -144,281 +134,190 @@ type TToOptionalSafeFnArgs<T> = {
 };
 
 export type TSafeFnOnErrorArgs<
+  TRunError,
+  TActionError,
   TCtx,
   TCtxInput extends AnyCtxInput,
-  TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
-  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnOutput,
-  TMergedParentOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput extends TSafeFnUnparsedInput,
-  THandlerRes extends TAnySafeFnHandlerRes,
-  TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > =
   | TSafeFnOnErrorActionArgs<
+      TActionError,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TCatchHandlerRes
+      TUnparsedInput
     >
   | TSafeFnOnErrorNonActionArgs<
+      TRunError,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TCatchHandlerRes
+      TUnparsedInput
     >;
 interface TSafeFnOnErrorActionArgs<
+  in out TActionError,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
-  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
-  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TAnySafeFnHandlerRes,
-  in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > extends TToOptionalSafeFnArgs<
     TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
   asAction: true;
-  error: TSafeFnReturnError<
-    TParentMergedHandlerErrs,
-    TMergedInputSchemaInput,
-    TOutputSchema,
-    TMergedParentOutputSchemaInput,
-    THandlerRes,
-    TCatchHandlerRes,
-    true
-  >;
+  error: TSafeFnActionError<TActionError, TOutputSchema>;
 }
 
 interface TSafeFnOnErrorNonActionArgs<
+  in out TRunError,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
-  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
-  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TAnySafeFnHandlerRes,
-  in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > extends TToOptionalSafeFnArgs<
     TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
   asAction: false;
-  error: TSafeFnReturnError<
-    TParentMergedHandlerErrs,
-    TMergedInputSchemaInput,
-    TOutputSchema,
-    TMergedParentOutputSchemaInput,
-    THandlerRes,
-    TCatchHandlerRes,
-    false
-  >;
+  error: TSafeFnRunError<TRunError, TOutputSchema>;
 }
 
 export type TSafeFnOnError<
+  in out TRunError,
+  in out TActionError,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
-  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnOutput,
-  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TAnySafeFnHandlerRes,
-  in out TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
 > = (
   args: TSafeFnOnErrorArgs<
+    TRunError,
+    TActionError,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
-    TMergedInputSchemaInput,
     TOutputSchema,
-    TMergedParentOutputSchemaInput,
-    TUnparsedInput,
-    THandlerRes,
-    TCatchHandlerRes
+    TUnparsedInput
   >,
 ) => Promise<void>;
 
 export type TSafeFnOnCompleteArgs<
+  TData,
+  TRunErr,
+  TActionErr,
   TCtx,
   TCtxInput extends AnyCtxInput,
-  TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
-  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
-  TMergedParentOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput extends TSafeFnUnparsedInput,
-  THandlerRes extends TAnySafeFnHandlerRes,
-  TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > =
   | TSafeFnOnCompleteErrorArgs<
+      TRunErr,
+      TActionErr,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes
+      TUnparsedInput
     >
   | TSafeFnOnCompleteSuccessArgs<
+      TData,
       TCtx,
       TCtxInput,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput,
-      THandlerRes
+      TUnparsedInput
     >;
 
 type TSafeFnOnCompleteErrorArgs<
+  TRunErr,
+  TActionErr,
   TCtx,
   TCtxInput extends AnyCtxInput,
-  TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
-  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnInput,
-  TMergedParentOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput extends TSafeFnUnparsedInput,
-  THandlerRes extends TAnySafeFnHandlerRes,
-  TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > =
   | TSafeFnOnCompleteErrorActionArgs<
+      TActionErr,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes
+      TUnparsedInput
     >
   | TSafeFnOnCompleteErrorNonActionArgs<
+      TRunErr,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes
+      TUnparsedInput
     >;
 
 interface TSafeFnOnCompleteSuccessArgs<
+  in out TData,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnInput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TAnySafeFnHandlerRes,
 > extends TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput> {
   asAction: boolean;
-  result: Result<TSafeFnReturnData<TOutputSchema, THandlerRes>, never>;
+  result: Result<TSafeFnReturnData<TData, TOutputSchema>, never>;
 }
 
 interface TSafeFnOnCompleteErrorActionArgs<
+  in out TActionError,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
-  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnInput,
-  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TAnySafeFnHandlerRes,
-  in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > extends TToOptionalSafeFnArgs<
     TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
   asAction: true;
-  result: Result<
-    never,
-    TSafeFnReturnError<
-      TParentMergedHandlerErrs,
-      TMergedInputSchemaInput,
-      TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      THandlerRes,
-      TThrownHandlerRes,
-      true
-    >
-  >;
+  result: Result<never, TSafeFnActionError<TActionError, TOutputSchema>>;
 }
 
 interface TSafeFnOnCompleteErrorNonActionArgs<
+  in out TRunError,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
-  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnInput,
-  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TAnySafeFnHandlerRes,
-  in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > extends TToOptionalSafeFnArgs<
     TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
   asAction: false;
-  result: Result<
-    never,
-    TSafeFnReturnError<
-      TParentMergedHandlerErrs,
-      TMergedInputSchemaInput,
-      TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      THandlerRes,
-      TThrownHandlerRes,
-      false
-    >
-  >;
+  result: Result<never, TSafeFnRunError<TRunError, TOutputSchema>>;
 }
 
 export type TSafeFnOnComplete<
+  in out TData,
+  in out TRunErr,
+  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
-  in out TMergedInputSchemaInput extends AnyObject | undefined,
   in out TOutputSchema extends TSafeFnInput,
-  in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TAnySafeFnHandlerRes,
-  in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > = (
   args: TSafeFnOnCompleteArgs<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
-    TMergedInputSchemaInput,
     TOutputSchema,
-    TMergedParentOutputSchemaInput,
-    TUnparsedInput,
-    THandlerRes,
-    TThrownHandlerRes
+    TUnparsedInput
   >,
 ) => Promise<void>;

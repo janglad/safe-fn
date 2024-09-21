@@ -1,7 +1,7 @@
-import { Result, ResultAsync, err, ok } from "neverthrow";
+import { ResultAsync, err, ok } from "neverthrow";
 import { z } from "zod";
 import type { TSafeFnCallBacks } from "./types/callbacks";
-import type { AnyCtxInput, TAnySafeFnHandlerRes } from "./types/handler";
+import type { AnyCtxInput } from "./types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
@@ -9,9 +9,8 @@ import type {
   TSafeFnUnparsedInput,
 } from "./types/schema";
 
-import type { TAnySafeFnCatchHandlerRes } from "./types/catch-handler";
 import type { TSafeFnInternalRunReturn } from "./types/run";
-import type { AnyObject, TODO } from "./types/util";
+import type { TODO } from "./types/util";
 
 const NEXT_JS_ERROR_MESSAGES = ["NEXT_REDIRECT", "NEXT_NOT_FOUND"];
 
@@ -34,56 +33,48 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 };
 
 export const runCallbacks = <
+  TData,
+  TRunErr,
+  TActionErr,
   TCtx,
   TCtxInput extends AnyCtxInput,
-  TParentMergedHandlerErrs extends Result<never, unknown>,
   TInputSchema extends TSafeFnInput,
-  TMergedInputSchemaInput extends AnyObject | undefined,
   TOutputSchema extends TSafeFnOutput,
-  TMergedParentOutputSchemaInput extends AnyObject | undefined,
   TUnparsedInput extends TSafeFnUnparsedInput,
-  THandlerRes extends TAnySafeFnHandlerRes,
-  TCatchHandlerRes extends TAnySafeFnCatchHandlerRes,
   TAsAction extends boolean,
   TRes extends TSafeFnInternalRunReturn<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
-    TMergedInputSchemaInput,
     TOutputSchema,
-    TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    THandlerRes,
-    TCatchHandlerRes,
     NoInfer<TAsAction>
   > = TSafeFnInternalRunReturn<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
-    TMergedInputSchemaInput,
     TOutputSchema,
-    TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    THandlerRes,
-    TCatchHandlerRes,
     NoInfer<TAsAction>
   >,
 >(args: {
   resultAsync: TRes;
   asAction: TAsAction;
   callbacks: TSafeFnCallBacks<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
-    TMergedInputSchemaInput,
     TOutputSchema,
-    TMergedParentOutputSchemaInput,
-    TUnparsedInput,
-    THandlerRes,
-    TCatchHandlerRes
+    TUnparsedInput
   >;
   hotOnStartCallback: ResultAsync<void, void> | undefined;
 }): TRes => {
