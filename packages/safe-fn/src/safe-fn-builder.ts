@@ -12,6 +12,7 @@ import {
 import type {
   TSafeFnDefaultCatchHandler,
   TSafeFnDefaultCatchHandlerErr,
+  TSafeFnDefaultCatchHandlerErrError,
 } from "./types/catch-handler";
 import type {
   AnyCtxInput,
@@ -123,8 +124,8 @@ export class SafeFnBuilder<
 */
   static new(): TSafeFnBuilder<
     never,
-    TSafeFnDefaultCatchHandlerErr,
-    TSafeFnDefaultCatchHandlerErr,
+    TSafeFnDefaultCatchHandlerErrError,
+    TSafeFnDefaultCatchHandlerErrError,
     undefined,
     [],
     Result<never, never>,

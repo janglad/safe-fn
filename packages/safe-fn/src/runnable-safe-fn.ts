@@ -47,6 +47,66 @@ import {
   throwFrameworkErrorOrVoid,
 } from "./util";
 
+export type TInferSafeFnOkData2<T> =
+  T extends TRunnableSafeFn<
+    infer TData,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TData
+    : never;
+
+export type TInferSafeFnRunErr<T> =
+  T extends TRunnableSafeFn<
+    any,
+    infer TRunErr,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TRunErr
+    : never;
+
+export type TInferSafeFnActionErr<T> =
+  T extends TRunnableSafeFn<
+    any,
+    any,
+    infer TActionErr,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TActionErr
+    : never;
+
 export type TAnyRunnableSafeFn = TRunnableSafeFn<
   any,
   any,
