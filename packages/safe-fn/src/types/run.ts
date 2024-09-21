@@ -1,5 +1,4 @@
 import type { Result, ResultAsync } from "neverthrow";
-import type { z } from "zod";
 import type {
   InferActionErrError,
   InferAsyncErrError,
@@ -7,21 +6,15 @@ import type {
   InferErrError,
 } from "../result";
 import type { TAnyRunnableSafeFn, TRunnableSafeFn } from "../runnable-safe-fn";
-import type { AnyCtxInput, TAnySafeFnHandlerRes } from "../types/handler";
+import type { AnyCtxInput } from "../types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
-  TSafeFnParseError,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
 } from "../types/schema";
-import type {
-  AnyObject,
-  TIntersectIfNotT,
-  TODO,
-  TPrettify,
-} from "../types/util";
+import type { TODO } from "../types/util";
 import type { TSafeFnActionReturn } from "./action";
 
 /*
@@ -108,7 +101,7 @@ export type InferSafeFnOkData<T> =
     infer TOutputSchema,
     any,
     any,
-    infer THandlerRes,
+    any,
     any,
     any
   >
@@ -183,56 +176,6 @@ type Thing<T> =
         | InferErrError<TThrownHandlerRes>
         | InferErrError<TParentMergedHandlerErrs>
     : never;
-
-type TOutputSchemaError<
-  TOutputSchema extends TSafeFnOutput,
-  TMergedParentOutputSchemaInput extends AnyObject | undefined,
-  THandlerRes extends TAnySafeFnHandlerRes,
-  TAsAction extends boolean,
-> = TOutputSchema extends z.ZodTypeAny
-  ? THandlerRes extends Result<never, any>
-    ? TMergedParentOutputSchemaInput extends AnyObject
-      ? {
-          code: "OUTPUT_PARSING";
-          cause: TSafeFnParseError<
-            TPrettify<TMergedParentOutputSchemaInput>,
-            TAsAction
-          >;
-        }
-      : // Handler can't return, no parents have output schemas
-        never
-    : {
-        code: "OUTPUT_PARSING";
-        cause: TSafeFnParseError<
-          TPrettify<
-            TIntersectIfNotT<
-              z.input<TOutputSchema>,
-              TMergedParentOutputSchemaInput,
-              undefined
-            >
-          >,
-          TAsAction
-        >;
-      }
-  : TMergedParentOutputSchemaInput extends AnyObject
-    ? {
-        code: "OUTPUT_PARSING";
-        cause: TSafeFnParseError<
-          TPrettify<TMergedParentOutputSchemaInput>,
-          TAsAction
-        >;
-      }
-    : // No output schema, parents have no output schemas
-      never;
-type TInputSchemaError<
-  TMergedInputSchemaInput extends AnyObject | undefined,
-  TAsAction extends boolean,
-> = TMergedInputSchemaInput extends AnyObject
-  ? {
-      code: "INPUT_PARSING";
-      cause: TSafeFnParseError<TPrettify<TMergedInputSchemaInput>, TAsAction>;
-    }
-  : never;
 
 export type TSafeFnRunArgs<T extends TSafeFnUnparsedInput> = T;
 

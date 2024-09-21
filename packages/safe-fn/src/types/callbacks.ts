@@ -99,7 +99,7 @@ export type TSafeFnOnStart<in out TUnparsedInput extends TSafeFnUnparsedInput> =
     unsafeRawInput: TPrettify<FirstTupleElOrUndefined<TUnparsedInput>>;
   }) => Promise<void>;
 
-export interface TSafeFnOnSuccessArgs<
+interface TSafeFnOnSuccessArgs<
   in out TData,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
@@ -133,7 +133,7 @@ type TToOptionalSafeFnArgs<T> = {
   [K in keyof T]: K extends "unsafeRawInput" ? T[K] : T[K] | undefined;
 };
 
-export type TSafeFnOnErrorArgs<
+type TSafeFnOnErrorArgs<
   TRunError,
   TActionError,
   TCtx,
@@ -206,7 +206,7 @@ export type TSafeFnOnError<
   >,
 ) => Promise<void>;
 
-export type TSafeFnOnCompleteArgs<
+type TSafeFnOnCompleteArgs<
   TData,
   TRunErr,
   TActionErr,
