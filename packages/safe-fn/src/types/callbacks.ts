@@ -27,7 +27,6 @@ export type TInferSafeFnCallbacks<T> =
     infer TActionErr,
     infer TCtx,
     infer TCtxInput,
-    any,
     infer TInputSchema,
     any,
     infer TOutputSchema,

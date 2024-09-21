@@ -66,7 +66,6 @@ export type TInferSafeFnOkData2<T> =
     any,
     any,
     any,
-    any,
     any
   >
     ? TData
@@ -76,7 +75,6 @@ export type TInferSafeFnRunErr<T> =
   T extends TRunnableSafeFn<
     any,
     infer TRunErr,
-    any,
     any,
     any,
     any,
@@ -106,7 +104,6 @@ export type TInferSafeFnActionErr<T> =
     any,
     any,
     any,
-    any,
     any
   >
     ? TActionErr
@@ -126,12 +123,10 @@ export interface TAnyRunnableSafeFn
     any,
     any,
     any,
-    any,
     any
   > {}
 
 type AnyRunnableSafeFn = RunnableSafeFn<
-  any,
   any,
   any,
   any,
@@ -162,7 +157,6 @@ export type TRunnableSafeFn<
   in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   /* Includes input schema of `this` */
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -180,7 +174,6 @@ export type TRunnableSafeFn<
     TActionErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
@@ -199,7 +192,6 @@ export class RunnableSafeFn<
   in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   /* Includes input schema of `this` */
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -286,7 +278,6 @@ export class RunnableSafeFn<
     | InferErrError<TNewThrownHandlerRes>,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
@@ -313,7 +304,6 @@ export class RunnableSafeFn<
     TActionErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
@@ -343,7 +333,6 @@ export class RunnableSafeFn<
     TActionErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
@@ -374,7 +363,6 @@ export class RunnableSafeFn<
     TActionErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
@@ -406,7 +394,6 @@ export class RunnableSafeFn<
     TActionErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,

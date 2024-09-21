@@ -23,7 +23,6 @@ export type InferInputSchema<T> =
     any,
     any,
     any,
-    any,
     infer TInputSchema,
     any,
     any,
@@ -45,7 +44,6 @@ export type InferInputSchema<T> =
  */
 export type InferOutputSchema<T> =
   T extends TRunnableSafeFn<
-    any,
     any,
     any,
     any,
@@ -81,7 +79,6 @@ export type InferUnparsedInputTuple<T> =
     any,
     any,
     any,
-    any,
     infer TUnparsed,
     any,
     any,
@@ -92,7 +89,6 @@ export type InferUnparsedInputTuple<T> =
 
 export type TInferMergedInputSchemaInput<T> =
   T extends TRunnableSafeFn<
-    any,
     any,
     any,
     any,
@@ -112,7 +108,6 @@ export type TInferMergedInputSchemaInput<T> =
 
 export type TInferMergedParentOutputSchemaInput<T> =
   T extends TRunnableSafeFn<
-    any,
     any,
     any,
     any,
@@ -141,7 +136,6 @@ export type TInferCtxInput<T> =
     any,
     any,
     infer TCtxInput,
-    any,
     any,
     any,
     any,

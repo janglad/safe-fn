@@ -42,7 +42,6 @@ export type InferSafeFnArgs<T> =
     any,
     any,
     any,
-    any,
     infer TUnparsedInput,
     any,
     any,
@@ -64,7 +63,6 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
     infer TData,
     infer TRunErr,
     infer TActionErr,
-    any,
     any,
     any,
     any,
@@ -91,7 +89,6 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
 export type InferSafeFnOkData<T> =
   T extends TRunnableSafeFn<
     infer TData,
-    any,
     any,
     any,
     any,
@@ -161,7 +158,6 @@ type Thing<T> =
     any,
     any,
     any,
-    infer TParentMergedHandlerErrs,
     any,
     any,
     any,
@@ -171,11 +167,9 @@ type Thing<T> =
     infer TThrownHandlerRes,
     any
   >
-    ?
-        | InferErrError<THandlerRes>
-        | InferErrError<TThrownHandlerRes>
-        | InferErrError<TParentMergedHandlerErrs>
-    : never;
+    ? InferErrError<THandlerRes> | InferErrError<TThrownHandlerRes>
+    : // | InferErrError<TParentMergedHandlerErrs>
+      never;
 
 export type TSafeFnRunArgs<T extends TSafeFnUnparsedInput> = T;
 
