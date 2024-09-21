@@ -46,6 +46,9 @@ export const createSafeFn = () => {
 };
 
 type TSafeFnBuilder<
+  TData,
+  TRunErr,
+  TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -57,6 +60,9 @@ type TSafeFnBuilder<
   in out TOmitArgs extends string | number | symbol,
 > = Omit<
   SafeFnBuilder<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -71,6 +77,9 @@ type TSafeFnBuilder<
 >;
 
 export class SafeFnBuilder<
+  TData,
+  TRunErr,
+  TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -113,6 +122,9 @@ export class SafeFnBuilder<
 ################################
 */
   static new(): TSafeFnBuilder<
+    never,
+    TSafeFnDefaultCatchHandlerErr,
+    TSafeFnDefaultCatchHandlerErr,
     undefined,
     [],
     Result<never, never>,
@@ -146,6 +158,9 @@ export class SafeFnBuilder<
   use<TNewParent extends TAnyRunnableSafeFn>(
     parent: TNewParent,
   ): TSafeFnBuilder<
+    TData,
+    TRunErr,
+    TActionErr,
     InferSafeFnOkData<TNewParent>,
     [
       ...TInferCtxInput<TNewParent>,
@@ -168,6 +183,9 @@ export class SafeFnBuilder<
   input<TNewInputSchema extends z.ZodTypeAny>(
     schema: TNewInputSchema,
   ): TSafeFnBuilder<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -194,6 +212,9 @@ export class SafeFnBuilder<
 
   // Utility method to set unparsedInput type. Other option is currying with action, this seems more elegant.
   unparsedInput<TNewUnparsedInput>(): TSafeFnBuilder<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -209,6 +230,9 @@ export class SafeFnBuilder<
     TOmitArgs | "unparsedInput"
   > {
     return this as unknown as SafeFnBuilder<
+      TData,
+      TRunErr,
+      TActionErr,
       TCtx,
       TCtxInput,
       TParentMergedHandlerErrs,
@@ -228,6 +252,9 @@ export class SafeFnBuilder<
   output<TNewOutputSchema extends z.ZodTypeAny>(
     schema: TNewOutputSchema,
   ): TSafeFnBuilder<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -251,6 +278,9 @@ export class SafeFnBuilder<
       >,
     ) => TMaybePromise<TNewHandlerResult>,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -290,6 +320,9 @@ export class SafeFnBuilder<
       >,
     ) => AsyncGenerator<YieldErr, GeneratorResult>,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,

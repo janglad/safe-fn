@@ -23,6 +23,9 @@ import type { AnyObject, FirstTupleElOrUndefined, TPrettify } from "./util";
 */
 export type TInferSafeFnCallbacks<T> =
   T extends TRunnableSafeFn<
+    infer TData,
+    infer TRunErr,
+    infer TActionErr,
     infer TCtx,
     infer TCtxInput,
     infer TParentMergedHandlerErrs,

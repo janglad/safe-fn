@@ -48,6 +48,9 @@ export type InferSafeFnArgs<T> =
     any,
     any,
     any,
+    any,
+    any,
+    any,
     infer TUnparsedInput,
     any,
     any,
@@ -66,6 +69,9 @@ export type InferSafeFnArgs<T> =
  */
 export type InferSafeFnReturn<T, TAsAction extends boolean> =
   T extends TRunnableSafeFn<
+    any,
+    any,
+    any,
     any,
     any,
     infer TParentMergedHandlerErrs,
@@ -107,6 +113,9 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
  */
 export type InferSafeFnOkData<T> =
   T extends TRunnableSafeFn<
+    any,
+    any,
+    any,
     any,
     any,
     any,
@@ -182,6 +191,9 @@ export type TBuildMergedHandlersErrs<T extends TAnyRunnableSafeFn> = Result<
 
 type Thing<T> =
   T extends TRunnableSafeFn<
+    any,
+    any,
+    any,
     any,
     any,
     infer TParentMergedHandlerErrs,

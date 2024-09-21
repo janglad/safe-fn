@@ -58,10 +58,16 @@ export type TAnyRunnableSafeFn = TRunnableSafeFn<
   any,
   any,
   any,
+  any,
+  any,
+  any,
   "run"
 >;
 
 type AnyRunnableSafeFn = RunnableSafeFn<
+  any,
+  any,
+  any,
   any,
   any,
   any,
@@ -85,6 +91,9 @@ export type TRunnableSafeFnPickArgs =
   | "createAction";
 
 export type TRunnableSafeFn<
+  TData,
+  TRunErr,
+  TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -100,6 +109,9 @@ export type TRunnableSafeFn<
   in out TPickArgs extends TRunnableSafeFnPickArgs,
 > = Pick<
   RunnableSafeFn<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -116,6 +128,9 @@ export type TRunnableSafeFn<
 >;
 
 export class RunnableSafeFn<
+  TData,
+  TRunErr,
+  TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TParentMergedHandlerErrs extends Result<never, unknown>,
@@ -204,6 +219,9 @@ export class RunnableSafeFn<
   catch<TNewThrownHandlerRes extends TAnySafeFnCatchHandlerRes>(
     handler: (error: unknown) => TNewThrownHandlerRes,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -228,6 +246,9 @@ export class RunnableSafeFn<
   onStart(
     onStartFn: TSafeFnOnStart<TUnparsedInput>,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -255,6 +276,9 @@ export class RunnableSafeFn<
       THandlerRes
     >,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -286,6 +310,9 @@ export class RunnableSafeFn<
       TThrownHandlerRes
     >,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
@@ -317,6 +344,9 @@ export class RunnableSafeFn<
       TThrownHandlerRes
     >,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
+    TActionErr,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
