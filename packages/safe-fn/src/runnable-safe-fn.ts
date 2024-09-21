@@ -4,10 +4,14 @@ import {
   actionErr,
   actionOk,
   type InferAsyncErrError,
+  type InferErrError,
   type InferOkData,
 } from "./result";
 
-import type { TAnySafeFnCatchHandlerRes } from "./types/catch-handler";
+import type {
+  TAnySafeFnCatchHandlerRes,
+  TSafeFnDefaultCatchHandlerErrError,
+} from "./types/catch-handler";
 import type { TSafeFnInternals } from "./types/internals";
 import type {
   TSafeFnInternalRunReturn,
@@ -281,8 +285,10 @@ export class RunnableSafeFn<
     handler: (error: unknown) => TNewThrownHandlerRes,
   ): TRunnableSafeFn<
     TData,
-    TRunErr,
-    TActionErr,
+    | Exclude<TRunErr, TSafeFnDefaultCatchHandlerErrError>
+    | InferErrError<TNewThrownHandlerRes>,
+    | Exclude<TActionErr, TSafeFnDefaultCatchHandlerErrError>
+    | InferErrError<TNewThrownHandlerRes>,
     TCtx,
     TCtxInput,
     TParentMergedHandlerErrs,
