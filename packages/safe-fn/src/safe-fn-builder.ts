@@ -164,8 +164,8 @@ export class SafeFnBuilder<
     parent: TNewParent,
   ): TSafeFnBuilder<
     TData,
-    TInferSafeFnRunErr<TNewParent>,
-    TInferSafeFnActionErr<TNewParent>,
+    TRunErr | TInferSafeFnRunErr<TNewParent>,
+    TActionErr | TInferSafeFnActionErr<TNewParent>,
     InferSafeFnOkData<TNewParent>,
     [
       ...TInferCtxInput<TNewParent>,
