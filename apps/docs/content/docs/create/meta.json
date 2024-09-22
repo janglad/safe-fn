@@ -6,7 +6,8 @@
     "input-output",
     "handler",
     "uncaught-errors",
-    "callbacks"
+    "callbacks",
+    "modifying-result"
   ],
   "defaultOpen": true
 }
