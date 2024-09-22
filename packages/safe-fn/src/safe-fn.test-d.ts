@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "neverthrow";
+import { err, ok, ResultAsync, type Result } from "neverthrow";
 import { assert, describe, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 import { type ActionResult } from "./result";
@@ -1359,6 +1359,28 @@ describe("runnableSafeFn", () => {
             }
         >();
       });
+    });
+  });
+  describe("mapErr", () => {
+    test("should change the err type", async () => {
+      const fn = createSafeFn()
+        .input(z.object({ test: z.string() }))
+        .output(z.object({ test: z.string() }))
+        .handler(() => ok({ test: "hello" }))
+        .mapErr((e) => {
+          let bool = true;
+          if (bool) {
+            return "NEW_CODE";
+          } else return e.code;
+        });
+
+      type Res = ReturnType<typeof fn.run>;
+      expectTypeOf<Res>().toEqualTypeOf<
+        ResultAsync<
+          { test: string },
+          "INPUT_PARSING" | "OUTPUT_PARSING" | "UNCAUGHT_ERROR" | "NEW_CODE"
+        >
+      >();
     });
   });
 });

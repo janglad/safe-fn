@@ -295,6 +295,7 @@ export class SafeFnBuilder<
         onError: undefined,
         onComplete: undefined,
       } as TODO,
+      undefined,
     ) as TODO;
   }
 
@@ -341,6 +342,7 @@ export class SafeFnBuilder<
         onError: undefined,
         onComplete: undefined,
       },
+      undefined,
     ) as any;
   }
 }

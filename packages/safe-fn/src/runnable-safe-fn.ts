@@ -71,7 +71,8 @@ export type TRunnableSafeFnPickArgs =
   | "onError"
   | "onComplete"
   | "run"
-  | "createAction";
+  | "createAction"
+  | "mapErr";
 
 export type TRunnableSafeFn<
   in out TData,
@@ -134,6 +135,8 @@ export class RunnableSafeFn<
     TUnparsedInput
   >;
 
+  readonly _mapErrHandler: ((e: any) => TRunErr) | undefined;
+
   constructor(
     internals: TSafeFnInternals<
       TCtx,
@@ -151,9 +154,11 @@ export class RunnableSafeFn<
       TOutputSchema,
       TUnparsedInput
     >,
+    mapErrHandler: ((e: TRunErr) => TRunErr) | undefined,
   ) {
     this._internals = internals;
     this._callBacks = callBacks;
+    this._mapErrHandler = mapErrHandler;
   }
 
   createAction(): TSafeFnAction<TData, TRunErr, TOutputSchema, TUnparsedInput> {
@@ -190,6 +195,28 @@ export class RunnableSafeFn<
         uncaughtErrorHandler: handler,
       } as TODO,
       this._callBacks as TODO,
+      this._mapErrHandler,
+    ) as TODO;
+  }
+
+  mapErr<TNewErrError>(
+    handler: (error: TRunErr) => TNewErrError,
+  ): TRunnableSafeFn<
+    TData,
+    TNewErrError,
+    TCtx,
+    TCtxInput,
+    TInputSchema,
+    TMergedInputSchemaInput,
+    TOutputSchema,
+    TMergedParentOutputSchemaInput,
+    TUnparsedInput,
+    Exclude<TPickArgs, "mapErr">
+  > {
+    return new RunnableSafeFn(
+      this._internals,
+      this._callBacks,
+      handler as TODO,
     ) as TODO;
   }
 
@@ -207,10 +234,14 @@ export class RunnableSafeFn<
     TUnparsedInput,
     Exclude<TPickArgs, "onStart">
   > {
-    return new RunnableSafeFn(this._internals, {
-      ...this._callBacks,
-      onStart: onStartFn,
-    }) as TODO;
+    return new RunnableSafeFn(
+      this._internals,
+      {
+        ...this._callBacks,
+        onStart: onStartFn,
+      },
+      this._mapErrHandler,
+    ) as TODO;
   }
   onSuccess(
     onSuccessFn: TSafeFnOnSuccess<
@@ -233,10 +264,14 @@ export class RunnableSafeFn<
     TUnparsedInput,
     Exclude<TPickArgs, "onSuccess">
   > {
-    return new RunnableSafeFn(this._internals, {
-      ...this._callBacks,
-      onSuccess: onSuccessFn,
-    }) as TODO;
+    return new RunnableSafeFn(
+      this._internals,
+      {
+        ...this._callBacks,
+        onSuccess: onSuccessFn,
+      },
+      this._mapErrHandler,
+    ) as TODO;
   }
   onError(
     onErrorFn: TSafeFnOnError<
@@ -259,10 +294,14 @@ export class RunnableSafeFn<
     TUnparsedInput,
     Exclude<TPickArgs, "onError">
   > {
-    return new RunnableSafeFn(this._internals, {
-      ...this._callBacks,
-      onError: onErrorFn,
-    }) as TODO;
+    return new RunnableSafeFn(
+      this._internals,
+      {
+        ...this._callBacks,
+        onError: onErrorFn,
+      },
+      this._mapErrHandler,
+    ) as TODO;
   }
   onComplete(
     onCompleteFn: TSafeFnOnComplete<
@@ -286,10 +325,14 @@ export class RunnableSafeFn<
     TUnparsedInput,
     Exclude<TPickArgs, "onComplete">
   > {
-    return new RunnableSafeFn(this._internals, {
-      ...this._callBacks,
-      onComplete: onCompleteFn,
-    }) as TODO;
+    return new RunnableSafeFn(
+      this._internals,
+      {
+        ...this._callBacks,
+        onComplete: onCompleteFn,
+      },
+      this._mapErrHandler,
+    ) as TODO;
   }
 
   /*
