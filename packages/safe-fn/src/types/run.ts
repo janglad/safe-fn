@@ -43,7 +43,6 @@ export type InferSafeFnArgs<T> =
     any,
     infer TUnparsedInput,
     any,
-    any,
     any
   >
     ? TSafeFnRunArgs<TUnparsedInput>
@@ -67,7 +66,6 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
     any,
     any,
     infer TOutputSchema,
-    any,
     any,
     any,
     any,
@@ -95,7 +93,6 @@ export type InferSafeFnOkData<T> =
     any,
     any,
     infer TOutputSchema,
-    any,
     any,
     any,
     any,

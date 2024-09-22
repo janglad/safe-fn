@@ -33,7 +33,6 @@ export type TInferSafeFnCallbacks<T> =
     any,
     infer TUnparsedInput,
     any,
-    any,
     any
   >
     ? TSafeFnCallBacks<

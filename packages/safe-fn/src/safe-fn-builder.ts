@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { err, type Result } from "neverthrow";
-import type { InferErrError, InferOkData, MergeResults } from "./result";
+import type { InferErrError, InferOkData } from "./result";
 import {
   RunnableSafeFn,
   type TAnyRunnableSafeFn,
@@ -99,7 +99,6 @@ export class SafeFnBuilder<
     TInputSchema,
     TOutputSchema,
     TUnparsedInput,
-    any,
     TSafeFnDefaultCatchHandlerErr
   >;
 
@@ -110,7 +109,6 @@ export class SafeFnBuilder<
       TInputSchema,
       TOutputSchema,
       TUnparsedInput,
-      any,
       TSafeFnDefaultCatchHandlerErr
     >,
   ) {
@@ -314,7 +312,6 @@ export class SafeFnBuilder<
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    Awaited<TNewHandlerResult>,
     TSafeFnDefaultCatchHandlerErr,
     TRunnableSafeFnPickArgs
   > {
@@ -355,10 +352,6 @@ export class SafeFnBuilder<
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    // YieldErr can be never if the generator never yields an error, [] cause distribution
-    [YieldErr] extends [never]
-      ? GeneratorResult
-      : MergeResults<GeneratorResult, YieldErr>,
     TSafeFnDefaultCatchHandlerErr,
     TRunnableSafeFnPickArgs
   > {
