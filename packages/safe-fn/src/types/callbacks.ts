@@ -1,11 +1,7 @@
 import type { Result } from "neverthrow";
 import type { TRunnableSafeFn } from "../runnable-safe-fn";
 import type { AnyCtxInput, TSafeFnHandlerArgs } from "./handler";
-import type {
-  TSafeFnActionError,
-  TSafeFnReturnData,
-  TSafeFnRunError,
-} from "./run";
+import type { TSafeFnReturnData, TSafeFnRunError } from "./run";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
@@ -24,7 +20,6 @@ export type TInferSafeFnCallbacks<T> =
   T extends TRunnableSafeFn<
     infer TData,
     infer TRunErr,
-    infer TActionErr,
     infer TCtx,
     infer TCtxInput,
     infer TInputSchema,
@@ -37,7 +32,6 @@ export type TInferSafeFnCallbacks<T> =
     ? TSafeFnCallBacks<
         TData,
         TRunErr,
-        TActionErr,
         TCtx,
         TCtxInput,
         TInputSchema,
@@ -49,7 +43,6 @@ export type TInferSafeFnCallbacks<T> =
 export interface TSafeFnCallBacks<
   in out TData,
   in out TRunErr,
-  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
@@ -70,7 +63,6 @@ export interface TSafeFnCallBacks<
   onError:
     | TSafeFnOnError<
         TRunErr,
-        TActionErr,
         TCtx,
         TCtxInput,
         TInputSchema,
@@ -82,7 +74,6 @@ export interface TSafeFnCallBacks<
     | TSafeFnOnComplete<
         TData,
         TRunErr,
-        TActionErr,
         TCtx,
         TCtxInput,
         TInputSchema,
@@ -132,42 +123,19 @@ type TToOptionalSafeFnArgs<T> = {
 
 type TSafeFnOnErrorArgs<
   TRunError,
-  TActionError,
   TCtx,
   TCtxInput extends AnyCtxInput,
   TInputSchema extends TSafeFnInput,
   TOutputSchema extends TSafeFnOutput,
   TUnparsedInput extends TSafeFnUnparsedInput,
-> =
-  | TSafeFnOnErrorActionArgs<
-      TActionError,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    >
-  | TSafeFnOnErrorNonActionArgs<
-      TRunError,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    >;
-interface TSafeFnOnErrorActionArgs<
-  in out TActionError,
-  in out TCtx,
-  in out TCtxInput extends AnyCtxInput,
-  in out TInputSchema extends TSafeFnInput,
-  in out TOutputSchema extends TSafeFnOutput,
-  in out TUnparsedInput extends TSafeFnUnparsedInput,
-> extends TToOptionalSafeFnArgs<
-    TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
-  > {
-  asAction: true;
-  error: TSafeFnActionError<TActionError, TOutputSchema>;
-}
+> = TSafeFnOnErrorNonActionArgs<
+  TRunError,
+  TCtx,
+  TCtxInput,
+  TInputSchema,
+  TOutputSchema,
+  TUnparsedInput
+>;
 
 interface TSafeFnOnErrorNonActionArgs<
   in out TRunError,
@@ -185,7 +153,6 @@ interface TSafeFnOnErrorNonActionArgs<
 
 export type TSafeFnOnError<
   in out TRunError,
-  in out TActionError,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
@@ -194,7 +161,6 @@ export type TSafeFnOnError<
 > = (
   args: TSafeFnOnErrorArgs<
     TRunError,
-    TActionError,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -206,7 +172,6 @@ export type TSafeFnOnError<
 type TSafeFnOnCompleteArgs<
   TData,
   TRunErr,
-  TActionErr,
   TCtx,
   TCtxInput extends AnyCtxInput,
   TInputSchema extends TSafeFnInput,
@@ -215,7 +180,6 @@ type TSafeFnOnCompleteArgs<
 > =
   | TSafeFnOnCompleteErrorArgs<
       TRunErr,
-      TActionErr,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -233,29 +197,19 @@ type TSafeFnOnCompleteArgs<
 
 type TSafeFnOnCompleteErrorArgs<
   TRunErr,
-  TActionErr,
   TCtx,
   TCtxInput extends AnyCtxInput,
   TInputSchema extends TSafeFnInput,
   TOutputSchema extends TSafeFnInput,
   TUnparsedInput extends TSafeFnUnparsedInput,
-> =
-  | TSafeFnOnCompleteErrorActionArgs<
-      TActionErr,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    >
-  | TSafeFnOnCompleteErrorNonActionArgs<
-      TRunErr,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    >;
+> = TSafeFnOnCompleteErrorNonActionArgs<
+  TRunErr,
+  TCtx,
+  TCtxInput,
+  TInputSchema,
+  TOutputSchema,
+  TUnparsedInput
+>;
 
 interface TSafeFnOnCompleteSuccessArgs<
   in out TData,
@@ -267,20 +221,6 @@ interface TSafeFnOnCompleteSuccessArgs<
 > extends TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput> {
   asAction: boolean;
   result: Result<TSafeFnReturnData<TData, TOutputSchema>, never>;
-}
-
-interface TSafeFnOnCompleteErrorActionArgs<
-  in out TActionError,
-  in out TCtx,
-  in out TCtxInput extends AnyCtxInput,
-  in out TInputSchema extends TSafeFnInput,
-  in out TOutputSchema extends TSafeFnInput,
-  in out TUnparsedInput extends TSafeFnUnparsedInput,
-> extends TToOptionalSafeFnArgs<
-    TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
-  > {
-  asAction: true;
-  result: Result<never, TSafeFnActionError<TActionError, TOutputSchema>>;
 }
 
 interface TSafeFnOnCompleteErrorNonActionArgs<
@@ -300,7 +240,6 @@ interface TSafeFnOnCompleteErrorNonActionArgs<
 export type TSafeFnOnComplete<
   in out TData,
   in out TRunErr,
-  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
@@ -310,7 +249,6 @@ export type TSafeFnOnComplete<
   args: TSafeFnOnCompleteArgs<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,

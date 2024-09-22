@@ -58,7 +58,6 @@ export type TInferSafeFnOkData2<T> =
     any,
     any,
     any,
-    any,
     any
   >
     ? TData
@@ -75,46 +74,15 @@ export type TInferSafeFnRunErr<T> =
     any,
     any,
     any,
-    any,
     any
   >
     ? TRunErr
     : never;
 
-export type TInferSafeFnActionErr<T> =
-  T extends TRunnableSafeFn<
-    any,
-    any,
-    infer TActionErr,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any
-  >
-    ? TActionErr
-    : never;
-
 export interface TAnyRunnableSafeFn
-  extends TRunnableSafeFn<
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any
-  > {}
+  extends TRunnableSafeFn<any, any, any, any, any, any, any, any, any, any> {}
 
 type AnyRunnableSafeFn = RunnableSafeFn<
-  any,
   any,
   any,
   any,
@@ -139,7 +107,6 @@ export type TRunnableSafeFnPickArgs =
 export type TRunnableSafeFn<
   in out TData,
   in out TRunErr,
-  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
@@ -154,7 +121,6 @@ export type TRunnableSafeFn<
   RunnableSafeFn<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -170,7 +136,6 @@ export type TRunnableSafeFn<
 export class RunnableSafeFn<
   in out TData,
   in out TRunErr,
-  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
@@ -193,7 +158,6 @@ export class RunnableSafeFn<
   readonly _callBacks: TSafeFnCallBacks<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -212,7 +176,6 @@ export class RunnableSafeFn<
     callBacks: TSafeFnCallBacks<
       TData,
       TRunErr,
-      TActionErr,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -224,13 +187,7 @@ export class RunnableSafeFn<
     this._callBacks = callBacks;
   }
 
-  createAction(): TSafeFnAction<
-    TData,
-    TRunErr,
-    TActionErr,
-    TOutputSchema,
-    TUnparsedInput
-  > {
+  createAction(): TSafeFnAction<TData, TRunErr, TOutputSchema, TUnparsedInput> {
     // TODO: strip stack traces etc here
     return this._runAsAction.bind(this);
   }
@@ -248,8 +205,6 @@ export class RunnableSafeFn<
   ): TRunnableSafeFn<
     TData,
     | Exclude<TRunErr, TSafeFnDefaultCatchHandlerErrError>
-    | InferErrError<TNewThrownHandlerRes>,
-    | Exclude<TActionErr, TSafeFnDefaultCatchHandlerErrError>
     | InferErrError<TNewThrownHandlerRes>,
     TCtx,
     TCtxInput,
@@ -274,7 +229,6 @@ export class RunnableSafeFn<
   ): TRunnableSafeFn<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -301,7 +255,6 @@ export class RunnableSafeFn<
   ): TRunnableSafeFn<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -319,7 +272,6 @@ export class RunnableSafeFn<
   onError(
     onErrorFn: TSafeFnOnError<
       TRunErr,
-      TActionErr,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -329,7 +281,6 @@ export class RunnableSafeFn<
   ): TRunnableSafeFn<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -348,7 +299,6 @@ export class RunnableSafeFn<
     onCompleteFn: TSafeFnOnComplete<
       TData,
       TRunErr,
-      TActionErr,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -358,7 +308,6 @@ export class RunnableSafeFn<
   ): TRunnableSafeFn<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -470,7 +419,6 @@ export class RunnableSafeFn<
   ): TSafeFnInternalRunReturn<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -499,7 +447,6 @@ export class RunnableSafeFn<
     type InternalOk = TSafeFnInternalRunReturnData<
       TData,
       TRunErr,
-      TActionErr,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -510,7 +457,6 @@ export class RunnableSafeFn<
     type InternalErr = TSafeFnInternalRunReturnError<
       TData,
       TRunErr,
-      TActionErr,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -535,7 +481,6 @@ export class RunnableSafeFn<
                     ({
                       public: e.public as TSafeFnReturnError<
                         TRunErr,
-                        TActionErr,
                         TOutputSchema,
                         TAsAction
                       >,
@@ -638,7 +583,6 @@ export class RunnableSafeFn<
     const internalRes: TSafeFnInternalRunReturn<
       TData,
       TRunErr,
-      TActionErr,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -686,7 +630,7 @@ export class RunnableSafeFn<
 
   async _runAsAction(
     ...args: TSafeFnActionArgs<TUnparsedInput>
-  ): TSafeFnActionReturn<TData, TActionErr, TOutputSchema> {
+  ): TSafeFnActionReturn<TData, TRunErr, TOutputSchema> {
     const res = await this._run(args[0], true, false)
       .map((res) => res.value)
       .mapErr((e) => e.public);

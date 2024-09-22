@@ -40,7 +40,6 @@ export type InferSafeFnArgs<T> =
     any,
     any,
     any,
-    any,
     infer TUnparsedInput,
     any
   >
@@ -59,7 +58,6 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
   T extends TRunnableSafeFn<
     infer TData,
     infer TRunErr,
-    infer TActionErr,
     any,
     any,
     any,
@@ -70,7 +68,7 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
     any
   >
     ? TAsAction extends true
-      ? TSafeFnActionReturn<TData, TActionErr, TOutputSchema>
+      ? TSafeFnActionReturn<TData, TRunErr, TOutputSchema>
       : TSafeFnRunReturn<TData, TRunErr, TOutputSchema>
     : never;
 
@@ -84,7 +82,6 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
 export type InferSafeFnOkData<T> =
   T extends TRunnableSafeFn<
     infer TData,
-    any,
     any,
     any,
     any,
@@ -128,29 +125,21 @@ export type TSafeFnReturnData<TData, TOutputSchema extends TSafeFnOutput> = [
   : TSchemaOutputOrFallback<TOutputSchema, TData>;
 
 export type TSafeFnRunError<TRunErr, TOutputSchema> = TRunErr;
-export type TSafeFnActionError<TActionErr, TOutputSchema> = TActionErr;
 
 export type TSafeFnRunArgs<T extends TSafeFnUnparsedInput> = T;
 
 export interface TSafeFnReturn<
   in out TData,
   in out TRunError,
-  in out TActionError,
   in out TOutputSchema extends TSafeFnOutput,
   in out TAsAction extends boolean,
 > extends ResultAsync<
     TSafeFnReturnData<TData, TOutputSchema>,
-    TSafeFnReturnError<TRunError, TActionError, TOutputSchema, TAsAction>
+    TSafeFnReturnError<TRunError, TOutputSchema, TAsAction>
   > {}
 
-export type TSafeFnReturnError<
-  TRunError,
-  TActionError,
-  TOutputSchema,
-  TAsAction,
-> = TAsAction extends true
-  ? TSafeFnActionError<TActionError, TOutputSchema>
-  : TSafeFnRunError<TRunError, TOutputSchema>;
+export type TSafeFnReturnError<TRunError, TOutputSchema, TAsAction> =
+  TSafeFnRunError<TRunError, TOutputSchema>;
 
 export interface TSafeFnRunReturn<
   in out TData,
@@ -164,7 +153,6 @@ export interface TSafeFnRunReturn<
 export interface TSafeFnInternalRunReturn<
   in out TData,
   in out TRunError,
-  in out TActionError,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
@@ -175,7 +163,6 @@ export interface TSafeFnInternalRunReturn<
     TSafeFnInternalRunReturnData<
       TData,
       TRunError,
-      TActionError,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -186,7 +173,6 @@ export interface TSafeFnInternalRunReturn<
     TSafeFnInternalRunReturnError<
       TData,
       TRunError,
-      TActionError,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -199,7 +185,6 @@ export interface TSafeFnInternalRunReturn<
 export interface TSafeFnInternalRunReturnData<
   in out TData,
   in out TRunErr,
-  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
@@ -208,7 +193,7 @@ export interface TSafeFnInternalRunReturnData<
   in out TAsAction extends boolean,
 > {
   value: InferAsyncOkData<
-    TSafeFnReturn<TData, TRunErr, TActionErr, TOutputSchema, TAsAction>
+    TSafeFnReturn<TData, TRunErr, TOutputSchema, TAsAction>
   >;
   input: TSchemaOutputOrFallback<TInputSchema, undefined>;
   ctx: TCtx;
@@ -219,7 +204,6 @@ export interface TSafeFnInternalRunReturnData<
 export interface TSafeFnInternalRunReturnError<
   in out TData,
   in out TRunErr,
-  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
@@ -228,7 +212,7 @@ export interface TSafeFnInternalRunReturnError<
   in out TAsAction extends boolean,
 > {
   public: InferAsyncErrError<
-    TSafeFnReturn<TData, TRunErr, TActionErr, TOutputSchema, TAsAction>
+    TSafeFnReturn<TData, TRunErr, TOutputSchema, TAsAction>
   >;
   private: {
     input: TSchemaInputOrFallback<TInputSchema, undefined> | undefined;

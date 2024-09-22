@@ -35,7 +35,6 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 export const runCallbacks = <
   TData,
   TRunErr,
-  TActionErr,
   TCtx,
   TCtxInput extends AnyCtxInput,
   TInputSchema extends TSafeFnInput,
@@ -45,7 +44,6 @@ export const runCallbacks = <
   TRes extends TSafeFnInternalRunReturn<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -55,7 +53,6 @@ export const runCallbacks = <
   > = TSafeFnInternalRunReturn<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -69,7 +66,6 @@ export const runCallbacks = <
   callbacks: TSafeFnCallBacks<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
