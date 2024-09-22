@@ -93,7 +93,6 @@ Starts execution after output parsing has completed if you defined a schema, oth
   .onError(async (args) => {
     /*
     (parameter) args: {
-    asAction: boolean
     input: {
         firstName: string;
         lastName: string;
@@ -114,7 +113,6 @@ Starts execution after output parsing has completed if you defined a schema, oth
 
 Starts execution after the first encountered `Err` return while executing your SafeFn. Takes in the following parameters:
 
-- `asAction`: wether the safe-fn was run as an action (`createAction()()`) or not (`run()`). This can be helpful the narrow down the type of `error`.
 - `unsafeRawInput`: the raw input passed when running your SafeFn. Keep in mind this can contain additional properties when using one SafeFn as the parent of another!
 - `input`: the results of parsing `unsafeRawInput` through your input schema if you defined one and parsing was successful, otherwise `undefined`.
 - `ctx`: the `Ok` value of your parent safe-fn if you defined one and execution was successful, otherwise undefined
@@ -128,7 +126,6 @@ Starts execution after the first encountered `Err` return while executing your S
   .onComplete(async (args) => {
     /*
     (parameter) args: {
-    asAction: boolean
     input: {
         firstName: string;
         lastName: string;
@@ -149,7 +146,6 @@ Starts execution after the first encountered `Err` return while executing your S
 
 Starts execution after either `onSuccess()` or `onError()` is **called** (not finished). Takes in the following parameters:
 
-- `asAction`: wether the safe-fn was run as an action (`createAction()()`) or not (`run()`). This can be helpful the narrow down the type of `error`.
 - `unsafeRawInput`: the raw input passed when running your SafeFn. Keep in mind this can contain additional properties when using one SafeFn as the parent of another!
 - `input`: the results of parsing `unsafeRawInput` through your input schema if you defined one and parsing was successful, otherwise `undefined`.
 - `ctx`: the `Ok` value of your parent safe-fn if you defined one and execution was successful, otherwise undefined

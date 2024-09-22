@@ -20,17 +20,6 @@ A union that can contain the following errors:
 
 ### Input parsing
 
-When using `.run()`
-
-```ts
-type E = {
-  code: "INPUT_PARSING";
-  cause: z.ZodError<T>;
-};
-```
-
-when using `.createAction()` full errors are stripped as classes can not be sent via a Server Action and stack traces should not be shipped to the client
-
 ```ts
 type E = {
   code: "INPUT_PARSING";
@@ -91,17 +80,6 @@ type E = {
 ```
 
 ### Output parsing
-
-When using `.run()`
-
-```ts
-type E = {
-  code: "OUTPUT_PARSING";
-  cause: z.ZodError<T>;
-};
-```
-
-when using `.createAction()` full errors are stripped as classes can not be sent via a Server Action and stack traces should not be shipped to the client
 
 ```ts
 type E = {
@@ -175,46 +153,7 @@ const child = createSafeFn()
   });
 ```
 
-The return type of `child.run()` will be:
-
-```ts
-type Res = ResultAsync<
-  {
-    childOut: string;
-  },
-  // Merged error from parent and child
-  | {
-      code: "INPUT_PARSING";
-      cause: z.ZodError<{
-        parentIn: string;
-        childIn: string;
-      }>;
-    }
-  // Yielded error in parent
-  | {
-      code: "TOO_LOW!";
-    }
-  // Parent did not specify a catch handler, so default is used
-  | {
-      code: "UNCAUGHT_ERROR";
-      cause: "An uncaught error occurred. You can implement a custom error handler by using `catch()`";
-    }
-  // Specified in child catch handler
-  | {
-      code: "Woops!";
-    }
-  // Output parsing error
-  | {
-      code: "OUTPUT_PARSING";
-      cause: z.ZodError<{
-        parentOut: string;
-        childOut: string;
-      }>;
-    }
->;
-```
-
-The result of calling `child.createAction()` through the `useServerAction()` hook will be:
+The return type of `child.run()` or calling `child.createAction()` through the `useServerAction()` hook will be:
 
 ```ts
 type Res = ResultAsync<

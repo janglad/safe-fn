@@ -23,23 +23,6 @@ const mySafeFunction = SafeFn.new()
 
 When parsing is not successful, your handler function is not called and the error is returned. As such, the following types are added to the return type of the function:
 
-- when using `run()`
-
-```ts
-ResultAsync<{
-  never,
-  {
-    code: "INPUT_PARSING";
-    cause: z.ZodError<{
-      firstName: string;
-    lastName: string;
-  }>;
-  }
-}>;
-```
-
-- when using `createAction()()` (full errors are stripped here as classes can not be sent via a Server Action and stack traces should not be shipped to the client)
-
 ```ts
 ActionResult<
   never,
@@ -61,6 +44,12 @@ ActionResult<
   }
 >;
 ```
+
+<Callout type="info">
+  The full Zod error is not returned as SafeFn is meant to be used at the edge
+  of your application, stack traces should not be sent to the client and it's
+  not possible to serialize an instance of `Error`s.
+</Callout>
 
 <Callout type="info">
   When using a [parent](/docs/create/chaining), the schema of the Zod error is
@@ -134,20 +123,6 @@ const mySafeFunction = SafeFn.new()
 
 When output parsing is not successful, an `Err` is returned. The following types are added to the return type:
 
-- when using `run()`
-
-```ts
-ResultAsync<{
-  never,
-  {
-    code: "OUTPUT_PARSING";
-    cause: z.ZodError<{ fullName: string }>;
-  };
-}>;
-```
-
-- when using `createAction()()` (full errors are stripped here as classes can not be sent via a Server Action and stack traces should not be shipped to the client)
-
 ```ts
 ActionResult<
   never,
@@ -160,6 +135,12 @@ ActionResult<
   }
 >;
 ```
+
+<Callout type="info">
+  The full Zod error is not returned as SafeFn is meant to be used at the edge
+  of your application, stack traces should not be sent to the client and it's
+  not possible to serialize an instance of `Error`s.
+</Callout>
 
 <Callout type="info">
   When using a [parent](/docs/create/chaining), the schema of the Zod error is
