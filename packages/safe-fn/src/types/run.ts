@@ -1,6 +1,5 @@
 import type { ResultAsync } from "neverthrow";
-import type { InferAsyncErrError } from "../result";
-import type { TAnyRunnableSafeFn, TRunnableSafeFn } from "../runnable-safe-fn";
+import type { TRunnableSafeFn } from "../runnable-safe-fn";
 import type { AnyCtxInput } from "../types/handler";
 import type {
   TSafeFnInput,
@@ -25,7 +24,7 @@ import type { TODO } from "../types/util";
  * Return type:
  * - The type of the arguments of the safe function passed to `run()`
  */
-export type InferSafeFnRunArgs<T> =
+export type InferSafeFnArgs<T> =
   T extends TRunnableSafeFn<
     any,
     any,
@@ -48,7 +47,7 @@ export type InferSafeFnRunArgs<T> =
  * Return type:
  * - The return typ, a `ResultAsync`
  */
-export type InferSafeFnRunReturn<T> =
+export type InferSafeFnReturn<T> =
   T extends TRunnableSafeFn<
     infer TData,
     infer TRunErr,
@@ -102,17 +101,6 @@ export type InferSafeFnReturnError<T> =
   >
     ? TRunErr
     : never;
-
-/**
- * Type params:
- * - `T`: The runnable safe function
- *
- * Return type:
- * - The type of the `.error` of the return type of the safe function after unsuccessful execution.
- */
-export type InferSafeFnError<T extends TAnyRunnableSafeFn> = InferAsyncErrError<
-  InferSafeFnRunReturn<T>
->;
 
 /*
 ################################

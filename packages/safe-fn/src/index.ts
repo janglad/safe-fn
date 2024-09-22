@@ -20,10 +20,10 @@ import type {
   TAnySafeFnAction,
 } from "./types/action";
 import type {
-  InferSafeFnError,
+  InferSafeFnArgs,
+  InferSafeFnReturn,
   InferSafeFnReturnData,
-  InferSafeFnRunArgs,
-  InferSafeFnRunReturn,
+  InferSafeFnReturnError,
 } from "./types/run";
 import type {
   InferInputSchema,
@@ -48,9 +48,9 @@ export type {
   InferSafeFnActionReturn,
   InferSafeFnActionReturnData,
   InferSafeFnActionReturnError,
-  InferSafeFnError,
+  InferSafeFnArgs,
+  InferSafeFnReturn,
   InferSafeFnReturnData,
-  InferSafeFnRunArgs,
-  InferSafeFnRunReturn,
+  InferSafeFnReturnError,
   InferUnparsedInputTuple,
 };

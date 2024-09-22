@@ -25,7 +25,7 @@ const myActionErr: MyActionErr = {
   ok: false,
   error: {
     code: "DB_ERROR";
-    cause: string;
+    cause: "Database connection failed";
   };
 };
 ```
@@ -72,31 +72,6 @@ type MyActionArgs = InferSafeFnActionArgs<typeof myAction>;
 //   ^ {name: string}
 ```
 
-### InferSafeFnActionError
-
-Infers the error type of an action.
-
-```ts
-const myAction = createSafeFn()
-  .handler(...)
-  .catch(() => err("ooh no" as const))
-  .createAction();
-type MyActionError = InferSafeFnActionError<typeof myAction>;
-//   ^ "ooh no"
-```
-
-### InferSafeFnActionOkData
-
-Infers the ok type of an action.
-
-```ts
-const myAction = createSafeFn()
-  .handler(() => ok("Yay!" as const))
-  .createAction();
-type MyActionOk = InferSafeFnActionOkData<typeof myAction>;
-//   ^ "Yay!"
-```
-
 ### InferSafeFnActionReturn
 
 Infers the return type of an action when calling it directly.
@@ -112,6 +87,31 @@ type MyActionReturn = InferSafeFnActionReturn<typeof myAction>;
 
 Infers the return type of an action.
 
+### InferSafeFnActionReturnData
+
+Infers the ok type of an action.
+
+```ts
+const myAction = createSafeFn()
+  .handler(() => ok("Yay!" as const))
+  .createAction();
+type MyActionOk = InferSafeFnActionOkData<typeof myAction>;
+//   ^ "Yay!"
+```
+
+### InferSafeFnActionReturnError
+
+Infers the error type of an action.
+
+```ts
+const myAction = createSafeFn()
+  .handler(...)
+  .catch(() => err("ooh no" as const))
+  .createAction();
+type MyActionError = InferSafeFnActionReturnError<typeof myAction>;
+//   ^ "ooh no"
+```
+
 ### InferSafeFnArgs
 
 Infers the arguments that need to be passed into `.run()`
@@ -124,32 +124,9 @@ type MySafeFnArgs = InferSafeFnArgs<typeof mySafeFn>;
 //   ^ {name: string}
 ```
 
-### InferSafeFnErrError
-
-Infers the error type of a SafeFn when using `.run()`.
-Boolean parameter is used to specify if the function is run as an action or not.
-
-```ts
-const mySafeFn = createSafeFn()
-  .handler(...)
-  .catch(() => "ooh no" as const);
-type MySafeFnError = InferSafeFnErrError<typeof mySafeFn, true>;
-//   ^ "ooh no"
-```
-
-### InferSafeFnOkData
-
-Infers the ok type of a SafeFn when using `.run()`.
-
-```ts
-const mySafeFn = createSafeFn().handler(() => ok("Yay!" as const));
-type MySafeFnOk = InferSafeFnOkData<typeof mySafeFn>;
-//   ^ "Yay!"
-```
-
 ### InferSafeFnReturn
 
-Infers the return type of a SafeFn when using `.run()`. Boolean parameter is used to specify if the function is run as an action or not.
+Infers the return type of a SafeFn when using `.run()`.
 This is the `ResultAsync` type, this can be converted into a `Result` type by wrapping it in `Await`
 
 ```ts
@@ -160,8 +137,26 @@ type MySafeFnReturn = InferSafeFnReturn<typeof mySafeFn, false>;
 //   ^ ResultAsync<"Yay!", "ooh no">
 type MyAwaitedSafeFnReturn = Awaited<MySafeFnReturn>;
 //   ^ Result<"Yay!", "ooh no">
-type MySafeFnActionReturn = InferSafeFnReturn<typeof mySafeFn, true>;
-//   ^ Promise<ActionResult<"Yay!", "ooh no">>
-type MyAwaitedActionSafeFnReturn = Awaited<MySafeFnReturn>;
-//   ^ ActionResult<"Yay!", "ooh no">
+```
+
+### InferSafeFnReturnData
+
+Infers the ok type of a SafeFn when using `.run()`.
+
+```ts
+const mySafeFn = createSafeFn().handler(() => ok("Yay!" as const));
+type MySafeFnOk = InferSafeFnReturnData<typeof mySafeFn>;
+//   ^ "Yay!"
+```
+
+### InferSafeFnReturnError
+
+Infers the error type of a SafeFn when using `.run()`.
+
+```ts
+const mySafeFn = createSafeFn()
+  .handler(...)
+  .catch(() => "ooh no" as const);
+type MySafeFnError = InferSafeFnReturnError<typeof mySafeFn>;
+//   ^ "ooh no"
 ```
