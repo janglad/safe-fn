@@ -606,9 +606,19 @@ export class RunnableSafeFn<
           handlerRes: undefined,
         },
       };
-    }).andThen((res) => {
-      return res;
-    }) as TODO;
+    })
+      .andThen((res) => {
+        return res;
+      })
+      .mapErr((e) => {
+        if (this._mapErrHandler !== undefined) {
+          return {
+            private: e.private,
+            public: this._mapErrHandler(e.public),
+          };
+        }
+        return e;
+      }) as TODO;
 
     const withCallbacks = runCallbacks({
       resultAsync: internalRes as TODO,

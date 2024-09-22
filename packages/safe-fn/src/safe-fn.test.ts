@@ -900,6 +900,26 @@ describe("runnable-safe-fn", () => {
       });
     });
   });
+
+  describe("mapErr", () => {
+    test("should map the error when input parsing fails", async () => {
+      const fn = createSafeFn()
+        .input(z.object({ test: z.string() }))
+        .handler(() => ok({ test: "hello" }))
+        .mapErr((e) => {
+          return {
+            code: "NEW_CODE",
+            cause: e.cause,
+          } as const;
+        });
+
+      // @ts-expect-error - passing wrong input on purpose
+      const res = await fn.run({});
+      expect(res.isErr()).toBe(true);
+      assert(res.isErr());
+      expect(res.error.code).toBe("NEW_CODE");
+    });
+  });
 });
 
 describe("parent", () => {
