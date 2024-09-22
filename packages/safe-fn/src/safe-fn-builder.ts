@@ -11,10 +11,7 @@ import {
   type TRunnableSafeFnPickArgs,
 } from "./runnable-safe-fn";
 
-import type {
-  TSafeFnDefaultCatchHandlerErr,
-  TSafeFnDefaultCatchHandlerErrError,
-} from "./types/catch-handler";
+import type { TSafeFnDefaultCatchHandlerErrError } from "./types/catch-handler";
 import type {
   AnyCtxInput,
   TSafeFnDefaultHandlerFn,
@@ -98,8 +95,7 @@ export class SafeFnBuilder<
     TCtxInput,
     TInputSchema,
     TOutputSchema,
-    TUnparsedInput,
-    TSafeFnDefaultCatchHandlerErr
+    TUnparsedInput
   >;
 
   protected constructor(
@@ -108,8 +104,7 @@ export class SafeFnBuilder<
       TCtxInput,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput,
-      TSafeFnDefaultCatchHandlerErr
+      TUnparsedInput
     >,
   ) {
     this._internals = internals;
@@ -312,7 +307,6 @@ export class SafeFnBuilder<
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    TSafeFnDefaultCatchHandlerErr,
     TRunnableSafeFnPickArgs
   > {
     return new RunnableSafeFn(
@@ -352,7 +346,6 @@ export class SafeFnBuilder<
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    TSafeFnDefaultCatchHandlerErr,
     TRunnableSafeFnPickArgs
   > {
     const handler = async (

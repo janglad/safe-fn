@@ -63,7 +63,6 @@ export type TInferSafeFnOkData2<T> =
     any,
     any,
     any,
-    any,
     any
   >
     ? TData
@@ -73,7 +72,6 @@ export type TInferSafeFnRunErr<T> =
   T extends TRunnableSafeFn<
     any,
     infer TRunErr,
-    any,
     any,
     any,
     any,
@@ -99,7 +97,6 @@ export type TInferSafeFnActionErr<T> =
     any,
     any,
     any,
-    any,
     any
   >
     ? TActionErr
@@ -117,12 +114,10 @@ export interface TAnyRunnableSafeFn
     any,
     any,
     any,
-    any,
     any
   > {}
 
 type AnyRunnableSafeFn = RunnableSafeFn<
-  any,
   any,
   any,
   any,
@@ -158,7 +153,6 @@ export type TRunnableSafeFn<
   /* Does not include output schema of `this` to be able to differentiate when handler only returns an error */
   in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
   in out TPickArgs extends TRunnableSafeFnPickArgs,
 > = Pick<
   RunnableSafeFn<
@@ -172,7 +166,6 @@ export type TRunnableSafeFn<
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    TThrownHandlerRes,
     TPickArgs
   >,
   TPickArgs
@@ -191,7 +184,6 @@ export class RunnableSafeFn<
   /* Does not include output schema of `this` to be able to differentiate when handler only returns an error */
   in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
   in out TPickArgs extends TRunnableSafeFnPickArgs,
 > {
   readonly _internals: TSafeFnInternals<
@@ -199,8 +191,7 @@ export class RunnableSafeFn<
     TCtxInput,
     TInputSchema,
     TOutputSchema,
-    TUnparsedInput,
-    TThrownHandlerRes
+    TUnparsedInput
   >;
 
   readonly _callBacks: TSafeFnCallBacks<
@@ -220,8 +211,7 @@ export class RunnableSafeFn<
       TCtxInput,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput,
-      TThrownHandlerRes
+      TUnparsedInput
     >,
     callBacks: TSafeFnCallBacks<
       TData,
@@ -272,7 +262,6 @@ export class RunnableSafeFn<
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    TNewThrownHandlerRes,
     Exclude<TPickArgs, "catch">
   > {
     return new RunnableSafeFn(
@@ -297,7 +286,6 @@ export class RunnableSafeFn<
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    TThrownHandlerRes,
     Exclude<TPickArgs, "onStart">
   > {
     return new RunnableSafeFn(this._internals, {
@@ -325,7 +313,6 @@ export class RunnableSafeFn<
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    TThrownHandlerRes,
     Exclude<TPickArgs, "onSuccess">
   > {
     return new RunnableSafeFn(this._internals, {
@@ -354,7 +341,6 @@ export class RunnableSafeFn<
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    TThrownHandlerRes,
     Exclude<TPickArgs, "onError">
   > {
     return new RunnableSafeFn(this._internals, {
@@ -384,7 +370,6 @@ export class RunnableSafeFn<
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    TThrownHandlerRes,
     Exclude<TPickArgs, "onComplete">
   > {
     return new RunnableSafeFn(this._internals, {

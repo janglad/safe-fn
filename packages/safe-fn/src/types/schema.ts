@@ -28,7 +28,6 @@ export type InferInputSchema<T> =
     any,
     any,
     any,
-    any,
     any
   >
     ? TInputSchema
@@ -51,7 +50,6 @@ export type InferOutputSchema<T> =
     any,
     any,
     infer TOutputSchema,
-    any,
     any,
     any,
     any
@@ -78,7 +76,6 @@ export type InferUnparsedInputTuple<T> =
     any,
     any,
     infer TUnparsed,
-    any,
     any
   >
     ? TUnparsed
@@ -93,7 +90,6 @@ export type TInferMergedInputSchemaInput<T> =
     any,
     any,
     infer MergedInputSchemaInput,
-    any,
     any,
     any,
     any,
@@ -114,7 +110,6 @@ export type TInferMergedParentOutputSchemaInput<T> =
     infer TOutputSchema,
     infer MergedOutputSchemaInput,
     any,
-    any,
     any
   >
     ? TIntersectIfNotT<
@@ -131,7 +126,6 @@ export type TInferCtxInput<T> =
     any,
     any,
     infer TCtxInput,
-    any,
     any,
     any,
     any,
