@@ -1,11 +1,6 @@
 import { ok, type Result, ResultAsync, safeTry } from "neverthrow";
 
-import {
-  actionErr,
-  actionOk,
-  type InferAsyncErrError,
-  type InferErrError,
-} from "./result";
+import { actionErr, actionOk, type InferErrError } from "./result";
 
 import type {
   TAnySafeFnCatchHandlerRes,
@@ -16,9 +11,10 @@ import type {
   TSafeFnInternalRunReturn,
   TSafeFnInternalRunReturnData,
   TSafeFnInternalRunReturnError,
-  TSafeFnReturn,
   TSafeFnReturnData,
+  TSafeFnReturnError,
   TSafeFnRunArgs,
+  TSafeFnRunReturn,
 } from "./types/run";
 import type {
   TSafeFnInput,
@@ -387,7 +383,7 @@ export class RunnableSafeFn<
   */
   run(
     ...args: TSafeFnRunArgs<TUnparsedInput>
-  ): TSafeFnReturn<TData, TRunErr, TActionErr, TOutputSchema, false> {
+  ): TSafeFnRunReturn<TData, TRunErr, TOutputSchema> {
     return this._run(args[0], false, false)
       .map((res) => res.value)
       .mapErr((e) => e.public);
@@ -537,14 +533,11 @@ export class RunnableSafeFn<
                 .mapErr(
                   (e) =>
                     ({
-                      public: e.public as InferAsyncErrError<
-                        TSafeFnReturn<
-                          TData,
-                          TRunErr,
-                          TActionErr,
-                          TOutputSchema,
-                          TAsAction
-                        >
+                      public: e.public as TSafeFnReturnError<
+                        TRunErr,
+                        TActionErr,
+                        TOutputSchema,
+                        TAsAction
                       >,
                       private: {
                         unsafeRawInput: args as TUnparsedInput,
@@ -693,7 +686,7 @@ export class RunnableSafeFn<
 
   async _runAsAction(
     ...args: TSafeFnActionArgs<TUnparsedInput>
-  ): TSafeFnActionReturn<TData, TRunErr, TActionErr, TOutputSchema> {
+  ): TSafeFnActionReturn<TData, TActionErr, TOutputSchema> {
     const res = await this._run(args[0], true, false)
       .map((res) => res.value)
       .mapErr((e) => e.public);

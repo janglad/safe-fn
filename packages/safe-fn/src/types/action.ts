@@ -1,10 +1,14 @@
 import type {
+  ActionResult,
   InferActionErrError,
   InferActionOkData,
-  ResultAsyncToActionResult,
 } from "../result";
-import type { TSafeFnReturn, TSafeFnRunArgs } from "../types/run";
-import type { TSafeFnOutput, TSafeFnUnparsedInput } from "./schema";
+import type { TSafeFnRunArgs } from "../types/run";
+import type {
+  TSafeFnOutput,
+  TSafeFnUnparsedInput,
+  TSchemaOutputOrFallback,
+} from "./schema";
 
 /*
 ################################
@@ -69,14 +73,12 @@ export type TSafeFnActionArgs<T extends TSafeFnUnparsedInput> =
 
 export type TSafeFnActionReturn<
   in out TData,
-  in out TRunErr,
   in out TActionErr,
   in out TOutputSchema extends TSafeFnOutput,
 > = Promise<
-  ResultAsyncToActionResult<
-    TSafeFnReturn<TData, TRunErr, TActionErr, TOutputSchema, true>
-  >
+  ActionResult<TSchemaOutputOrFallback<TOutputSchema, TData>, TActionErr>
 >;
+
 export type TSafeFnAction<
   in out TData,
   in out TRunErr,
@@ -85,4 +87,4 @@ export type TSafeFnAction<
   in out TUnparsedInput extends TSafeFnUnparsedInput,
 > = (
   ...args: TSafeFnActionArgs<TUnparsedInput>
-) => TSafeFnActionReturn<TData, TRunErr, TActionErr, TOutputSchema>;
+) => TSafeFnActionReturn<TData, TActionErr, TOutputSchema>;

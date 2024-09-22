@@ -1228,6 +1228,21 @@ describe("runnableSafeFn", () => {
     });
 
     describe("output", () => {
+      test("should take output type from schema", () => {
+        const safeFn = createSafeFn()
+          .output(schemaTransformed)
+          .handler(() => ok({ test: "hello", nested: { value: 1 } }))
+          .createAction();
+
+        type ExpectedOk = SchemaTransformedOutput;
+        type ExpectedErr =
+          | TSafeFnDefaultCatchHandlerErrError
+          | TSafeFnOutputParseError<typeof schemaTransformed, true>;
+
+        expectTypeOf(safeFn).returns.resolves.toEqualTypeOf<
+          ActionResult<ExpectedOk, ExpectedErr>
+        >();
+      });
       // Just throwing the kitchen sink here to not make this file any longer
       test("should type proper result", async () => {
         const safeFn = createSafeFn()
@@ -1235,11 +1250,11 @@ describe("runnableSafeFn", () => {
           .output(schemaPrimitive);
 
         const safeActionSync = safeFn
-          .handler(() => ok("hello"))
+          .handler(() => ok("hello" as const))
           .catch(() => err("world" as const))
           .createAction();
         const safeActionAsync = safeFn
-          .handler(async () => ok("hello"))
+          .handler(async () => ok("hello" as const))
           .catch(() => err("world" as const))
           .createAction();
         const safeActionSafe = safeFn
@@ -1251,7 +1266,7 @@ describe("runnableSafeFn", () => {
         const safeActionSafeYield = safeFn
           .safeHandler(async function* () {
             yield* err("world2" as const).safeUnwrap();
-            return ok("hello");
+            return ok("hello" as const);
           })
           .catch(() => err("world" as const))
           .createAction();
@@ -1281,6 +1296,7 @@ describe("runnableSafeFn", () => {
             ExpectedErr | ExpectedInputParseError | ExpectedOutputParseError
           >
         >();
+
         expectTypeOf(safeActionSafe).returns.resolves.toEqualTypeOf<
           ActionResult<
             ExpectedOk,

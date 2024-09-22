@@ -70,8 +70,8 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
     any
   >
     ? TAsAction extends true
-      ? TSafeFnActionReturn<TData, TRunErr, TActionErr, TOutputSchema>
-      : TSafeFnReturn<TData, TRunErr, TActionErr, TOutputSchema, false>
+      ? TSafeFnActionReturn<TData, TActionErr, TOutputSchema>
+      : TSafeFnRunReturn<TData, TRunErr, TOutputSchema>
     : never;
 
 /**
@@ -127,15 +127,6 @@ export type TSafeFnReturnData<TData, TOutputSchema extends TSafeFnOutput> = [
   ? never
   : TSchemaOutputOrFallback<TOutputSchema, TData>;
 
-export type TSafeFnReturnError<
-  TRunErr,
-  TActionErr,
-  TOutputSchema extends TSafeFnOutput,
-  TAsAction extends boolean,
-> = TAsAction extends true
-  ? TSafeFnActionError<TActionErr, TOutputSchema>
-  : TSafeFnRunError<TRunErr, TOutputSchema>;
-
 export type TSafeFnRunError<TRunErr, TOutputSchema> = TRunErr;
 export type TSafeFnActionError<TActionErr, TOutputSchema> = TActionErr;
 
@@ -150,6 +141,24 @@ export interface TSafeFnReturn<
 > extends ResultAsync<
     TSafeFnReturnData<TData, TOutputSchema>,
     TSafeFnReturnError<TRunError, TActionError, TOutputSchema, TAsAction>
+  > {}
+
+export type TSafeFnReturnError<
+  TRunError,
+  TActionError,
+  TOutputSchema,
+  TAsAction,
+> = TAsAction extends true
+  ? TSafeFnActionError<TActionError, TOutputSchema>
+  : TSafeFnRunError<TRunError, TOutputSchema>;
+
+export interface TSafeFnRunReturn<
+  in out TData,
+  in out TRunError,
+  in out TOutputSchema extends TSafeFnOutput,
+> extends ResultAsync<
+    TSafeFnReturnData<TData, TOutputSchema>,
+    TSafeFnRunError<TRunError, TOutputSchema>
   > {}
 
 export interface TSafeFnInternalRunReturn<
