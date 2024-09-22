@@ -1,5 +1,14 @@
 # @safe-fn/safe-fn
 
+## 0.4.1
+
+### Patch Changes
+
+- ad1a948: - add `mapErr()` function
+- c86e7ff: - removes asAction, all errors are now stripped by default
+- 5e691c4: - Use child `.catch()` handler if parent didn't define one
+- b78293b: - Rename some Infer types, see docs.
+
 ## 0.4.0
 
 ### Minor Changes

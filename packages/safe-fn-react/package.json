@@ -1,6 +1,6 @@
 {
   "name": "safe-fn-react",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "janglad",
   "publishConfig": {
     "access": "public"
