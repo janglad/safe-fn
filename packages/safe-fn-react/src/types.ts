@@ -1,9 +1,9 @@
 import type {
   AnySafeFnAction,
   InferSafeFnActionArgs,
-  InferSafeFnActionError,
-  InferSafeFnActionOkData,
   InferSafeFnActionReturn,
+  InferSafeFnActionReturnData,
+  InferSafeFnActionReturnError,
 } from "safe-fn";
 
 export type UseServerActionOnStartArgs<TAction extends AnySafeFnAction> = {
@@ -15,7 +15,7 @@ export type UseServerActionOnStart<TAction extends AnySafeFnAction> = (
 
 export type UseServerActionOnErrorArgs<TAction extends AnySafeFnAction> = {
   unsafeRawInput: InferSafeFnActionArgs<TAction>;
-  error: InferSafeFnActionError<TAction>;
+  error: InferSafeFnActionReturnError<TAction>;
 };
 export type UseServerActionOnError<TAction extends AnySafeFnAction> = (
   args: UseServerActionOnErrorArgs<TAction>,
@@ -23,7 +23,7 @@ export type UseServerActionOnError<TAction extends AnySafeFnAction> = (
 
 export type UseServerActionOnSuccessArgs<TAction extends AnySafeFnAction> = {
   unsafeRawInput: InferSafeFnActionArgs<TAction>;
-  value: InferSafeFnActionOkData<TAction>;
+  value: InferSafeFnActionReturnData<TAction>;
 };
 export type UseServerActionOnSuccess<TAction extends AnySafeFnAction> = (
   args: UseServerActionOnSuccessArgs<TAction>,

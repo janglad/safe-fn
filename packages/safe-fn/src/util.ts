@@ -5,7 +5,7 @@ import type { AnyCtxInput } from "./types/handler";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
-  TSafeFnParseError,
+  TSafeFnParseErrorCause,
   TSafeFnUnparsedInput,
 } from "./types/schema";
 
@@ -35,41 +35,33 @@ export const throwFrameworkErrorOrVoid = (error: unknown): void => {
 export const runCallbacks = <
   TData,
   TRunErr,
-  TActionErr,
   TCtx,
   TCtxInput extends AnyCtxInput,
   TInputSchema extends TSafeFnInput,
   TOutputSchema extends TSafeFnOutput,
   TUnparsedInput extends TSafeFnUnparsedInput,
-  TAsAction extends boolean,
   TRes extends TSafeFnInternalRunReturn<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
     TOutputSchema,
-    TUnparsedInput,
-    NoInfer<TAsAction>
+    TUnparsedInput
   > = TSafeFnInternalRunReturn<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
     TOutputSchema,
-    TUnparsedInput,
-    NoInfer<TAsAction>
+    TUnparsedInput
   >,
 >(args: {
   resultAsync: TRes;
-  asAction: TAsAction;
   callbacks: TSafeFnCallBacks<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -103,7 +95,6 @@ export const runCallbacks = <
         args.callbacks.onError,
         throwFrameworkErrorOrVoid,
       )({
-        asAction: args.asAction,
         error: res.error.public,
         ctx: res.error.private.ctx,
         ctxInput: res.error.private.ctxInput,
@@ -118,7 +109,6 @@ export const runCallbacks = <
         args.callbacks.onComplete,
         throwFrameworkErrorOrVoid,
       )({
-        asAction: args.asAction,
         result: res.match(
           (value) => ok(value.value),
           (error) => err(error.public),
@@ -198,5 +188,5 @@ export const mapZodError = <T>(
   return {
     formattedError: err.format(),
     flattenedError: err.flatten(),
-  } satisfies TSafeFnParseError<TODO, true>;
+  } satisfies TSafeFnParseErrorCause<TODO>;
 };

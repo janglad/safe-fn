@@ -5,8 +5,8 @@ import { type ActionResult } from "./result";
 import { createSafeFn } from "./safe-fn-builder";
 import type { TSafeFnDefaultCatchHandlerErrError } from "./types/catch-handler";
 import type {
-  TSafeFnInputParseError,
-  TSafeFnOutputParseError,
+  TSafeFnInputParseErrorNoZod,
+  TSafeFnOutputParseErrorNoZod,
 } from "./types/schema";
 import type { TPrettify } from "./types/util";
 
@@ -936,29 +936,19 @@ describe("runnableSafeFn", () => {
         assert(!resAsync.isOk());
         assert(!resSafe.isOk());
 
-        resAsync.error.code;
+        type ExpectedErr =
+          | TSafeFnDefaultCatchHandlerErrError
+          | {
+              code: "INPUT_PARSING";
+              cause: {
+                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
+                flattenedError: z.typeToFlattenedError<SchemaTransformedInput>;
+              };
+            };
 
-        expectTypeOf(resSync.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErrError
-          | {
-              code: "INPUT_PARSING";
-              cause: z.ZodError<SchemaTransformedInput>;
-            }
-        >();
-        expectTypeOf(resAsync.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErrError
-          | {
-              code: "INPUT_PARSING";
-              cause: z.ZodError<SchemaTransformedInput>;
-            }
-        >();
-        expectTypeOf(resSafe.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErrError
-          | {
-              code: "INPUT_PARSING";
-              cause: z.ZodError<SchemaTransformedInput>;
-            }
-        >();
+        expectTypeOf(resSync.error).toEqualTypeOf<ExpectedErr>();
+        expectTypeOf(resAsync.error).toEqualTypeOf<ExpectedErr>();
+        expectTypeOf(resSafe.error).toEqualTypeOf<ExpectedErr>();
 
         const nestedChild = createSafeFn()
           .use(safeFnSafeParent)
@@ -968,13 +958,7 @@ describe("runnableSafeFn", () => {
 
         assert(resNestedChildSync.isErr());
 
-        expectTypeOf(resNestedChildSync.error).toEqualTypeOf<
-          | TSafeFnDefaultCatchHandlerErrError
-          | {
-              code: "INPUT_PARSING";
-              cause: z.ZodError<SchemaTransformedInput>;
-            }
-        >();
+        expectTypeOf(resNestedChildSync.error).toEqualTypeOf<ExpectedErr>();
       });
     });
 
@@ -1013,16 +997,8 @@ describe("runnableSafeFn", () => {
         type ExpectedInput = { child: string } | undefined;
         type ExpectedCtx = "hello" | undefined;
         type ExpectedCtxInput = [SchemaTransformedOutput] | undefined;
-        type ExpectedRunErrError =
-          | TSafeFnDefaultCatchHandlerErrError
-          | {
-              code: "INPUT_PARSING";
-              cause: z.ZodError<
-                TPrettify<SchemaTransformedInput & ChildSchemaInput>
-              >;
-            };
 
-        type ExpectedActionErrError =
+        type ExpectedError =
           | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
@@ -1036,24 +1012,13 @@ describe("runnableSafeFn", () => {
                 >;
               };
             };
-        type ExpectedArgs = TPrettify<
-          | {
-              asAction: true;
-              error: ExpectedActionErrError;
-              input: ExpectedInput;
-              ctx: ExpectedCtx;
-              ctxInput: ExpectedCtxInput;
-              unsafeRawInput: UnsafeRawInput;
-            }
-          | {
-              asAction: false;
-              error: ExpectedRunErrError;
-              input: ExpectedInput;
-              ctx: ExpectedCtx;
-              ctxInput: ExpectedCtxInput;
-              unsafeRawInput: UnsafeRawInput;
-            }
-        >;
+        type ExpectedArgs = TPrettify<{
+          error: ExpectedError;
+          input: ExpectedInput;
+          ctx: ExpectedCtx;
+          ctxInput: ExpectedCtxInput;
+          unsafeRawInput: UnsafeRawInput;
+        }>;
 
         expectTypeOf<OnErrorArgs>().toEqualTypeOf<ExpectedArgs>();
       });
@@ -1094,16 +1059,8 @@ describe("runnableSafeFn", () => {
         type ExpectedCtx = "hello";
         type ExpectedCtxInput = [SchemaTransformedOutput];
         type ExpectedOkData = "world";
-        type ExpectedRunErrError =
-          | TSafeFnDefaultCatchHandlerErrError
-          | {
-              code: "INPUT_PARSING";
-              cause: z.ZodError<
-                TPrettify<SchemaTransformedInput & ChildSchemaInput>
-              >;
-            };
 
-        type ExpectedActionErrError =
+        type ExpectedError =
           | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
@@ -1118,32 +1075,21 @@ describe("runnableSafeFn", () => {
               };
             };
 
-        type ExpectedArgs = TPrettify<
-          | {
-              asAction: boolean;
+        type ExpectedArgs =
+          | TPrettify<{
               unsafeRawInput: ExpectedUnsafeRawInput;
               input: ExpectedInput;
               ctx: ExpectedCtx;
               ctxInput: ExpectedCtxInput;
               result: Result<ExpectedOkData, never>;
-            }
-          | {
-              asAction: true;
+            }>
+          | TPrettify<{
               unsafeRawInput: ExpectedUnsafeRawInput;
               input: ExpectedInput | undefined;
               ctx: ExpectedCtx | undefined;
               ctxInput: ExpectedCtxInput | undefined;
-              result: Result<never, ExpectedActionErrError>;
-            }
-          | {
-              asAction: false;
-              unsafeRawInput: ExpectedUnsafeRawInput;
-              input: ExpectedInput | undefined;
-              ctx: ExpectedCtx | undefined;
-              ctxInput: ExpectedCtxInput | undefined;
-              result: Result<never, ExpectedRunErrError>;
-            }
-        >;
+              result: Result<never, ExpectedError>;
+            }>;
         expectTypeOf<ExpectedArgs>().toEqualTypeOf<OnCompleteArgs>();
       });
     });
@@ -1237,7 +1183,7 @@ describe("runnableSafeFn", () => {
         type ExpectedOk = SchemaTransformedOutput;
         type ExpectedErr =
           | TSafeFnDefaultCatchHandlerErrError
-          | TSafeFnOutputParseError<typeof schemaTransformed, true>;
+          | TSafeFnOutputParseErrorNoZod<SchemaTransformedInput>;
 
         expectTypeOf(safeFn).returns.resolves.toEqualTypeOf<
           ActionResult<ExpectedOk, ExpectedErr>
@@ -1271,13 +1217,11 @@ describe("runnableSafeFn", () => {
           .catch(() => err("world" as const))
           .createAction();
 
-        type ExpectedInputParseError = TSafeFnInputParseError<
-          typeof schemaTransformed,
-          true
+        type ExpectedInputParseError = TSafeFnInputParseErrorNoZod<
+          z.input<typeof schemaTransformed>
         >;
-        type ExpectedOutputParseError = TSafeFnOutputParseError<
-          typeof schemaPrimitive,
-          true
+        type ExpectedOutputParseError = TSafeFnOutputParseErrorNoZod<
+          z.input<typeof schemaPrimitive>
         >;
         // Type comes from Zod, so const is lost
         type ExpectedOk = string;
@@ -1405,7 +1349,13 @@ describe("runnableSafeFn", () => {
           | TSafeFnDefaultCatchHandlerErrError
           | {
               code: "INPUT_PARSING";
-              cause: z.ZodError<SchemaTransformedInput>;
+              cause: {
+                formattedError: z.ZodFormattedError<SchemaTransformedInput>;
+                flattenedError: z.typeToFlattenedError<
+                  SchemaObjectInput,
+                  string
+                >;
+              };
             }
         >();
       });

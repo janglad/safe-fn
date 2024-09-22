@@ -27,5 +27,7 @@ export type TIntersectIfNotT<A, B, T> = [A] extends [T]
 
 export type AnyObject = Record<PropertyKey, unknown>;
 
+export type AnyValue = AnyObject | string | number | boolean;
+
 export type FirstTupleElOrUndefined<T extends TSafeFnUnparsedInput> =
   T extends [] ? undefined : T[0];

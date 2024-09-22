@@ -6,9 +6,9 @@ import {
   type ActionResultToResultAsync,
   type AnySafeFnAction,
   type InferSafeFnActionArgs,
-  type InferSafeFnActionError,
-  type InferSafeFnActionOkData,
   type InferSafeFnActionReturn,
+  type InferSafeFnActionReturnData,
+  type InferSafeFnActionReturnError,
 } from "safe-fn";
 import type { UserServerActionCallbacks } from "./types";
 
@@ -80,7 +80,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
         callbackCatch,
       )({
         unsafeRawInput: argsRef.current,
-        value: result.value as InferSafeFnActionOkData<TAction>,
+        value: result.value as InferSafeFnActionReturnData<TAction>,
       });
     } else if (
       result !== undefined &&
@@ -92,7 +92,7 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
         callbackCatch,
       )({
         unsafeRawInput: argsRef.current,
-        error: result.error as InferSafeFnActionError<TAction>,
+        error: result.error as InferSafeFnActionReturnError<TAction>,
       });
     }
 

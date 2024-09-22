@@ -45,7 +45,7 @@ export type InferSafeFnActionArgs<T extends TAnySafeFnAction> =
  * Return type:
  * - The `.value` type of the returned `ActionResult` assuming it's ok
  */
-export type InferSafeFnActionOkData<T extends TAnySafeFnAction> =
+export type InferSafeFnActionReturnData<T extends TAnySafeFnAction> =
   InferActionOkData<InferSafeFnActionReturn<T>>;
 
 /**
@@ -55,7 +55,7 @@ export type InferSafeFnActionOkData<T extends TAnySafeFnAction> =
  * Return type:
  * - The `.error` type of the returned `ActionResult` assuming it's not ok
  */
-export type InferSafeFnActionError<T extends TAnySafeFnAction> =
+export type InferSafeFnActionReturnError<T extends TAnySafeFnAction> =
   InferActionErrError<InferSafeFnActionReturn<T>>;
 
 /*
@@ -66,25 +66,24 @@ export type InferSafeFnActionError<T extends TAnySafeFnAction> =
 ################################
 */
 
-export type TAnySafeFnAction = TSafeFnAction<any, any, any, any, any>;
+export type TAnySafeFnAction = TSafeFnAction<any, any, any, any>;
 
 export type TSafeFnActionArgs<T extends TSafeFnUnparsedInput> =
   TSafeFnRunArgs<T>;
 
 export type TSafeFnActionReturn<
   in out TData,
-  in out TActionErr,
+  in out TRunError,
   in out TOutputSchema extends TSafeFnOutput,
 > = Promise<
-  ActionResult<TSchemaOutputOrFallback<TOutputSchema, TData>, TActionErr>
+  ActionResult<TSchemaOutputOrFallback<TOutputSchema, TData>, TRunError>
 >;
 
 export type TSafeFnAction<
   in out TData,
   in out TRunErr,
-  in out TActionErr,
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
 > = (
   ...args: TSafeFnActionArgs<TUnparsedInput>
-) => TSafeFnActionReturn<TData, TActionErr, TOutputSchema>;
+) => TSafeFnActionReturn<TData, TRunErr, TOutputSchema>;

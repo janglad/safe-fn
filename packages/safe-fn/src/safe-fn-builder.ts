@@ -5,8 +5,6 @@ import type { InferErrError, InferOkData } from "./result";
 import {
   RunnableSafeFn,
   type TAnyRunnableSafeFn,
-  type TInferSafeFnActionErr,
-  type TInferSafeFnRunErr,
   type TRunnableSafeFn,
   type TRunnableSafeFnPickArgs,
 } from "./runnable-safe-fn";
@@ -26,16 +24,17 @@ import type {
   TInferMergedInputSchemaInput,
   TInferMergedParentOutputSchemaInput,
   TSafeFnInput,
-  TSafeFnInputParseActionError,
-  TSafeFnInputParseRunError,
-  TSafeFnOutputParseActionError,
-  TSafeFnOutputParseRunError,
+  TSafeFnInputParseErrorNoZod,
+  TSafeFnOutputParseErrorNoZod,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
 } from "./types/schema";
 
-import type { InferSafeFnOkData } from "./types/run";
+import type {
+  InferSafeFnReturnData,
+  InferSafeFnReturnError,
+} from "./types/run";
 import type {
   AnyObject,
   TIntersectIfNotT,
@@ -51,7 +50,6 @@ export const createSafeFn = () => {
 type TSafeFnBuilder<
   in out TData,
   in out TRunErr,
-  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
@@ -64,7 +62,6 @@ type TSafeFnBuilder<
   SafeFnBuilder<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -80,7 +77,6 @@ type TSafeFnBuilder<
 export class SafeFnBuilder<
   in out TData,
   in out TRunErr,
-  in out TActionErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
@@ -129,7 +125,6 @@ export class SafeFnBuilder<
   static new(): TSafeFnBuilder<
     never,
     TSafeFnDefaultCatchHandlerErrError,
-    TSafeFnDefaultCatchHandlerErrError,
     undefined,
     [],
     undefined,
@@ -155,9 +150,8 @@ export class SafeFnBuilder<
     parent: TNewParent,
   ): TSafeFnBuilder<
     TData,
-    TRunErr | TInferSafeFnRunErr<TNewParent>,
-    TActionErr | TInferSafeFnActionErr<TNewParent>,
-    InferSafeFnOkData<TNewParent>,
+    TRunErr | InferSafeFnReturnError<TNewParent>,
+    InferSafeFnReturnData<TNewParent>,
     [
       ...TInferCtxInput<TNewParent>,
       TSchemaOutputOrFallback<InferInputSchema<TNewParent>, undefined>,
@@ -180,15 +174,7 @@ export class SafeFnBuilder<
   ): TSafeFnBuilder<
     TData,
     | Exclude<TRunErr, { code: "INPUT_PARSING" }>
-    | TSafeFnInputParseRunError<
-        TIntersectIfNotT<
-          TMergedInputSchemaInput,
-          z.input<TNewInputSchema>,
-          undefined
-        >
-      >,
-    | Exclude<TActionErr, { code: "INPUT_PARSING" }>
-    | TSafeFnInputParseActionError<
+    | TSafeFnInputParseErrorNoZod<
         TIntersectIfNotT<
           TMergedInputSchemaInput,
           z.input<TNewInputSchema>,
@@ -222,7 +208,6 @@ export class SafeFnBuilder<
   unparsedInput<TNewUnparsedInput>(): TSafeFnBuilder<
     TData,
     TRunErr,
-    TActionErr,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -239,7 +224,6 @@ export class SafeFnBuilder<
     return this as unknown as SafeFnBuilder<
       TData,
       TRunErr,
-      TActionErr,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -260,15 +244,7 @@ export class SafeFnBuilder<
   ): TSafeFnBuilder<
     TData,
     | Exclude<TRunErr, { code: "OUTPUT_PARSING" }>
-    | TSafeFnOutputParseRunError<
-        TIntersectIfNotT<
-          TMergedParentOutputSchemaInput,
-          z.input<TNewOutputSchema>,
-          undefined
-        >
-      >,
-    | Exclude<TActionErr, { code: "OUTPUT_PARSING" }>
-    | TSafeFnOutputParseActionError<
+    | TSafeFnOutputParseErrorNoZod<
         TIntersectIfNotT<
           TMergedParentOutputSchemaInput,
           z.input<TNewOutputSchema>,
@@ -299,7 +275,6 @@ export class SafeFnBuilder<
   ): TRunnableSafeFn<
     InferOkData<TNewHandlerResult>,
     TRunErr | InferErrError<TNewHandlerResult>,
-    TActionErr | InferErrError<TNewHandlerResult>,
     TCtx,
     TCtxInput,
     TInputSchema,
@@ -338,7 +313,6 @@ export class SafeFnBuilder<
   ): TRunnableSafeFn<
     InferOkData<GeneratorResult>,
     TRunErr | InferErrError<GeneratorResult> | InferErrError<YieldErr>,
-    TActionErr | InferErrError<GeneratorResult> | InferErrError<YieldErr>,
     TCtx,
     TCtxInput,
     TInputSchema,
