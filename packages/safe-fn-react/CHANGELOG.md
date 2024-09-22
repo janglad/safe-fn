@@ -1,5 +1,16 @@
 # safe-fn-react
 
+## 0.3.1
+
+### Patch Changes
+
+- b78293b: - Rename some Infer types, see docs.
+- Updated dependencies [ad1a948]
+- Updated dependencies [c86e7ff]
+- Updated dependencies [5e691c4]
+- Updated dependencies [b78293b]
+  - safe-fn@0.4.1
+
 ## 0.3.0
 
 ### Minor Changes
