@@ -1,5 +1,5 @@
+import type { Result } from "neverthrow";
 import type { TAnyRunnableSafeFn } from "../runnable-safe-fn";
-import type { TAnySafeFnCatchHandlerRes } from "./catch-handler";
 import type {
   AnyCtxInput,
   TSafeFnHandlerArgs,
@@ -20,8 +20,6 @@ export interface TSafeFnInternals<
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnInput,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerReturn extends TSafeFnHandlerReturn<TOutputSchema>,
-  in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
 > {
   parent: TAnyRunnableSafeFn | undefined;
   inputSchema: TInputSchema;
@@ -30,6 +28,6 @@ export interface TSafeFnInternals<
     input: TPrettify<
       TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
     >,
-  ) => TMaybePromise<THandlerReturn>;
-  uncaughtErrorHandler: (error: unknown) => TThrownHandlerRes;
+  ) => TMaybePromise<TSafeFnHandlerReturn<TOutputSchema>>;
+  uncaughtErrorHandler: (error: unknown) => Result<never, any>;
 }

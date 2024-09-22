@@ -88,7 +88,16 @@ type res = ResultAsync<
   | { code: "NOT_AUTHORIZED" }
   | {
       code: "INPUT_PARSING";
-      cause: z.ZodError<{ title: string; description: string }>;
+      cause: {
+        formattedError: z.ZodFormattedError<{
+          title: string;
+          description: string;
+        }>;
+        flattenedError: z.ZodFlattenedError<{
+          title: string;
+          description: string;
+        }>;
+      };
     }
 >;
 ```

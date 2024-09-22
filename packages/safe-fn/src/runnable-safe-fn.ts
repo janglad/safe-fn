@@ -1,30 +1,31 @@
 import { ok, type Result, ResultAsync, safeTry } from "neverthrow";
 
-import {
-  actionErr,
-  actionOk,
-  type InferAsyncErrError,
-  type InferOkData,
-} from "./result";
+import { actionErr, actionOk, type InferErrError } from "./result";
 
-import type { TAnySafeFnCatchHandlerRes } from "./types/catch-handler";
+import type {
+  TAnySafeFnCatchHandlerRes,
+  TSafeFnDefaultCatchHandlerErrError,
+} from "./types/catch-handler";
 import type { TSafeFnInternals } from "./types/internals";
 import type {
   TSafeFnInternalRunReturn,
   TSafeFnInternalRunReturnData,
   TSafeFnInternalRunReturnError,
-  TSafeFnReturn,
   TSafeFnReturnData,
+  TSafeFnReturnError,
   TSafeFnRunArgs,
+  TSafeFnRunReturn,
 } from "./types/run";
 import type {
   TSafeFnInput,
-  TSafeFnInputParseError,
-  TSafeFnOutputParseError,
+  TSafeFnInputParseErrorNoZod,
+  TSafeFnOutputParseErrorNoZod,
   TSafeFnUnparsedInput,
+  TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
 } from "./types/schema";
 
+import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   TSafeFnAction,
   TSafeFnActionArgs,
@@ -37,7 +38,7 @@ import type {
   TSafeFnOnStart,
   TSafeFnOnSuccess,
 } from "./types/callbacks";
-import type { AnyCtxInput, TSafeFnHandlerReturn } from "./types/handler";
+import type { AnyCtxInput } from "./types/handler";
 import type { AnyObject, TODO } from "./types/util";
 import {
   isFrameworkError,
@@ -47,22 +48,10 @@ import {
   throwFrameworkErrorOrVoid,
 } from "./util";
 
-export type TAnyRunnableSafeFn = TRunnableSafeFn<
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  "run"
->;
+export interface TAnyRunnableSafeFn
+  extends TRunnableSafeFn<any, any, any, any, any, any, any, any, any, any> {}
 
 type AnyRunnableSafeFn = RunnableSafeFn<
-  any,
   any,
   any,
   any,
@@ -82,12 +71,14 @@ export type TRunnableSafeFnPickArgs =
   | "onError"
   | "onComplete"
   | "run"
-  | "createAction";
+  | "createAction"
+  | "mapErr";
 
 export type TRunnableSafeFn<
+  in out TData,
+  in out TRunErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   /* Includes input schema of `this` */
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -95,30 +86,28 @@ export type TRunnableSafeFn<
   /* Does not include output schema of `this` to be able to differentiate when handler only returns an error */
   in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TSafeFnHandlerReturn<TOutputSchema>,
-  in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
   in out TPickArgs extends TRunnableSafeFnPickArgs,
 > = Pick<
   RunnableSafeFn<
+    TData,
+    TRunErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    THandlerRes,
-    TThrownHandlerRes,
     TPickArgs
   >,
   TPickArgs
 >;
 
 export class RunnableSafeFn<
+  in out TData,
+  in out TRunErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
-  in out TParentMergedHandlerErrs extends Result<never, unknown>,
   in out TInputSchema extends TSafeFnInput,
   /* Includes input schema of `this` */
   in out TMergedInputSchemaInput extends AnyObject | undefined,
@@ -126,8 +115,6 @@ export class RunnableSafeFn<
   /* Does not include output schema of `this` to be able to differentiate when handler only returns an error */
   in out TMergedParentOutputSchemaInput extends AnyObject | undefined,
   in out TUnparsedInput extends TSafeFnUnparsedInput,
-  in out THandlerRes extends TSafeFnHandlerReturn<TOutputSchema>,
-  in out TThrownHandlerRes extends TAnySafeFnCatchHandlerRes,
   in out TPickArgs extends TRunnableSafeFnPickArgs,
 > {
   readonly _internals: TSafeFnInternals<
@@ -135,23 +122,20 @@ export class RunnableSafeFn<
     TCtxInput,
     TInputSchema,
     TOutputSchema,
-    TUnparsedInput,
-    THandlerRes,
-    TThrownHandlerRes
+    TUnparsedInput
   >;
 
   readonly _callBacks: TSafeFnCallBacks<
+    TData,
+    TRunErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
-    TMergedInputSchemaInput,
     TOutputSchema,
-    TMergedParentOutputSchemaInput,
-    TUnparsedInput,
-    THandlerRes,
-    TThrownHandlerRes
+    TUnparsedInput
   >;
+
+  readonly _mapErrHandler: ((e: any) => TRunErr) | undefined;
 
   constructor(
     internals: TSafeFnInternals<
@@ -159,36 +143,25 @@ export class RunnableSafeFn<
       TCtxInput,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes
+      TUnparsedInput
     >,
     callBacks: TSafeFnCallBacks<
+      TData,
+      TRunErr,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes
+      TUnparsedInput
     >,
+    mapErrHandler: ((e: TRunErr) => TRunErr) | undefined,
   ) {
     this._internals = internals;
     this._callBacks = callBacks;
+    this._mapErrHandler = mapErrHandler;
   }
 
-  createAction(): TSafeFnAction<
-    TParentMergedHandlerErrs,
-    TMergedInputSchemaInput,
-    TOutputSchema,
-    TMergedParentOutputSchemaInput,
-    TUnparsedInput,
-    THandlerRes,
-    TThrownHandlerRes
-  > {
+  createAction(): TSafeFnAction<TData, TRunErr, TOutputSchema, TUnparsedInput> {
     // TODO: strip stack traces etc here
     return this._runAsAction.bind(this);
   }
@@ -204,16 +177,16 @@ export class RunnableSafeFn<
   catch<TNewThrownHandlerRes extends TAnySafeFnCatchHandlerRes>(
     handler: (error: unknown) => TNewThrownHandlerRes,
   ): TRunnableSafeFn<
+    TData,
+    | Exclude<TRunErr, TSafeFnDefaultCatchHandlerErrError>
+    | InferErrError<TNewThrownHandlerRes>,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    THandlerRes,
-    TNewThrownHandlerRes,
     Exclude<TPickArgs, "catch">
   > {
     return new RunnableSafeFn(
@@ -222,117 +195,144 @@ export class RunnableSafeFn<
         uncaughtErrorHandler: handler,
       } as TODO,
       this._callBacks as TODO,
+      this._mapErrHandler,
+    ) as TODO;
+  }
+
+  mapErr<TNewErrError>(
+    handler: (error: TRunErr) => TNewErrError,
+  ): TRunnableSafeFn<
+    TData,
+    TNewErrError,
+    TCtx,
+    TCtxInput,
+    TInputSchema,
+    TMergedInputSchemaInput,
+    TOutputSchema,
+    TMergedParentOutputSchemaInput,
+    TUnparsedInput,
+    Exclude<TPickArgs, "mapErr">
+  > {
+    return new RunnableSafeFn(
+      this._internals,
+      this._callBacks,
+      handler as TODO,
     ) as TODO;
   }
 
   onStart(
     onStartFn: TSafeFnOnStart<TUnparsedInput>,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    THandlerRes,
-    TThrownHandlerRes,
     Exclude<TPickArgs, "onStart">
   > {
-    return new RunnableSafeFn(this._internals, {
-      ...this._callBacks,
-      onStart: onStartFn,
-    }) as TODO;
+    return new RunnableSafeFn(
+      this._internals,
+      {
+        ...this._callBacks,
+        onStart: onStartFn,
+      },
+      this._mapErrHandler,
+    ) as TODO;
   }
   onSuccess(
     onSuccessFn: TSafeFnOnSuccess<
+      TData,
       TCtx,
       TCtxInput,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput,
-      THandlerRes
+      TUnparsedInput
     >,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    THandlerRes,
-    TThrownHandlerRes,
     Exclude<TPickArgs, "onSuccess">
   > {
-    return new RunnableSafeFn(this._internals, {
-      ...this._callBacks,
-      onSuccess: onSuccessFn,
-    }) as TODO;
+    return new RunnableSafeFn(
+      this._internals,
+      {
+        ...this._callBacks,
+        onSuccess: onSuccessFn,
+      },
+      this._mapErrHandler,
+    ) as TODO;
   }
   onError(
     onErrorFn: TSafeFnOnError<
+      TRunErr,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes
+      TUnparsedInput
     >,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    THandlerRes,
-    TThrownHandlerRes,
     Exclude<TPickArgs, "onError">
   > {
-    return new RunnableSafeFn(this._internals, {
-      ...this._callBacks,
-      onError: onErrorFn,
-    }) as TODO;
+    return new RunnableSafeFn(
+      this._internals,
+      {
+        ...this._callBacks,
+        onError: onErrorFn,
+      },
+      this._mapErrHandler,
+    ) as TODO;
   }
   onComplete(
     onCompleteFn: TSafeFnOnComplete<
+      TData,
+      TRunErr,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes
+      TUnparsedInput
     >,
   ): TRunnableSafeFn<
+    TData,
+    TRunErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
     TMergedInputSchemaInput,
     TOutputSchema,
     TMergedParentOutputSchemaInput,
     TUnparsedInput,
-    THandlerRes,
-    TThrownHandlerRes,
     Exclude<TPickArgs, "onComplete">
   > {
-    return new RunnableSafeFn(this._internals, {
-      ...this._callBacks,
-      onComplete: onCompleteFn,
-    }) as TODO;
+    return new RunnableSafeFn(
+      this._internals,
+      {
+        ...this._callBacks,
+        onComplete: onCompleteFn,
+      },
+      this._mapErrHandler,
+    ) as TODO;
   }
 
   /*
@@ -344,15 +344,7 @@ export class RunnableSafeFn<
   */
   run(
     ...args: TSafeFnRunArgs<TUnparsedInput>
-  ): TSafeFnReturn<
-    TParentMergedHandlerErrs,
-    TMergedInputSchemaInput,
-    TOutputSchema,
-    TMergedParentOutputSchemaInput,
-    THandlerRes,
-    TThrownHandlerRes,
-    false
-  > {
+  ): TSafeFnRunReturn<TData, TRunErr, TOutputSchema> {
     return this._run(args[0], false)
       .map((res) => res.value)
       .mapErr((e) => e.public);
@@ -366,12 +358,11 @@ export class RunnableSafeFn<
 ################################
 */
 
-  _parseInput<TAsAction extends boolean = false>(
+  _parseInput(
     input: unknown,
-    asAction: TAsAction,
   ): ResultAsync<
     TSchemaOutputOrFallback<TInputSchema, never>,
-    TSafeFnInputParseError<TInputSchema, TAsAction>
+    TSafeFnInputParseErrorNoZod<TSchemaInputOrFallback<TInputSchema, never>>
   > {
     if (this._internals.inputSchema === undefined) {
       throw new Error("No input schema defined");
@@ -383,28 +374,22 @@ export class RunnableSafeFn<
           throw error.cause;
         }
 
-        if (asAction) {
-          const cause = mapZodError(error.cause);
-          return {
-            code: "INPUT_PARSING",
-            cause,
-          } as TSafeFnInputParseError<TInputSchema, TAsAction>;
-        }
-
+        const cause = mapZodError(error.cause);
         return {
           code: "INPUT_PARSING",
-          cause: error.cause,
-        } as TSafeFnInputParseError<TInputSchema, TAsAction>;
+          cause,
+        } as TSafeFnInputParseErrorNoZod<
+          TSchemaInputOrFallback<TInputSchema, never>
+        >;
       },
     );
   }
 
-  _parseOutput<TAsAction extends boolean = false>(
+  _parseOutput(
     output: unknown,
-    asAction: TAsAction,
   ): ResultAsync<
     TSchemaOutputOrFallback<TOutputSchema, never>,
-    TSafeFnOutputParseError<TOutputSchema, TAsAction>
+    TSafeFnOutputParseErrorNoZod<TSchemaInputOrFallback<TOutputSchema, never>>
   > {
     if (this._internals.outputSchema === undefined) {
       throw new Error("No output schema defined");
@@ -416,37 +401,28 @@ export class RunnableSafeFn<
           throw error.cause;
         }
 
-        if (asAction) {
-          const cause = mapZodError(error.cause);
-          return {
-            code: "OUTPUT_PARSING",
-            cause,
-          } as TSafeFnOutputParseError<TOutputSchema, TAsAction>;
-        }
-
+        const cause = mapZodError(error.cause);
         return {
           code: "OUTPUT_PARSING",
-          cause: error.cause,
-        } as TSafeFnOutputParseError<TOutputSchema, TAsAction>;
+          cause,
+        } as TSafeFnOutputParseErrorNoZod<
+          TSchemaInputOrFallback<TOutputSchema, never>
+        >;
       },
     );
   }
 
-  _run<TAsAction extends boolean>(
+  _run(
     args: TSafeFnRunArgs<TUnparsedInput>[0],
-    tAsAction: TAsAction,
+    asProcedure: boolean,
   ): TSafeFnInternalRunReturn<
+    TData,
+    TRunErr,
     TCtx,
     TCtxInput,
-    TParentMergedHandlerErrs,
     TInputSchema,
-    TMergedInputSchemaInput,
     TOutputSchema,
-    TMergedParentOutputSchemaInput,
-    TUnparsedInput,
-    THandlerRes,
-    TThrownHandlerRes,
-    TAsAction
+    TUnparsedInput
   > {
     const inputSchema = this._internals.inputSchema;
     const outputSchema = this._internals.outputSchema;
@@ -467,30 +443,20 @@ export class RunnableSafeFn<
           });
 
     type InternalOk = TSafeFnInternalRunReturnData<
+      TData,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes,
-      TAsAction
+      TUnparsedInput
     >;
     type InternalErr = TSafeFnInternalRunReturnError<
+      TRunErr,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes,
-      TAsAction
+      TUnparsedInput
     >;
 
     const safeTryPromise: Promise<Result<InternalOk, InternalErr>> = safeTry(
@@ -499,7 +465,7 @@ export class RunnableSafeFn<
           parent === undefined
             ? undefined
             : yield* parent
-                ._run(args, tAsAction)
+                ._run(args, true)
                 .map((res) => ({
                   ...res,
                   ctxInput: [...res.ctxInput, res.input],
@@ -507,16 +473,9 @@ export class RunnableSafeFn<
                 .mapErr(
                   (e) =>
                     ({
-                      public: e.public as InferAsyncErrError<
-                        TSafeFnReturn<
-                          TParentMergedHandlerErrs,
-                          TMergedInputSchemaInput,
-                          TOutputSchema,
-                          TMergedParentOutputSchemaInput,
-                          THandlerRes,
-                          TThrownHandlerRes,
-                          TAsAction
-                        >
+                      public: e.public as TSafeFnReturnError<
+                        TRunErr,
+                        TOutputSchema
                       >,
                       private: {
                         unsafeRawInput: args as TUnparsedInput,
@@ -535,7 +494,7 @@ export class RunnableSafeFn<
         const parsedInput: TSchemaOutputOrFallback<TInputSchema, undefined> =
           inputSchema === undefined
             ? (undefined as TSchemaOutputOrFallback<TInputSchema, undefined>)
-            : yield* _parseInput(args, tAsAction)
+            : yield* _parseInput(args)
                 .mapErr(
                   (e) =>
                     ({
@@ -551,7 +510,7 @@ export class RunnableSafeFn<
                 )
                 .safeUnwrap();
 
-        const handlerRes: InferOkData<THandlerRes> = yield* (
+        const handlerRes: TData = yield* (
           await (async () => {
             const res = await handler({
               input: parsedInput,
@@ -584,7 +543,7 @@ export class RunnableSafeFn<
         const parsedOutput: TSchemaOutputOrFallback<TOutputSchema, undefined> =
           outputSchema === undefined
             ? (undefined as TSchemaOutputOrFallback<TOutputSchema, undefined>)
-            : yield* _parseOutput(handlerRes, tAsAction)
+            : yield* _parseOutput(handlerRes)
                 .mapErr(
                   (e) =>
                     ({
@@ -600,10 +559,10 @@ export class RunnableSafeFn<
                 )
                 .safeUnwrap();
 
-        const value: TSafeFnReturnData<TOutputSchema, THandlerRes> =
+        const value: TSafeFnReturnData<TData, TOutputSchema> =
           parsedOutput === undefined
-            ? (handlerRes as TSafeFnReturnData<TOutputSchema, THandlerRes>)
-            : (parsedOutput as TSafeFnReturnData<TOutputSchema, THandlerRes>);
+            ? (handlerRes as TSafeFnReturnData<TData, TOutputSchema>)
+            : (parsedOutput as TSafeFnReturnData<TData, TOutputSchema>);
         return ok({
           value,
           input: parsedInput,
@@ -615,24 +574,27 @@ export class RunnableSafeFn<
     ) as TODO;
 
     const internalRes: TSafeFnInternalRunReturn<
+      TData,
+      TRunErr,
       TCtx,
       TCtxInput,
-      TParentMergedHandlerErrs,
       TInputSchema,
-      TMergedInputSchemaInput,
       TOutputSchema,
-      TMergedParentOutputSchemaInput,
-      TUnparsedInput,
-      THandlerRes,
-      TThrownHandlerRes,
-      TAsAction
+      TUnparsedInput
     > = ResultAsync.fromPromise(safeTryPromise, (error) => {
       if (isFrameworkError(error)) {
         throw error;
       }
+
       const handledErr = uncaughtErrorHandler(error);
       if (handledErr.isOk()) {
         throw new Error("uncaught error handler returned ok");
+      }
+      if (
+        asProcedure &&
+        uncaughtErrorHandler === SafeFnBuilder.safeFnDefaultUncaughtErrorHandler
+      ) {
+        throw error;
       }
       return {
         public: handledErr.error,
@@ -644,13 +606,22 @@ export class RunnableSafeFn<
           handlerRes: undefined,
         },
       };
-    }).andThen((res) => {
-      return res;
-    }) as TODO;
+    })
+      .andThen((res) => {
+        return res;
+      })
+      .mapErr((e) => {
+        if (this._mapErrHandler !== undefined) {
+          return {
+            private: e.private,
+            public: this._mapErrHandler(e.public),
+          };
+        }
+        return e;
+      }) as TODO;
 
     const withCallbacks = runCallbacks({
       resultAsync: internalRes as TODO,
-      asAction: tAsAction,
       callbacks: _callBacks,
       hotOnStartCallback: onStartCallback,
     });
@@ -660,15 +631,8 @@ export class RunnableSafeFn<
 
   async _runAsAction(
     ...args: TSafeFnActionArgs<TUnparsedInput>
-  ): TSafeFnActionReturn<
-    TParentMergedHandlerErrs,
-    TMergedInputSchemaInput,
-    TOutputSchema,
-    TMergedParentOutputSchemaInput,
-    THandlerRes,
-    TThrownHandlerRes
-  > {
-    const res = await this._run(args[0], true)
+  ): TSafeFnActionReturn<TData, TRunErr, TOutputSchema> {
+    const res = await this._run(args[0], false)
       .map((res) => res.value)
       .mapErr((e) => e.public);
 

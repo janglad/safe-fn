@@ -1,6 +1,6 @@
-import type { z } from "zod";
+import { z } from "zod";
 import type { TRunnableSafeFn } from "../runnable-safe-fn";
-import type { AnyObject, TIntersectIfNotT } from "./util";
+import type { AnyValue, TIntersectIfNotT, TPrettify } from "./util";
 
 /*
 ################################
@@ -21,9 +21,8 @@ export type InferInputSchema<T> =
     any,
     any,
     any,
+    any,
     infer TInputSchema,
-    any,
-    any,
     any,
     any,
     any,
@@ -47,9 +46,8 @@ export type InferOutputSchema<T> =
     any,
     any,
     any,
+    any,
     infer TOutputSchema,
-    any,
-    any,
     any,
     any,
     any
@@ -73,9 +71,8 @@ export type InferUnparsedInputTuple<T> =
     any,
     any,
     any,
+    any,
     infer TUnparsed,
-    any,
-    any,
     any
   >
     ? TUnparsed
@@ -87,9 +84,8 @@ export type TInferMergedInputSchemaInput<T> =
     any,
     any,
     any,
+    any,
     infer MergedInputSchemaInput,
-    any,
-    any,
     any,
     any,
     any,
@@ -105,10 +101,9 @@ export type TInferMergedParentOutputSchemaInput<T> =
     any,
     any,
     any,
+    any,
     infer TOutputSchema,
     infer MergedOutputSchemaInput,
-    any,
-    any,
     any,
     any
   >
@@ -122,10 +117,9 @@ export type TInferMergedParentOutputSchemaInput<T> =
 export type TInferCtxInput<T> =
   T extends TRunnableSafeFn<
     any,
+    any,
+    any,
     infer TCtxInput,
-    any,
-    any,
-    any,
     any,
     any,
     any,
@@ -160,32 +154,22 @@ export type TSchemaOutputOrFallback<
   TFallback,
 > = TSchema extends z.ZodTypeAny ? z.output<TSchema> : TFallback;
 
-export type TSafeFnParseError<
-  TSchemaInput extends AnyObject,
-  TAsAction extends boolean,
-> = TAsAction extends true
-  ? {
-      formattedError: z.ZodFormattedError<TSchemaInput>;
-      flattenedError: z.typeToFlattenedError<TSchemaInput>;
-    }
-  : z.ZodError<TSchemaInput>;
+export interface TSafeFnParseErrorCause<TSchemaInput extends AnyValue> {
+  formattedError: z.ZodFormattedError<TSchemaInput>;
+  flattenedError: z.typeToFlattenedError<TSchemaInput>;
+}
 
-export type TSafeFnInputParseError<
-  TInputSchema extends TSafeFnInput,
-  TAsAction extends boolean,
-> = TInputSchema extends z.ZodTypeAny
-  ? {
-      code: "INPUT_PARSING";
-      cause: TSafeFnParseError<z.input<TInputSchema>, TAsAction>;
-    }
-  : never;
-
-export type TSafeFnOutputParseError<
-  TOutputSchema extends TSafeFnOutput,
-  TAsAction extends boolean,
-> = TOutputSchema extends z.ZodTypeAny
-  ? {
-      code: "OUTPUT_PARSING";
-      cause: TSafeFnParseError<z.input<TOutputSchema>, TAsAction>;
-    }
-  : never;
+export type TSafeFnInputParseErrorNoZod<T extends AnyValue | undefined> =
+  T extends AnyValue
+    ? {
+        code: "INPUT_PARSING";
+        cause: TSafeFnParseErrorCause<TPrettify<T>>;
+      }
+    : never;
+export type TSafeFnOutputParseErrorNoZod<T extends AnyValue | undefined> =
+  T extends AnyValue
+    ? {
+        code: "OUTPUT_PARSING";
+        cause: TSafeFnParseErrorCause<TPrettify<T>>;
+      }
+    : never;

@@ -14,16 +14,16 @@ import type { TAnyRunnableSafeFn } from "./runnable-safe-fn";
 
 import type {
   InferSafeFnActionArgs,
-  InferSafeFnActionError,
-  InferSafeFnActionOkData,
   InferSafeFnActionReturn,
+  InferSafeFnActionReturnData,
+  InferSafeFnActionReturnError,
   TAnySafeFnAction,
 } from "./types/action";
 import type {
   InferSafeFnArgs,
-  InferSafeFnErrError,
-  InferSafeFnOkData,
   InferSafeFnReturn,
+  InferSafeFnReturnData,
+  InferSafeFnReturnError,
 } from "./types/run";
 import type {
   InferInputSchema,
@@ -45,12 +45,12 @@ export type {
   InferInputSchema,
   InferOutputSchema,
   InferSafeFnActionArgs,
-  InferSafeFnActionError,
-  InferSafeFnActionOkData,
   InferSafeFnActionReturn,
+  InferSafeFnActionReturnData,
+  InferSafeFnActionReturnError,
   InferSafeFnArgs,
-  InferSafeFnErrError,
-  InferSafeFnOkData,
   InferSafeFnReturn,
+  InferSafeFnReturnData,
+  InferSafeFnReturnError,
   InferUnparsedInputTuple,
 };

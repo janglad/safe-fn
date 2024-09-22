@@ -1,0 +1,47 @@
+---
+title: Modifying result type
+---
+
+Often times you want to filter out some specific errors from the client. Typically you'll handle this by calling NeverThrow's own `mapErr()` on your returned/yielded results, however sometimes it can be handy to do this globally for your SafeFn.
+You can modify the error type of the SafeFn by using `.mapErr()`. This is a function that takes in an argument of the original error type (see ), and returns a value that will set the new error type.
+
+As an example:
+
+```ts
+// Fake function declaration
+declare const generateText: (
+  prompt: string,
+) => ResultAsync<string, { code: "NO_CREDITS_REMAINING" }>;
+
+const generateTodo = createSafeFn()
+  .input(z.object({ prompt: z.string() }))
+  .safeHandler(async function* (args) {
+    const todo = yield* generateText(
+      `Make todo based on ${args.input.prompt}`,
+    ).safeUnwrap();
+    return ok(todo);
+  })
+  .mapErr((e) => {
+    if (e.code === "NO_CREDITS_REMAINING") {
+      // Don't let em know funds are running low lmao
+      return {
+        code: "UNKNOWN_ERROR",
+      } as const;
+    }
+    return e;
+  });
+```
+
+The possible `Error` type when running this function will be
+
+```ts
+type Res =
+  | {
+      code: "UNKNOWN_ERROR";
+    }
+  | {
+      code: "INPUT_PARSING";
+      cause: ...;
+    }
+  | { code: "UNCAUGHT_ERROR"; cause: ... };
+```

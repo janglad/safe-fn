@@ -1,6 +1,6 @@
 import { err, ok, type Result } from "neverthrow";
 import { assert, describe, expect, test, vi, type Mock } from "vitest";
-import { z, ZodError } from "zod";
+import { z } from "zod";
 import type { TAnyRunnableSafeFn } from "./runnable-safe-fn";
 import { createSafeFn, SafeFnBuilder } from "./safe-fn-builder";
 import type { TInferSafeFnCallbacks } from "./types/callbacks";
@@ -258,9 +258,8 @@ describe("runnable-safe-fn", () => {
           assert(res.isErr());
           expect(res.error.code).toBe("INPUT_PARSING");
           assert(res.error.code === "INPUT_PARSING");
-          expect(res.error.cause).toBeInstanceOf(ZodError);
-          expect(res.error.cause.format().lastName).toBeDefined();
-          expect(res.error.cause.format().name).toBeDefined();
+          expect(res.error.cause.formattedError.lastName).toBeDefined();
+          expect(res.error.cause.formattedError.name).toBeDefined();
         });
 
         test("should pass parent input in array", async () => {
@@ -387,9 +386,8 @@ describe("runnable-safe-fn", () => {
         assert(res.isErr());
         expect(res.error.code).toBe("OUTPUT_PARSING");
         assert(res.error.code === "OUTPUT_PARSING");
-        expect(res.error.cause).toBeInstanceOf(ZodError);
-        expect(res.error.cause.format().lastName).toBeDefined();
-        expect(res.error.cause.format().name).toBeDefined();
+        expect(res.error.cause.formattedError.lastName).toBeDefined();
+        expect(res.error.cause.formattedError.name).toBeDefined();
       });
     });
 
@@ -465,6 +463,82 @@ describe("runnable-safe-fn", () => {
         assert(res.error.cause instanceof Error);
         expect(res.error.cause.message).toBe("error");
       });
+    });
+
+    test("should use default catch handler", async () => {
+      const safeFn = createSafeFn().handler(() => {
+        throw new Error("error");
+      });
+      const res = await safeFn.run();
+      expect(res).toBeErr();
+      assert(res.isErr());
+      expect(res.error.code).toBe("UNCAUGHT_ERROR");
+      assert(res.error.code === "UNCAUGHT_ERROR");
+    });
+
+    test("should use child catch handler on parent if parent uses default", async () => {
+      const parent = createSafeFn().handler(() => {
+        let bool = true;
+        if (bool) {
+          throw new Error("error");
+        }
+        return ok("");
+      });
+
+      const child = createSafeFn()
+        .use(parent)
+        .handler(() => {
+          return ok("");
+        })
+        .catch((e) =>
+          err({
+            code: "TEST_ERROR",
+            cause: e,
+          } as const),
+        );
+
+      const res = await child.run();
+      assert(res.isErr());
+      expect(res.error.code).toBe("TEST_ERROR");
+      assert(res.error.code === "TEST_ERROR");
+      expect(res.error.cause).toBeInstanceOf(Error);
+      assert(res.error.cause instanceof Error);
+      expect(res.error.cause.message).toBe("error");
+    });
+    test("should use parent catch handler on parent if parent defines one", async () => {
+      const parent = createSafeFn()
+        .handler(() => {
+          let bool = true;
+          if (bool) {
+            throw new Error("error");
+          }
+          return ok("");
+        })
+        .catch((e) =>
+          err({
+            code: "PARENT_ERROR",
+            cause: e,
+          } as const),
+        );
+
+      const child = createSafeFn()
+        .use(parent)
+        .handler(() => {
+          return ok("");
+        })
+        .catch((e) =>
+          err({
+            code: "TEST_ERROR",
+            cause: e,
+          } as const),
+        );
+
+      const res = await child.run();
+      assert(res.isErr());
+      expect(res.error.code).toBe("PARENT_ERROR");
+      expect(res.error.cause).toBeInstanceOf(Error);
+      assert(res.error.cause instanceof Error);
+      expect(res.error.cause.message).toBe("error");
     });
   });
 
@@ -598,7 +672,6 @@ describe("runnable-safe-fn", () => {
 
       test("onComplete", () => {
         expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-          asAction: false,
           input: { name: "John" },
           unsafeRawInput: { name: "John", age: 100 },
           ctx: "Parent!",
@@ -657,7 +730,6 @@ describe("runnable-safe-fn", () => {
 
       test("onError", () => {
         expect(callbackMocks.onError).toHaveBeenCalledWith({
-          asAction: false,
           error: "Woops!",
           ctx: "Parent!",
           ctxInput: [{ age: 100 }],
@@ -668,7 +740,6 @@ describe("runnable-safe-fn", () => {
 
       test("onComplete", () => {
         expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-          asAction: false,
           input: { name: "John" },
           unsafeRawInput: { name: "John", age: 100 },
           ctx: "Parent!",
@@ -691,7 +762,13 @@ describe("runnable-safe-fn", () => {
 
       const parent = createSafeFn()
         .input(parentInputSchema)
-        .handler(() => err("Parent!" as const));
+        .handler(() => {
+          let bool = true;
+          if (bool) {
+            return err("Parent!" as const);
+          }
+          return ok("");
+        });
 
       const safeFn = createSafeFn()
         .use(parent)
@@ -727,7 +804,6 @@ describe("runnable-safe-fn", () => {
 
       test("onError", () => {
         expect(callbackMocks.onError).toHaveBeenCalledWith({
-          asAction: false,
           error: "Parent!",
           ctx: undefined,
           ctxInput: [{ age: 100 }],
@@ -738,12 +814,11 @@ describe("runnable-safe-fn", () => {
 
       test("onComplete", () => {
         expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-          asAction: false,
           input: undefined,
           unsafeRawInput: { name: "John", age: 100 },
           ctx: undefined,
           ctxInput: [{ age: 100 }],
-          result: err("Parent!"),
+          result: err("Parent!") as TODO,
         } satisfies CallbackArgs["onComplete"]);
       });
     });
@@ -802,12 +877,12 @@ describe("runnable-safe-fn", () => {
         const args = callbackMocks.onError.mock
           .calls[0]![0] as CallbackArgs["onError"];
 
-        assert(args.asAction === false);
         assert(args.ctx === undefined);
         assert(args.input === undefined);
         assert(args.error.code === "INPUT_PARSING");
-        assert(args.error.cause instanceof ZodError);
-        expect(args.error.cause.format()).toHaveProperty(["age"]);
+        expect(args.error.cause.formattedError.age).toBeDefined();
+        // Doesn't reach child parsing
+        expect(args.error.cause.formattedError.name).not.toBeDefined();
       });
 
       test("onComplete", () => {
@@ -815,14 +890,82 @@ describe("runnable-safe-fn", () => {
         const args = callbackMocks.onComplete.mock
           .calls[0]![0] as CallbackArgs["onComplete"];
 
-        assert(args.asAction === false);
         assert(args.ctx === undefined);
         assert(args.input === undefined);
         assert(args.result.isErr());
         assert(args.result.error.code === "INPUT_PARSING");
-        assert(args.result.error.cause instanceof ZodError);
-        expect(args.result.error.cause.format()).toHaveProperty(["age"]);
+        expect(args.result.error.cause.formattedError.age).toBeDefined();
+        // Doesn't reach child parsing
+        expect(args.result.error.cause.formattedError.name).not.toBeDefined();
       });
+    });
+  });
+
+  describe("mapErr", () => {
+    test("should map the error when input parsing fails", async () => {
+      const fn = createSafeFn()
+        .input(z.object({ test: z.string() }))
+        .handler(() => ok({ test: "hello" }))
+        .mapErr((e) => {
+          return {
+            code: "NEW_CODE",
+            cause: e.cause,
+          } as const;
+        });
+
+      // @ts-expect-error - passing wrong input on purpose
+      const res = await fn.run({});
+      expect(res.isErr()).toBe(true);
+      assert(res.isErr());
+      expect(res.error.code).toBe("NEW_CODE");
+      expect(res.error.cause).toBeDefined();
+      expect((res.error.cause as any).formattedError.test).toBeDefined();
+    });
+
+    test("should map the error when output parsing fails", async () => {
+      const fn = createSafeFn()
+        .output(z.object({ test: z.string() }))
+        // @ts-expect-error - passing wrong input on purpose
+        .handler(() => {
+          return ok({});
+        })
+        .mapErr((e) => {
+          return {
+            code: "NEW_CODE",
+            cause: e.cause,
+          } as const;
+        });
+
+      // @ts-expect-error - passing wrong input on purpose
+      const res = await fn.run({});
+      expect(res.isErr()).toBe(true);
+      assert(res.isErr());
+      expect(res.error.code).toBe("NEW_CODE");
+      expect(res.error.cause).toBeDefined();
+      expect((res.error.cause as any).formattedError.test).toBeDefined();
+    });
+
+    test("should map error returned from handler", async () => {
+      const fn = createSafeFn()
+        .handler(() => {
+          return err({
+            code: "HANDLER_ERR",
+            cause: "Handler error",
+          } as const);
+        })
+        .mapErr((e) => {
+          return {
+            code: "NEW_CODE",
+            cause: e.cause,
+          } as const;
+        });
+
+      const res = await fn.run();
+      expect(res.isErr()).toBe(true);
+      assert(res.isErr());
+      expect(res.error.code).toBe("NEW_CODE");
+      expect(res.error.cause).toBeDefined();
+      expect(res.error.cause).toBe("Handler error");
     });
   });
 });
