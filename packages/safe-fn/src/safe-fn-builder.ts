@@ -25,8 +25,8 @@ import type {
   TInferMergedInputSchemaInput,
   TInferMergedParentOutputSchemaInput,
   TSafeFnInput,
-  TSafeFnInputParseRunError,
-  TSafeFnOutputParseRunError,
+  TSafeFnInputParseErrorNoZod,
+  TSafeFnOutputParseErrorNoZod,
   TSafeFnUnparsedInput,
   TSchemaInputOrFallback,
   TSchemaOutputOrFallback,
@@ -172,7 +172,7 @@ export class SafeFnBuilder<
   ): TSafeFnBuilder<
     TData,
     | Exclude<TRunErr, { code: "INPUT_PARSING" }>
-    | TSafeFnInputParseRunError<
+    | TSafeFnInputParseErrorNoZod<
         TIntersectIfNotT<
           TMergedInputSchemaInput,
           z.input<TNewInputSchema>,
@@ -242,7 +242,7 @@ export class SafeFnBuilder<
   ): TSafeFnBuilder<
     TData,
     | Exclude<TRunErr, { code: "OUTPUT_PARSING" }>
-    | TSafeFnOutputParseRunError<
+    | TSafeFnOutputParseErrorNoZod<
         TIntersectIfNotT<
           TMergedParentOutputSchemaInput,
           z.input<TNewOutputSchema>,

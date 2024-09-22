@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { TRunnableSafeFn } from "../runnable-safe-fn";
-import type { AnyObject, TIntersectIfNotT } from "./util";
+import type { AnyValue, TIntersectIfNotT, TPrettify } from "./util";
 
 /*
 ################################
@@ -154,58 +154,22 @@ export type TSchemaOutputOrFallback<
   TFallback,
 > = TSchema extends z.ZodTypeAny ? z.output<TSchema> : TFallback;
 
-export type TSafeFnParseError<
-  TSchemaInput extends AnyObject,
-  TAsAction extends boolean,
-> = TAsAction extends true
-  ? {
-      formattedError: z.ZodFormattedError<TSchemaInput>;
-      flattenedError: z.typeToFlattenedError<TSchemaInput>;
-    }
-  : z.ZodError<TSchemaInput>;
-
-export type TSafeFnInputParseError<
-  TInputSchema extends TSafeFnInput,
-  TAsAction extends boolean,
-> = TInputSchema extends z.ZodTypeAny
-  ? {
-      code: "INPUT_PARSING";
-      cause: TSafeFnParseError<z.input<TInputSchema>, TAsAction>;
-    }
-  : never;
-
-export interface TSafeFnInputParseRunError<TSchemaInput> {
-  code: "INPUT_PARSING";
-  cause: z.ZodError<TSchemaInput>;
+export interface TSafeFnParseErrorCause<TSchemaInput extends AnyValue> {
+  formattedError: z.ZodFormattedError<TSchemaInput>;
+  flattenedError: z.typeToFlattenedError<TSchemaInput>;
 }
 
-export interface TSafeFnInputParseActionError<TSchemaInput> {
-  code: "INPUT_PARSING";
-  cause: {
-    formattedError: z.ZodFormattedError<TSchemaInput>;
-    flattenedError: z.typeToFlattenedError<TSchemaInput>;
-  };
-}
-
-export interface TSafeFnOutputParseRunError<TSchemaInput> {
-  code: "OUTPUT_PARSING";
-  cause: z.ZodError<TSchemaInput>;
-}
-
-export interface TSafeFnOutputParseActionError<TSchemaInput> {
-  code: "OUTPUT_PARSING";
-  cause: {
-    formattedError: z.ZodFormattedError<TSchemaInput>;
-    flattenedError: z.typeToFlattenedError<TSchemaInput>;
-  };
-}
-
-export type TSafeFnOutputParseError<
-  TOutputSchema extends TSafeFnOutput,
-  TAsAction extends boolean,
-> = TOutputSchema extends z.ZodTypeAny
-  ? {
-      code: "OUTPUT_PARSING";
-      cause: TSafeFnParseError<z.input<TOutputSchema>, TAsAction>;
-    }
-  : never;
+export type TSafeFnInputParseErrorNoZod<T extends AnyValue | undefined> =
+  T extends AnyValue
+    ? {
+        code: "INPUT_PARSING";
+        cause: TSafeFnParseErrorCause<TPrettify<T>>;
+      }
+    : never;
+export type TSafeFnOutputParseErrorNoZod<T extends AnyValue | undefined> =
+  T extends AnyValue
+    ? {
+        code: "OUTPUT_PARSING";
+        cause: TSafeFnParseErrorCause<TPrettify<T>>;
+      }
+    : never;

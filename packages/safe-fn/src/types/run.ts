@@ -132,14 +132,15 @@ export interface TSafeFnReturn<
   in out TData,
   in out TRunError,
   in out TOutputSchema extends TSafeFnOutput,
-  in out TAsAction extends boolean,
 > extends ResultAsync<
     TSafeFnReturnData<TData, TOutputSchema>,
-    TSafeFnReturnError<TRunError, TOutputSchema, TAsAction>
+    TSafeFnReturnError<TRunError, TOutputSchema>
   > {}
 
-export type TSafeFnReturnError<TRunError, TOutputSchema, TAsAction> =
-  TSafeFnRunError<TRunError, TOutputSchema>;
+export type TSafeFnReturnError<TRunError, TOutputSchema> = TSafeFnRunError<
+  TRunError,
+  TOutputSchema
+>;
 
 export interface TSafeFnRunReturn<
   in out TData,
@@ -158,7 +159,6 @@ export interface TSafeFnInternalRunReturn<
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput,
-  in out TAsAction extends boolean,
 > extends ResultAsync<
     TSafeFnInternalRunReturnData<
       TData,
@@ -167,8 +167,7 @@ export interface TSafeFnInternalRunReturn<
       TCtxInput,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput,
-      TAsAction
+      TUnparsedInput
     >,
     TSafeFnInternalRunReturnError<
       TData,
@@ -177,8 +176,7 @@ export interface TSafeFnInternalRunReturn<
       TCtxInput,
       TInputSchema,
       TOutputSchema,
-      TUnparsedInput,
-      TAsAction
+      TUnparsedInput
     >
   > {}
 
@@ -190,11 +188,8 @@ export interface TSafeFnInternalRunReturnData<
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput,
-  in out TAsAction extends boolean,
 > {
-  value: InferAsyncOkData<
-    TSafeFnReturn<TData, TRunErr, TOutputSchema, TAsAction>
-  >;
+  value: InferAsyncOkData<TSafeFnReturn<TData, TRunErr, TOutputSchema>>;
   input: TSchemaOutputOrFallback<TInputSchema, undefined>;
   ctx: TCtx;
   ctxInput: TCtxInput;
@@ -209,11 +204,8 @@ export interface TSafeFnInternalRunReturnError<
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput,
-  in out TAsAction extends boolean,
 > {
-  public: InferAsyncErrError<
-    TSafeFnReturn<TData, TRunErr, TOutputSchema, TAsAction>
-  >;
+  public: InferAsyncErrError<TSafeFnReturn<TData, TRunErr, TOutputSchema>>;
   private: {
     input: TSchemaInputOrFallback<TInputSchema, undefined> | undefined;
     ctx: TCtx;

@@ -1,6 +1,6 @@
 import { err, ok, type Result } from "neverthrow";
 import { assert, describe, expect, test, vi, type Mock } from "vitest";
-import { z, ZodError } from "zod";
+import { z } from "zod";
 import type { TAnyRunnableSafeFn } from "./runnable-safe-fn";
 import { createSafeFn, SafeFnBuilder } from "./safe-fn-builder";
 import type { TInferSafeFnCallbacks } from "./types/callbacks";
@@ -258,9 +258,8 @@ describe("runnable-safe-fn", () => {
           assert(res.isErr());
           expect(res.error.code).toBe("INPUT_PARSING");
           assert(res.error.code === "INPUT_PARSING");
-          expect(res.error.cause).toBeInstanceOf(ZodError);
-          expect(res.error.cause.format().lastName).toBeDefined();
-          expect(res.error.cause.format().name).toBeDefined();
+          expect(res.error.cause.formattedError.lastName).toBeDefined();
+          expect(res.error.cause.formattedError.name).toBeDefined();
         });
 
         test("should pass parent input in array", async () => {
@@ -387,9 +386,8 @@ describe("runnable-safe-fn", () => {
         assert(res.isErr());
         expect(res.error.code).toBe("OUTPUT_PARSING");
         assert(res.error.code === "OUTPUT_PARSING");
-        expect(res.error.cause).toBeInstanceOf(ZodError);
-        expect(res.error.cause.format().lastName).toBeDefined();
-        expect(res.error.cause.format().name).toBeDefined();
+        expect(res.error.cause.formattedError.lastName).toBeDefined();
+        expect(res.error.cause.formattedError.name).toBeDefined();
       });
     });
 
@@ -674,7 +672,6 @@ describe("runnable-safe-fn", () => {
 
       test("onComplete", () => {
         expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-          asAction: false,
           input: { name: "John" },
           unsafeRawInput: { name: "John", age: 100 },
           ctx: "Parent!",
@@ -733,7 +730,6 @@ describe("runnable-safe-fn", () => {
 
       test("onError", () => {
         expect(callbackMocks.onError).toHaveBeenCalledWith({
-          asAction: false,
           error: "Woops!",
           ctx: "Parent!",
           ctxInput: [{ age: 100 }],
@@ -744,7 +740,6 @@ describe("runnable-safe-fn", () => {
 
       test("onComplete", () => {
         expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-          asAction: false,
           input: { name: "John" },
           unsafeRawInput: { name: "John", age: 100 },
           ctx: "Parent!",
@@ -809,7 +804,6 @@ describe("runnable-safe-fn", () => {
 
       test("onError", () => {
         expect(callbackMocks.onError).toHaveBeenCalledWith({
-          asAction: false,
           error: "Parent!",
           ctx: undefined,
           ctxInput: [{ age: 100 }],
@@ -820,7 +814,6 @@ describe("runnable-safe-fn", () => {
 
       test("onComplete", () => {
         expect(callbackMocks.onComplete).toHaveBeenCalledWith({
-          asAction: false,
           input: undefined,
           unsafeRawInput: { name: "John", age: 100 },
           ctx: undefined,
@@ -884,12 +877,12 @@ describe("runnable-safe-fn", () => {
         const args = callbackMocks.onError.mock
           .calls[0]![0] as CallbackArgs["onError"];
 
-        assert(args.asAction === false);
         assert(args.ctx === undefined);
         assert(args.input === undefined);
         assert(args.error.code === "INPUT_PARSING");
-        assert(args.error.cause instanceof ZodError);
-        expect(args.error.cause.format()).toHaveProperty(["age"]);
+        expect(args.error.cause.formattedError.age).toBeDefined();
+        // Doesn't reach child parsing
+        expect(args.error.cause.formattedError.name).not.toBeDefined();
       });
 
       test("onComplete", () => {
@@ -897,13 +890,13 @@ describe("runnable-safe-fn", () => {
         const args = callbackMocks.onComplete.mock
           .calls[0]![0] as CallbackArgs["onComplete"];
 
-        assert(args.asAction === false);
         assert(args.ctx === undefined);
         assert(args.input === undefined);
         assert(args.result.isErr());
         assert(args.result.error.code === "INPUT_PARSING");
-        assert(args.result.error.cause instanceof ZodError);
-        expect(args.result.error.cause.format()).toHaveProperty(["age"]);
+        expect(args.result.error.cause.formattedError.age).toBeDefined();
+        // Doesn't reach child parsing
+        expect(args.result.error.cause.formattedError.name).not.toBeDefined();
       });
     });
   });
