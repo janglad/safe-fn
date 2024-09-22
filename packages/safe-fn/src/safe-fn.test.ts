@@ -918,6 +918,54 @@ describe("runnable-safe-fn", () => {
       expect(res.isErr()).toBe(true);
       assert(res.isErr());
       expect(res.error.code).toBe("NEW_CODE");
+      expect(res.error.cause).toBeDefined();
+      expect((res.error.cause as any).formattedError.test).toBeDefined();
+    });
+
+    test("should map the error when output parsing fails", async () => {
+      const fn = createSafeFn()
+        .output(z.object({ test: z.string() }))
+        // @ts-expect-error - passing wrong input on purpose
+        .handler(() => {
+          return ok({});
+        })
+        .mapErr((e) => {
+          return {
+            code: "NEW_CODE",
+            cause: e.cause,
+          } as const;
+        });
+
+      // @ts-expect-error - passing wrong input on purpose
+      const res = await fn.run({});
+      expect(res.isErr()).toBe(true);
+      assert(res.isErr());
+      expect(res.error.code).toBe("NEW_CODE");
+      expect(res.error.cause).toBeDefined();
+      expect((res.error.cause as any).formattedError.test).toBeDefined();
+    });
+
+    test("should map error returned from handler", async () => {
+      const fn = createSafeFn()
+        .handler(() => {
+          return err({
+            code: "HANDLER_ERR",
+            cause: "Handler error",
+          } as const);
+        })
+        .mapErr((e) => {
+          return {
+            code: "NEW_CODE",
+            cause: e.cause,
+          } as const;
+        });
+
+      const res = await fn.run();
+      expect(res.isErr()).toBe(true);
+      assert(res.isErr());
+      expect(res.error.code).toBe("NEW_CODE");
+      expect(res.error.cause).toBeDefined();
+      expect(res.error.cause).toBe("Handler error");
     });
   });
 });
