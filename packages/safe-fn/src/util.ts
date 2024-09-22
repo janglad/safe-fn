@@ -40,7 +40,6 @@ export const runCallbacks = <
   TInputSchema extends TSafeFnInput,
   TOutputSchema extends TSafeFnOutput,
   TUnparsedInput extends TSafeFnUnparsedInput,
-  TAsAction extends boolean,
   TRes extends TSafeFnInternalRunReturn<
     TData,
     TRunErr,

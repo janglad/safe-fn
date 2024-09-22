@@ -5,7 +5,6 @@ import type { InferErrError, InferOkData } from "./result";
 import {
   RunnableSafeFn,
   type TAnyRunnableSafeFn,
-  type TInferSafeFnRunErr,
   type TRunnableSafeFn,
   type TRunnableSafeFnPickArgs,
 } from "./runnable-safe-fn";
@@ -32,7 +31,10 @@ import type {
   TSchemaOutputOrFallback,
 } from "./types/schema";
 
-import type { InferSafeFnOkData } from "./types/run";
+import type {
+  InferSafeFnReturnData,
+  InferSafeFnReturnError,
+} from "./types/run";
 import type {
   AnyObject,
   TIntersectIfNotT,
@@ -148,8 +150,8 @@ export class SafeFnBuilder<
     parent: TNewParent,
   ): TSafeFnBuilder<
     TData,
-    TRunErr | TInferSafeFnRunErr<TNewParent>,
-    InferSafeFnOkData<TNewParent>,
+    TRunErr | InferSafeFnReturnError<TNewParent>,
+    InferSafeFnReturnData<TNewParent>,
     [
       ...TInferCtxInput<TNewParent>,
       TSchemaOutputOrFallback<InferInputSchema<TNewParent>, undefined>,

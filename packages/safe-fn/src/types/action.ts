@@ -45,7 +45,7 @@ export type InferSafeFnActionArgs<T extends TAnySafeFnAction> =
  * Return type:
  * - The `.value` type of the returned `ActionResult` assuming it's ok
  */
-export type InferSafeFnActionOkData<T extends TAnySafeFnAction> =
+export type InferSafeFnActionReturnData<T extends TAnySafeFnAction> =
   InferActionOkData<InferSafeFnActionReturn<T>>;
 
 /**
@@ -55,7 +55,7 @@ export type InferSafeFnActionOkData<T extends TAnySafeFnAction> =
  * Return type:
  * - The `.error` type of the returned `ActionResult` assuming it's not ok
  */
-export type InferSafeFnActionError<T extends TAnySafeFnAction> =
+export type InferSafeFnActionReturnError<T extends TAnySafeFnAction> =
   InferActionErrError<InferSafeFnActionReturn<T>>;
 
 /*

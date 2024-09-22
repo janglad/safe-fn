@@ -48,38 +48,6 @@ import {
   throwFrameworkErrorOrVoid,
 } from "./util";
 
-export type TInferSafeFnOkData2<T> =
-  T extends TRunnableSafeFn<
-    infer TData,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any
-  >
-    ? TData
-    : never;
-
-export type TInferSafeFnRunErr<T> =
-  T extends TRunnableSafeFn<
-    any,
-    infer TRunErr,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any
-  >
-    ? TRunErr
-    : never;
-
 export interface TAnyRunnableSafeFn
   extends TRunnableSafeFn<any, any, any, any, any, any, any, any, any, any> {}
 
@@ -433,7 +401,6 @@ export class RunnableSafeFn<
 
     type InternalOk = TSafeFnInternalRunReturnData<
       TData,
-      TRunErr,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -441,7 +408,6 @@ export class RunnableSafeFn<
       TUnparsedInput
     >;
     type InternalErr = TSafeFnInternalRunReturnError<
-      TData,
       TRunErr,
       TCtx,
       TCtxInput,

@@ -1,9 +1,5 @@
 import type { ResultAsync } from "neverthrow";
-import type {
-  InferActionErrError,
-  InferAsyncErrError,
-  InferAsyncOkData,
-} from "../result";
+import type { InferAsyncErrError } from "../result";
 import type { TAnyRunnableSafeFn, TRunnableSafeFn } from "../runnable-safe-fn";
 import type { AnyCtxInput } from "../types/handler";
 import type {
@@ -14,7 +10,6 @@ import type {
   TSchemaOutputOrFallback,
 } from "../types/schema";
 import type { TODO } from "../types/util";
-import type { TSafeFnActionReturn } from "./action";
 
 /*
 ################################
@@ -30,7 +25,7 @@ import type { TSafeFnActionReturn } from "./action";
  * Return type:
  * - The type of the arguments of the safe function passed to `run()`
  */
-export type InferSafeFnArgs<T> =
+export type InferSafeFnRunArgs<T> =
   T extends TRunnableSafeFn<
     any,
     any,
@@ -49,12 +44,11 @@ export type InferSafeFnArgs<T> =
 /**
  * Type params:
  * - `T`: The runnable safe function
- * - `TAsAction`: Indicates whether the function is run as an action (`.createAction()()`) or not (`run()`)
  *
  * Return type:
- * - The return type. `ResultAsync` if `TAsAction` is `false`, `Promise<ActionResult>` if `TAsAction` is `true`.
+ * - The return typ, a `ResultAsync`
  */
-export type InferSafeFnReturn<T, TAsAction extends boolean> =
+export type InferSafeFnRunReturn<T> =
   T extends TRunnableSafeFn<
     infer TData,
     infer TRunErr,
@@ -67,9 +61,7 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
     any,
     any
   >
-    ? TAsAction extends true
-      ? TSafeFnActionReturn<TData, TRunErr, TOutputSchema>
-      : TSafeFnRunReturn<TData, TRunErr, TOutputSchema>
+    ? TSafeFnRunReturn<TData, TRunErr, TOutputSchema>
     : never;
 
 /**
@@ -79,7 +71,7 @@ export type InferSafeFnReturn<T, TAsAction extends boolean> =
  * Return type:
  * - The type of the `.value` of the return type of the safe function after successful execution.
  */
-export type InferSafeFnOkData<T> =
+export type InferSafeFnReturnData<T> =
   T extends TRunnableSafeFn<
     infer TData,
     any,
@@ -95,20 +87,32 @@ export type InferSafeFnOkData<T> =
     ? TSafeFnReturnData<TData, TOutputSchema>
     : never;
 
+export type InferSafeFnReturnError<T> =
+  T extends TRunnableSafeFn<
+    any,
+    infer TRunErr,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TRunErr
+    : never;
+
 /**
  * Type params:
  * - `T`: The runnable safe function
- * - `TAsAction`: Indicates whether the function is run as an action (`.createAction()()`) or not (`run()`)
  *
  * Return type:
  * - The type of the `.error` of the return type of the safe function after unsuccessful execution.
  */
-export type InferSafeFnErrError<
-  T extends TAnyRunnableSafeFn,
-  TAsAction extends boolean,
-> = TAsAction extends true
-  ? InferActionErrError<Awaited<InferSafeFnReturn<T, true>>>
-  : InferAsyncErrError<InferSafeFnReturn<T, false>>;
+export type InferSafeFnError<T extends TAnyRunnableSafeFn> = InferAsyncErrError<
+  InferSafeFnRunReturn<T>
+>;
 
 /*
 ################################
@@ -124,23 +128,9 @@ export type TSafeFnReturnData<TData, TOutputSchema extends TSafeFnOutput> = [
   ? never
   : TSchemaOutputOrFallback<TOutputSchema, TData>;
 
-export type TSafeFnRunError<TRunErr, TOutputSchema> = TRunErr;
+export type TSafeFnReturnError<TRunErr, TOutputSchema> = TRunErr;
 
 export type TSafeFnRunArgs<T extends TSafeFnUnparsedInput> = T;
-
-export interface TSafeFnReturn<
-  in out TData,
-  in out TRunError,
-  in out TOutputSchema extends TSafeFnOutput,
-> extends ResultAsync<
-    TSafeFnReturnData<TData, TOutputSchema>,
-    TSafeFnReturnError<TRunError, TOutputSchema>
-  > {}
-
-export type TSafeFnReturnError<TRunError, TOutputSchema> = TSafeFnRunError<
-  TRunError,
-  TOutputSchema
->;
 
 export interface TSafeFnRunReturn<
   in out TData,
@@ -148,7 +138,7 @@ export interface TSafeFnRunReturn<
   in out TOutputSchema extends TSafeFnOutput,
 > extends ResultAsync<
     TSafeFnReturnData<TData, TOutputSchema>,
-    TSafeFnRunError<TRunError, TOutputSchema>
+    TSafeFnReturnError<TRunError, TOutputSchema>
   > {}
 
 export interface TSafeFnInternalRunReturn<
@@ -162,7 +152,6 @@ export interface TSafeFnInternalRunReturn<
 > extends ResultAsync<
     TSafeFnInternalRunReturnData<
       TData,
-      TRunError,
       TCtx,
       TCtxInput,
       TInputSchema,
@@ -170,7 +159,6 @@ export interface TSafeFnInternalRunReturn<
       TUnparsedInput
     >,
     TSafeFnInternalRunReturnError<
-      TData,
       TRunError,
       TCtx,
       TCtxInput,
@@ -182,14 +170,13 @@ export interface TSafeFnInternalRunReturn<
 
 export interface TSafeFnInternalRunReturnData<
   in out TData,
-  in out TRunErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
   in out TInputSchema extends TSafeFnInput,
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput,
 > {
-  value: InferAsyncOkData<TSafeFnReturn<TData, TRunErr, TOutputSchema>>;
+  value: TSafeFnReturnData<TData, TOutputSchema>;
   input: TSchemaOutputOrFallback<TInputSchema, undefined>;
   ctx: TCtx;
   ctxInput: TCtxInput;
@@ -197,7 +184,6 @@ export interface TSafeFnInternalRunReturnData<
 }
 
 export interface TSafeFnInternalRunReturnError<
-  in out TData,
   in out TRunErr,
   in out TCtx,
   in out TCtxInput extends AnyCtxInput,
@@ -205,7 +191,7 @@ export interface TSafeFnInternalRunReturnError<
   in out TOutputSchema extends TSafeFnOutput,
   in out TUnparsedInput,
 > {
-  public: InferAsyncErrError<TSafeFnReturn<TData, TRunErr, TOutputSchema>>;
+  public: TSafeFnReturnError<TRunErr, TOutputSchema>;
   private: {
     input: TSchemaInputOrFallback<TInputSchema, undefined> | undefined;
     ctx: TCtx;

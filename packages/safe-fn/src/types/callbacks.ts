@@ -1,7 +1,7 @@
 import type { Result } from "neverthrow";
 import type { TRunnableSafeFn } from "../runnable-safe-fn";
 import type { AnyCtxInput, TSafeFnHandlerArgs } from "./handler";
-import type { TSafeFnReturnData, TSafeFnRunError } from "./run";
+import type { TSafeFnReturnData, TSafeFnReturnError } from "./run";
 import type {
   TSafeFnInput,
   TSafeFnOutput,
@@ -147,7 +147,7 @@ interface TSafeFnOnErrorNonActionArgs<
 > extends TToOptionalSafeFnArgs<
     TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
-  error: TSafeFnRunError<TRunError, TOutputSchema>;
+  error: TSafeFnReturnError<TRunError, TOutputSchema>;
 }
 
 export type TSafeFnOnError<
@@ -215,7 +215,7 @@ interface TSafeFnOnCompleteErrorArgs<
 > extends TToOptionalSafeFnArgs<
     TSafeFnHandlerArgs<TCtx, TCtxInput, TInputSchema, TUnparsedInput>
   > {
-  result: Result<never, TSafeFnRunError<TRunError, TOutputSchema>>;
+  result: Result<never, TSafeFnReturnError<TRunError, TOutputSchema>>;
 }
 
 export type TSafeFnOnComplete<
