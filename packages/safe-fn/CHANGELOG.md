@@ -1,5 +1,11 @@
 # @safe-fn/safe-fn
 
+## 0.4.2
+
+### Patch Changes
+
+- 51dd313: Fix type issues with the hook (related to distribution)
+
 ## 0.4.1
 
 ### Patch Changes
