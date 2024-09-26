@@ -1,5 +1,13 @@
 # safe-fn-react
 
+## 0.3.2
+
+### Patch Changes
+
+- 51dd313: Fix type issues with the hook (related to distribution)
+- Updated dependencies [51dd313]
+  - safe-fn@0.4.2
+
 ## 0.3.1
 
 ### Patch Changes
