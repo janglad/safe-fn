@@ -27,7 +27,7 @@ const callbackCatch = (e: unknown): void => {
 
 export const useServerAction = <TAction extends AnySafeFnAction>(
   action: TAction,
-  callbacks: UserServerActionCallbacks<TAction>,
+  callbacks: UserServerActionCallbacks<TAction> = {},
 ): UseServerActionReturn<TAction> => {
   type ActionArgs = InferSafeFnActionArgs<TAction>;
   /** Original `ActionResult<T,E>` */
