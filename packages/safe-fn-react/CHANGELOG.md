@@ -1,5 +1,12 @@
 # safe-fn-react
 
+## 0.3.3
+
+### Patch Changes
+
+- daf1a07: - Fix possible client side type error when redirecting in server action
+- e92f5e4: Make callback argument optional
+
 ## 0.3.2
 
 ### Patch Changes
