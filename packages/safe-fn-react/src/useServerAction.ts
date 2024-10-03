@@ -56,7 +56,13 @@ export const useServerAction = <TAction extends AnySafeFnAction>(
         void ResultAsync.fromThrowable(callbacks.onStart, callbackCatch)(args);
       }
 
-      const actionResult = (await action(args)) as ActionReturnActionResult;
+      // Undefined return happens when action redirects/has uncaught error.
+      const actionResult = (await action(args)) as
+        | ActionReturnActionResult
+        | undefined;
+      if (actionResult === undefined) {
+        return;
+      }
       const res = actionResultToResult(actionResult) as ActionReturnResult;
 
       setResult(res);
