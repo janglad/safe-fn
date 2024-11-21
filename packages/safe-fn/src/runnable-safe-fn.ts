@@ -653,111 +653,125 @@ export class RunnableSafeFn<
       TUnparsedInput
     >
   > {
+    let value: TSafeFnReturnData<TData, TOutputSchema> = undefined as TODO;
+    let input: TSchemaOutputOrFallback<TInputSchema, undefined> =
+      undefined as TODO;
+    let ctx: TCtx | undefined = undefined;
+    let ctxInput: TCtxInput = [] as TODO;
+    let unsafeRawInput: TUnparsedInput = args as TUnparsedInput;
+
     try {
       const parentRes: AnyTSafeFnInternalRunReturn2 | undefined =
         this._internals.parent === undefined
           ? undefined
           : await this._internals.parent._run2(args, true);
 
-      if (parentRes !== undefined && !parentRes.ok) {
-        return actionErr({
-          public:
-            this._mapErrHandler?.(parentRes.error.public) ??
-            parentRes.error.public,
-          private: {
-            input: undefined,
-            ctx: undefined as TODO,
-            ctxInput:
-              parentRes.error.private.ctxInput === undefined
-                ? []
-                : ([
-                    ...parentRes.error.private.ctxInput,
-                    parentRes.error.private.input,
-                  ] as TODO),
-            unsafeRawInput: args as TUnparsedInput,
-            handlerRes: undefined,
-          },
-        });
+      if (parentRes !== undefined) {
+        if (parentRes.ok) {
+          ctx = parentRes.value.value;
+          ctxInput = [
+            ...parentRes.value.ctxInput,
+            parentRes.value.input,
+          ] as TODO;
+        } else {
+          ctxInput =
+            parentRes.error.private.ctxInput === undefined
+              ? []
+              : ([
+                  ...parentRes.error.private.ctxInput,
+                  parentRes.error.private.input,
+                ] as TODO);
+
+          return actionErr({
+            public:
+              this._mapErrHandler?.(parentRes.error.public) ??
+              parentRes.error.public,
+            private: {
+              input: undefined,
+              ctx: undefined as TODO,
+              ctxInput,
+              unsafeRawInput,
+              handlerRes: undefined,
+            },
+          });
+        }
       }
 
-      const parentResValue =
-        parentRes === undefined
-          ? undefined
-          : {
-              ...parentRes.value,
-              ctxInput: [...parentRes.value.ctxInput, parentRes.value.input],
-            };
-
-      const parsedInput =
+      const parsedInputRes =
         this._internals.inputSchema === undefined
           ? undefined
           : await this._parseInput(args);
 
-      if (parsedInput !== undefined && parsedInput.isErr()) {
-        return actionErr({
-          public:
-            this._mapErrHandler?.(parsedInput.error) ??
-            (parsedInput.error as TODO),
-          private: {
-            ctx: parentResValue?.value,
-            ctxInput: (parentResValue?.ctxInput as TODO) ?? [],
-            unsafeRawInput: args as TUnparsedInput,
-            handlerRes: undefined,
-            input: undefined,
-          },
-        });
+      if (parsedInputRes !== undefined) {
+        if (parsedInputRes.isErr()) {
+          return actionErr({
+            public:
+              this._mapErrHandler?.(parsedInputRes.error) ??
+              (parsedInputRes.error as TODO),
+            private: {
+              ctx: ctx as TODO,
+              ctxInput,
+              unsafeRawInput: args as TUnparsedInput,
+              handlerRes: undefined,
+              input: undefined,
+            },
+          });
+        }
+        input = parsedInputRes.value;
       }
 
       const handlerRes = await this._internals.handler({
-        input: parsedInput?.value as TODO,
+        input,
         unsafeRawInput: args as TODO,
-        ctx: parentResValue?.value,
-        ctxInput: (parentResValue?.ctxInput as TODO) ?? [],
+        ctx: ctx as TODO,
+        ctxInput,
       });
 
       if (handlerRes.isErr()) {
         return actionErr({
           public: this._mapErrHandler?.(handlerRes.error) ?? handlerRes.error,
           private: {
-            ctx: parentResValue?.value,
-            ctxInput: (parentResValue?.ctxInput as TODO) ?? [],
+            ctx: ctx as TODO,
+            ctxInput,
             unsafeRawInput: args as TUnparsedInput,
             handlerRes: undefined,
-            input: parsedInput?.value,
+            input,
           },
         });
       }
+      value = handlerRes.value;
 
       if (this._internals.outputSchema === undefined) {
         return actionOk({
-          value: handlerRes.value,
-          input: parsedInput?.value as TODO,
-          ctx: parentResValue?.value,
-          ctxInput: (parentResValue?.ctxInput as TODO) ?? [],
+          value,
+          input,
+          ctx: ctx as TODO,
+          ctxInput,
           unsafeRawInput: args as TUnparsedInput,
         });
       }
 
-      const parsedOutput = await this._parseOutput(handlerRes.value);
+      const parsedOutput = await this._parseOutput(value);
       if (parsedOutput.isErr()) {
         return actionErr({
           public:
             this._mapErrHandler?.(parsedOutput.error) ??
             (parsedOutput.error as TODO),
           private: {
-            ctx: parentResValue?.value,
-            ctxInput: (parentResValue?.ctxInput as TODO) ?? [],
+            ctx: ctx as TODO,
+            ctxInput,
             unsafeRawInput: args as TUnparsedInput,
-            handlerRes: handlerRes.value,
-            input: parsedInput?.value,
+            handlerRes: value,
+            input,
           },
         });
       }
+      value = parsedOutput.value;
       return actionOk({
-        value: parsedOutput.value,
-        input: parsedInput?.value as TODO,
-        ctx: parentResValue?.value,
-        ctxInput: (parentResValue?.ctxInput as TODO) ?? [],
+        value,
+        input,
+        ctx: ctx as TODO,
+        ctxInput,
         unsafeRawInput: args as TUnparsedInput,
       });
     } catch (error) {
@@ -782,10 +796,10 @@ export class RunnableSafeFn<
         public: this._mapErrHandler?.(handlerErr.error) ?? handlerErr.error,
         private: {
           unsafeRawInput: args as TUnparsedInput,
-          input: undefined,
-          ctx: undefined as TODO,
-          ctxInput: undefined,
-          handlerRes: undefined,
+          input,
+          ctx: ctx as TODO,
+          ctxInput,
+          handlerRes: value,
         },
       });
     }
