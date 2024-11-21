@@ -1,4 +1,4 @@
-import { err, ok, ResultAsync, safeTry, type Result } from "neverthrow";
+import { err, ok, ResultAsync } from "neverthrow";
 
 import {
   actionErr,
@@ -14,12 +14,9 @@ import type {
 import type { TSafeFnInternals } from "./types/internals";
 import type {
   AnyTSafeFnInternalRunReturn2,
-  TSafeFnInternalRunReturn,
   TSafeFnInternalRunReturn2,
-  TSafeFnInternalRunReturnData,
   TSafeFnInternalRunReturnError,
   TSafeFnReturnData,
-  TSafeFnReturnError,
   TSafeFnRunArgs,
   TSafeFnRunReturn,
 } from "./types/run";
@@ -49,13 +46,7 @@ import type {
 } from "./types/callbacks";
 import type { AnyCtxInput } from "./types/handler";
 import type { AnyObject, TODO } from "./types/util";
-import {
-  isFrameworkError,
-  mapZodError,
-  runCallbacks,
-  safeZodAsyncParse,
-  throwFrameworkErrorOrVoid,
-} from "./util";
+import { isFrameworkError, mapZodError } from "./util";
 
 export interface TAnyRunnableSafeFn
   extends TRunnableSafeFn<any, any, any, any, any, any, any, any, any, any> {}
@@ -357,7 +348,7 @@ export class RunnableSafeFn<
     const resPromise = (async (): Promise<
       Awaited<TSafeFnRunReturn<TData, TRunErr, TOutputSchema>>
     > => {
-      const res = await this._run2(args[0], false);
+      const res = await this._run(args[0], false);
       if (res.ok) {
         return ok(res.value.value);
       }
@@ -375,34 +366,7 @@ export class RunnableSafeFn<
 ################################
 */
 
-  _parseInput(
-    input: unknown,
-  ): ResultAsync<
-    TSchemaOutputOrFallback<TInputSchema, never>,
-    TSafeFnInputParseErrorNoZod<TSchemaInputOrFallback<TInputSchema, never>>
-  > {
-    if (this._internals.inputSchema === undefined) {
-      throw new Error("No input schema defined");
-    }
-
-    return safeZodAsyncParse(this._internals.inputSchema, input).mapErr(
-      (error) => {
-        if (error.code === "PARSING_UNHANDLED") {
-          throw error.cause;
-        }
-
-        const cause = mapZodError(error.cause);
-        return {
-          code: "INPUT_PARSING",
-          cause,
-        } as TSafeFnInputParseErrorNoZod<
-          TSchemaInputOrFallback<TInputSchema, never>
-        >;
-      },
-    );
-  }
-
-  static async _parseInput2<T extends ZodTypeAny | undefined>(
+  static async _parseInput<T extends ZodTypeAny | undefined>(
     input: unknown,
     inputSchema: T,
   ): Promise<
@@ -424,7 +388,7 @@ export class RunnableSafeFn<
       cause: mapZodError(res.error),
     } as TSafeFnInputParseErrorNoZod<TSchemaInputOrFallback<T, never>>);
   }
-  static async _parseOutput2<T extends ZodTypeAny | undefined>(
+  static async _parseOutput<T extends ZodTypeAny | undefined>(
     input: unknown,
     inputSchema: T,
   ): Promise<
@@ -447,251 +411,7 @@ export class RunnableSafeFn<
     } as TSafeFnOutputParseErrorNoZod<TSchemaInputOrFallback<T, never>>);
   }
 
-  _parseOutput(
-    output: unknown,
-  ): ResultAsync<
-    TSchemaOutputOrFallback<TOutputSchema, never>,
-    TSafeFnOutputParseErrorNoZod<TSchemaInputOrFallback<TOutputSchema, never>>
-  > {
-    if (this._internals.outputSchema === undefined) {
-      throw new Error("No output schema defined");
-    }
-
-    return safeZodAsyncParse(this._internals.outputSchema, output).mapErr(
-      (error) => {
-        if (error.code === "PARSING_UNHANDLED") {
-          throw error.cause;
-        }
-
-        const cause = mapZodError(error.cause);
-        return {
-          code: "OUTPUT_PARSING",
-          cause,
-        } as TSafeFnOutputParseErrorNoZod<
-          TSchemaInputOrFallback<TOutputSchema, never>
-        >;
-      },
-    );
-  }
-
-  _run(
-    args: TSafeFnRunArgs<TUnparsedInput>[0],
-    asProcedure: boolean,
-  ): TSafeFnInternalRunReturn<
-    TData,
-    TRunErr,
-    TCtx,
-    TCtxInput,
-    TInputSchema,
-    TOutputSchema,
-    TUnparsedInput
-  > {
-    const inputSchema = this._internals.inputSchema;
-    const outputSchema = this._internals.outputSchema;
-    const handler = this._internals.handler;
-    const parent = this._internals.parent as AnyRunnableSafeFn | undefined;
-    const uncaughtErrorHandler = this._internals.uncaughtErrorHandler;
-    const _parseOutput = this._parseOutput.bind(this);
-    const _parseInput = this._parseInput.bind(this);
-    const _callBacks = this._callBacks;
-    const onStartCallback: ResultAsync<void, void> | undefined =
-      _callBacks.onStart === undefined
-        ? undefined
-        : ResultAsync.fromThrowable(
-            _callBacks.onStart,
-            throwFrameworkErrorOrVoid,
-          )({
-            unsafeRawInput: args as TODO,
-          });
-
-    type InternalOk = TSafeFnInternalRunReturnData<
-      TData,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    >;
-    type InternalErr = TSafeFnInternalRunReturnError<
-      TRunErr,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    >;
-
-    const safeTryPromise: Promise<Result<InternalOk, InternalErr>> = safeTry(
-      async function* () {
-        const parentRes: any | undefined =
-          parent === undefined
-            ? undefined
-            : yield* parent
-                ._run(args, true)
-                .map((res) => ({
-                  ...res,
-                  ctxInput: [...res.ctxInput, res.input],
-                }))
-                .mapErr(
-                  (e) =>
-                    ({
-                      public: e.public as TSafeFnReturnError<
-                        TRunErr,
-                        TOutputSchema
-                      >,
-                      private: {
-                        unsafeRawInput: args as TUnparsedInput,
-                        input: undefined,
-                        ctx: undefined,
-                        ctxInput:
-                          e.private.ctxInput === undefined
-                            ? []
-                            : [...e.private.ctxInput, e.private.input],
-                        handlerRes: undefined,
-                      } as TODO,
-                    }) satisfies InternalErr,
-                )
-                .safeUnwrap() as TODO;
-
-        const parsedInput: TSchemaOutputOrFallback<TInputSchema, undefined> =
-          inputSchema === undefined
-            ? (undefined as TSchemaOutputOrFallback<TInputSchema, undefined>)
-            : yield* _parseInput(args)
-                .mapErr(
-                  (e) =>
-                    ({
-                      public: e as TODO,
-                      private: {
-                        ctx: parentRes?.value,
-                        ctxInput: parentRes?.ctxInput || [],
-                        unsafeRawInput: args as TUnparsedInput,
-                        input: undefined,
-                        handlerRes: undefined,
-                      } as TODO,
-                    }) satisfies InternalErr,
-                )
-                .safeUnwrap();
-
-        const handlerRes: TData = yield* (
-          await (async () => {
-            const res = await handler({
-              input: parsedInput,
-              unsafeRawInput: args as TODO,
-              ctx: parentRes?.value,
-              ctxInput: parentRes?.ctxInput || [],
-            } as TODO);
-            if (!res) {
-              // This should never happen, will cause Typescript to error out.
-              throw new Error("Handler did not return a result");
-            }
-            return res;
-          })()
-        )
-          .mapErr(
-            (e) =>
-              ({
-                public: e,
-                private: {
-                  ctx: parentRes?.value,
-                  ctxInput: parentRes?.ctxInput || [],
-                  input: parsedInput,
-                  unsafeRawInput: args as TUnparsedInput,
-                  handlerRes: undefined,
-                },
-              }) as TODO satisfies InternalErr,
-          )
-          .safeUnwrap();
-
-        const parsedOutput: TSchemaOutputOrFallback<TOutputSchema, undefined> =
-          outputSchema === undefined
-            ? (undefined as TSchemaOutputOrFallback<TOutputSchema, undefined>)
-            : yield* _parseOutput(handlerRes)
-                .mapErr(
-                  (e) =>
-                    ({
-                      public: e as any,
-                      private: {
-                        ctx: parentRes?.value,
-                        ctxInput: parentRes?.ctxInput || [],
-                        input: parsedInput,
-                        handlerRes,
-                        unsafeRawInput: args as TUnparsedInput,
-                      },
-                    }) as TODO satisfies InternalErr,
-                )
-                .safeUnwrap();
-
-        const value: TSafeFnReturnData<TData, TOutputSchema> =
-          parsedOutput === undefined
-            ? (handlerRes as TSafeFnReturnData<TData, TOutputSchema>)
-            : (parsedOutput as TSafeFnReturnData<TData, TOutputSchema>);
-        return ok({
-          value,
-          input: parsedInput,
-          ctx: parentRes?.value,
-          ctxInput: (parentRes?.ctxInput as TODO) || [],
-          unsafeRawInput: args as TUnparsedInput,
-        } satisfies InternalOk);
-      },
-    ) as TODO;
-
-    const internalRes: TSafeFnInternalRunReturn<
-      TData,
-      TRunErr,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    > = ResultAsync.fromPromise(safeTryPromise, (error) => {
-      if (isFrameworkError(error)) {
-        throw error;
-      }
-
-      const handledErr = uncaughtErrorHandler(error);
-      if (handledErr.isOk()) {
-        throw new Error("uncaught error handler returned ok");
-      }
-      if (
-        asProcedure &&
-        uncaughtErrorHandler === SafeFnBuilder.safeFnDefaultUncaughtErrorHandler
-      ) {
-        throw error;
-      }
-      return {
-        public: handledErr.error,
-        private: {
-          unsafeRawInput: args as TUnparsedInput,
-          input: undefined,
-          ctx: undefined,
-          ctxInput: undefined,
-          handlerRes: undefined,
-        },
-      };
-    })
-      .andThen((res) => {
-        return res;
-      })
-      .mapErr((e) => {
-        if (this._mapErrHandler !== undefined) {
-          return {
-            private: e.private,
-            public: this._mapErrHandler(e.public),
-          };
-        }
-        return e;
-      }) as TODO;
-
-    const withCallbacks = runCallbacks({
-      resultAsync: internalRes as TODO,
-      callbacks: _callBacks,
-      hotOnStartCallback: onStartCallback,
-    });
-
-    return withCallbacks;
-  }
-
-  async _run2(
+  async _run(
     args: TSafeFnRunArgs<TUnparsedInput>[0],
     asProcedure: boolean,
     callbackPromises: Promise<void>[] = [],
@@ -808,10 +528,7 @@ export class RunnableSafeFn<
       const parsedInputRes =
         this._internals.inputSchema === undefined
           ? undefined
-          : await RunnableSafeFn._parseInput2(
-              args,
-              this._internals.inputSchema,
-            );
+          : await RunnableSafeFn._parseInput(args, this._internals.inputSchema);
 
       if (parsedInputRes !== undefined) {
         if (!parsedInputRes.ok) {
@@ -833,7 +550,7 @@ export class RunnableSafeFn<
       value = handlerRes.value;
 
       if (this._internals.outputSchema !== undefined) {
-        const parsedOutput = await RunnableSafeFn._parseOutput2(
+        const parsedOutput = await RunnableSafeFn._parseOutput(
           value,
           this._internals.outputSchema,
         );
@@ -915,7 +632,7 @@ export class RunnableSafeFn<
   ): TSafeFnActionReturn<TData, TRunErr, TOutputSchema> {
     const res = await this._run(args[0], false);
 
-    if (res.isOk()) {
+    if (res.ok) {
       return actionOk(res.value.value);
     }
     return actionErr(res.error.public);
