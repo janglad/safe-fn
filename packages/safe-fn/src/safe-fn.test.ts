@@ -579,7 +579,7 @@ describe("runnable-safe-fn", () => {
         name: "generator - yield error",
         createSafeFn: () => {
           const builder = createSafeFn().safeHandler(async function* () {
-            yield* err("Ooh no!").safeUnwrap();
+            yield* err("Ooh no!");
             postYieldMock();
             return ok("Ooh yes!");
           }) as any;
@@ -1051,7 +1051,7 @@ describe("parent", () => {
       name: "generator - yield error",
       createSafeFn: () =>
         createSafeFn().safeHandler(async function* (args) {
-          yield* err("Not ok!").safeUnwrap();
+          yield* err("Not ok!");
           return ok("Ok!");
         }),
     },

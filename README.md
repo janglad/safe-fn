@@ -133,14 +133,14 @@ const { execute, result, isPending } = useServerAction(createTodoAction);
 ```
 
 However, the magic of the integration of NeverThrow really comes out if your other functions are also returning a `Result` or `ResultAsync`. Instead of passing a regular function via `handler()` you can also use `safeHandler()`.
-This builds on Neverthrow's `safeTry()` and takes in a generator function. This generator function receives the same args as `handler()`, but it allows you to `yield *` other results using `.safeUnwrap()`.
+This builds on Neverthrow's `safeTry()` and takes in a generator function. This generator function receives the same args as `handler()`, but it allows you to `yield *` other results (note that in `Neverthrow` versions before 8.0.0 you need to use `.safeUnwrap()`).
 This is meant to emulate Rust's `?` operator and allows a very ergonomic way to write "return early if this fails, otherwise continue" logic.
 
 This function has the same return type as the `handler()` example above.
 
 ```ts
 const withAuth = createSafeFn().safeHandler(async function* () {
-  const user = yield* auth.getSignedInUser().safeUnwrap();
+  const user = yield* auth.getSignedInUser();
   return ok(user);
 });
 
@@ -154,13 +154,11 @@ const createTodoAction = createSafeFn()
   )
   .safeHandler(async function* (args) {
     const user = args.ctx;
-    const todo = yield* db.todo
-      .create({
-        title: args.input.title,
-        description: args.input.description,
-        userId: user.id,
-      })
-      .safeUnwrap();
+    const todo = yield* db.todo.create({
+      title: args.input.title,
+      description: args.input.description,
+      userId: user.id,
+    });
     return ok(todo);
   });
 ```

@@ -123,7 +123,7 @@ const parent = createSafeFn()
     }),
   )
   .safeHandler(async function* (args) {
-    const res = yield* maybeFail().safeUnwrap();
+    const res = yield* maybeFail();
     return ok({
       parentOut: `${res} ${args.input.parentIn}`,
     });
