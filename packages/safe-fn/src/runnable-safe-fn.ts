@@ -1,6 +1,11 @@
-import { err, ok, type Result, ResultAsync, safeTry } from "neverthrow";
+import { err, ok, ResultAsync, safeTry, type Result } from "neverthrow";
 
-import { actionErr, actionOk, type InferErrError } from "./result";
+import {
+  actionErr,
+  actionOk,
+  type ActionErr,
+  type InferErrError,
+} from "./result";
 
 import type {
   TAnySafeFnCatchHandlerRes,
@@ -660,6 +665,31 @@ export class RunnableSafeFn<
     let ctxInput: TCtxInput = [] as TODO;
     let unsafeRawInput: TUnparsedInput = args as TUnparsedInput;
 
+    const getError = (
+      publicError: any,
+    ): ActionErr<
+      never,
+      TSafeFnInternalRunReturnError<
+        TRunErr,
+        TCtx,
+        TCtxInput,
+        TInputSchema,
+        TOutputSchema,
+        TUnparsedInput
+      >
+    > => {
+      return actionErr({
+        public: this._mapErrHandler?.(publicError) ?? publicError,
+        private: {
+          input,
+          ctx: ctx as TODO,
+          ctxInput,
+          unsafeRawInput,
+          handlerRes: value,
+        },
+      });
+    };
+
     try {
       const parentRes: AnyTSafeFnInternalRunReturn2 | undefined =
         this._internals.parent === undefined
@@ -682,18 +712,7 @@ export class RunnableSafeFn<
                   parentRes.error.private.input,
                 ] as TODO);
 
-          return actionErr({
-            public:
-              this._mapErrHandler?.(parentRes.error.public) ??
-              parentRes.error.public,
-            private: {
-              input: undefined,
-              ctx: undefined as TODO,
-              ctxInput,
-              unsafeRawInput,
-              handlerRes: undefined,
-            },
-          });
+          return getError(parentRes.error.public);
         }
       }
 
@@ -704,18 +723,7 @@ export class RunnableSafeFn<
 
       if (parsedInputRes !== undefined) {
         if (parsedInputRes.isErr()) {
-          return actionErr({
-            public:
-              this._mapErrHandler?.(parsedInputRes.error) ??
-              (parsedInputRes.error as TODO),
-            private: {
-              ctx: ctx as TODO,
-              ctxInput,
-              unsafeRawInput: args as TUnparsedInput,
-              handlerRes: undefined,
-              input: undefined,
-            },
-          });
+          return getError(parsedInputRes.error);
         }
         input = parsedInputRes.value;
       }
@@ -728,16 +736,7 @@ export class RunnableSafeFn<
       });
 
       if (handlerRes.isErr()) {
-        return actionErr({
-          public: this._mapErrHandler?.(handlerRes.error) ?? handlerRes.error,
-          private: {
-            ctx: ctx as TODO,
-            ctxInput,
-            unsafeRawInput: args as TUnparsedInput,
-            handlerRes: undefined,
-            input,
-          },
-        });
+        return getError(handlerRes.error);
       }
       value = handlerRes.value;
 
@@ -753,18 +752,7 @@ export class RunnableSafeFn<
 
       const parsedOutput = await this._parseOutput(value);
       if (parsedOutput.isErr()) {
-        return actionErr({
-          public:
-            this._mapErrHandler?.(parsedOutput.error) ??
-            (parsedOutput.error as TODO),
-          private: {
-            ctx: ctx as TODO,
-            ctxInput,
-            unsafeRawInput: args as TUnparsedInput,
-            handlerRes: value,
-            input,
-          },
-        });
+        return getError(parsedOutput.error);
       }
       value = parsedOutput.value;
       return actionOk({
@@ -792,16 +780,7 @@ export class RunnableSafeFn<
         throw error;
       }
 
-      return actionErr({
-        public: this._mapErrHandler?.(handlerErr.error) ?? handlerErr.error,
-        private: {
-          unsafeRawInput: args as TUnparsedInput,
-          input,
-          ctx: ctx as TODO,
-          ctxInput,
-          handlerRes: value,
-        },
-      });
+      return getError(handlerErr.error);
     }
   }
 
