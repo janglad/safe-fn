@@ -32,6 +32,8 @@ import type {
   TSchemaOutputOrFallback,
 } from "./types/schema";
 
+import type { ZodTypeAny } from "zod";
+import type { ActionResult } from "../dist";
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   TSafeFnAction,
@@ -400,6 +402,51 @@ export class RunnableSafeFn<
     );
   }
 
+  static async _parseInput2<T extends ZodTypeAny | undefined>(
+    input: unknown,
+    inputSchema: T,
+  ): Promise<
+    ActionResult<
+      TSchemaOutputOrFallback<T, never>,
+      TSafeFnInputParseErrorNoZod<TSchemaInputOrFallback<T, never>>
+    >
+  > {
+    if (inputSchema === undefined) {
+      throw new Error("No input schema defined");
+    }
+
+    const res = await inputSchema.safeParseAsync(input);
+    if (res.success) {
+      return actionOk(res.data);
+    }
+    return actionErr({
+      code: "INPUT_PARSING",
+      cause: mapZodError(res.error),
+    } as TSafeFnInputParseErrorNoZod<TSchemaInputOrFallback<T, never>>);
+  }
+  static async _parseOutput2<T extends ZodTypeAny | undefined>(
+    input: unknown,
+    inputSchema: T,
+  ): Promise<
+    ActionResult<
+      TSchemaOutputOrFallback<T, never>,
+      TSafeFnOutputParseErrorNoZod<TSchemaInputOrFallback<T, never>>
+    >
+  > {
+    if (inputSchema === undefined) {
+      throw new Error("No input schema defined");
+    }
+
+    const res = await inputSchema.safeParseAsync(input);
+    if (res.success) {
+      return actionOk(res.data);
+    }
+    return actionErr({
+      code: "OUTPUT_PARSING",
+      cause: mapZodError(res.error),
+    } as TSafeFnOutputParseErrorNoZod<TSchemaInputOrFallback<T, never>>);
+  }
+
   _parseOutput(
     output: unknown,
   ): ResultAsync<
@@ -761,10 +808,13 @@ export class RunnableSafeFn<
       const parsedInputRes =
         this._internals.inputSchema === undefined
           ? undefined
-          : await this._parseInput(args);
+          : await RunnableSafeFn._parseInput2(
+              args,
+              this._internals.inputSchema,
+            );
 
       if (parsedInputRes !== undefined) {
-        if (parsedInputRes.isErr()) {
+        if (!parsedInputRes.ok) {
           return await getError(parsedInputRes.error);
         }
         input = parsedInputRes.value;
@@ -783,8 +833,11 @@ export class RunnableSafeFn<
       value = handlerRes.value;
 
       if (this._internals.outputSchema !== undefined) {
-        const parsedOutput = await this._parseOutput(value);
-        if (parsedOutput.isErr()) {
+        const parsedOutput = await RunnableSafeFn._parseOutput2(
+          value,
+          this._internals.outputSchema,
+        );
+        if (!parsedOutput.ok) {
           return await getError(parsedOutput.error);
         }
         value = parsedOutput.value;
