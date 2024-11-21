@@ -817,7 +817,7 @@ describe("runnableSafeFn", () => {
         const safeFnSafeYield = safeFn.safeHandler(async function* () {
           let bool = true;
           if (!bool) {
-            yield* err("world" as const).safeUnwrap();
+            yield* err("world" as const);
           }
           return ok("hello" as const);
         });
@@ -1211,7 +1211,7 @@ describe("runnableSafeFn", () => {
           .createAction();
         const safeActionSafeYield = safeFn
           .safeHandler(async function* () {
-            yield* err("world2" as const).safeUnwrap();
+            yield* err("world2" as const);
             return ok("hello" as const);
           })
           .catch(() => err("world" as const))

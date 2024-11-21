@@ -82,14 +82,14 @@ This can be rewritten using `safeHandler()` as follows:
 const getLastUserTodoTitle = createSafeFn().handler(async function* () {
   // Read as: run getUserTodolist() and assign the result value to todoList if it's okay,
   // otherwise short-circuit the entire function and return error.
-  const todoList = yield* getUserTodoList().safeUnwrap();
+  const todoList = yield* getUserTodoList();
   if (!todoList.length) {
     return err({
       code: "NO_TODOS",
     });
   }
   const lastTodoId = todoList[todoList.length - 1];
-  const todo = yield* getTodoById(lastTodoId).safeUnwrap();
+  const todo = yield* getTodoById(lastTodoId);
   return ok(todo.title);
 });
 ```
