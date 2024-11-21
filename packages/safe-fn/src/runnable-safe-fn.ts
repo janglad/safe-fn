@@ -348,7 +348,13 @@ export class RunnableSafeFn<
     const resPromise = (async (): Promise<
       Awaited<TSafeFnRunReturn<TData, TRunErr, TOutputSchema>>
     > => {
-      const res = await this._run(args[0], false);
+      const res = await RunnableSafeFn._run(
+        this._internals,
+        this._callBacks,
+        this._mapErrHandler,
+        args[0],
+        false,
+      );
       if (res.ok) {
         return ok(res.value.value);
       }
@@ -411,7 +417,32 @@ export class RunnableSafeFn<
     } as TSafeFnOutputParseErrorNoZod<TSchemaInputOrFallback<T, never>>);
   }
 
-  async _run(
+  static async _run<
+    TData,
+    TRunErr,
+    TCtx,
+    TCtxInput extends AnyCtxInput,
+    TInputSchema extends TSafeFnInput,
+    TOutputSchema extends TSafeFnInput,
+    TUnparsedInput extends TSafeFnUnparsedInput,
+  >(
+    internals: TSafeFnInternals<
+      TCtx,
+      TCtxInput,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput
+    >,
+    callBacks: TSafeFnCallBacks<
+      TData,
+      TRunErr,
+      TCtx,
+      TCtxInput,
+      TInputSchema,
+      TOutputSchema,
+      TUnparsedInput
+    >,
+    mapErrHandler: ((e: any) => TRunErr) | undefined,
     args: TSafeFnRunArgs<TUnparsedInput>[0],
     asProcedure: boolean,
     callbackPromises: Promise<void>[] = [],
@@ -448,9 +479,9 @@ export class RunnableSafeFn<
         >
       >
     > => {
-      if (this._callBacks.onError !== undefined) {
+      if (callBacks.onError !== undefined) {
         callbackPromises.push(
-          RunnableSafeFn.callbackSandbox(this._callBacks.onError)({
+          RunnableSafeFn.callbackSandbox(callBacks.onError)({
             error: publicError,
             ctx: ctx as TODO,
             ctxInput,
@@ -461,12 +492,10 @@ export class RunnableSafeFn<
         );
       }
 
-      if (this._callBacks.onComplete !== undefined) {
+      if (callBacks.onComplete !== undefined) {
         callbackPromises.push(
-          RunnableSafeFn.callbackSandbox(this._callBacks.onComplete)({
-            result: err(
-              this._mapErrHandler?.(publicError) ?? publicError,
-            ) as TODO,
+          RunnableSafeFn.callbackSandbox(callBacks.onComplete)({
+            result: err(mapErrHandler?.(publicError) ?? publicError) as TODO,
             ctx: ctx as TODO,
             ctxInput,
             input,
@@ -480,7 +509,7 @@ export class RunnableSafeFn<
       }
 
       return actionErr({
-        public: this._mapErrHandler?.(publicError) ?? publicError,
+        public: mapErrHandler?.(publicError) ?? publicError,
         private: {
           input,
           ctx: ctx as TODO,
@@ -493,18 +522,18 @@ export class RunnableSafeFn<
     };
 
     try {
-      if (this._callBacks.onStart !== undefined) {
+      if (callBacks.onStart !== undefined) {
         callbackPromises.push(
-          RunnableSafeFn.callbackSandbox(this._callBacks.onStart)({
+          RunnableSafeFn.callbackSandbox(callBacks.onStart)({
             unsafeRawInput: args as TODO,
           }),
         );
       }
 
       const parsedInputRes =
-        this._internals.inputSchema === undefined
+        internals.inputSchema === undefined
           ? undefined
-          : await RunnableSafeFn._parseInput(args, this._internals.inputSchema);
+          : await RunnableSafeFn._parseInput(args, internals.inputSchema);
 
       if (parsedInputRes !== undefined) {
         if (!parsedInputRes.ok) {
@@ -514,9 +543,15 @@ export class RunnableSafeFn<
       }
 
       const parentRes: AnyTSafeFnInternalRunReturn2 | undefined =
-        this._internals.parent === undefined
+        internals.parent === undefined
           ? undefined
-          : await this._internals.parent._run(args, true);
+          : await RunnableSafeFn._run(
+              internals.parent._internals,
+              internals.parent._callBacks,
+              internals.parent._mapErrHandler,
+              args,
+              true,
+            );
 
       if (parentRes !== undefined) {
         if (parentRes.ok) {
@@ -546,7 +581,7 @@ export class RunnableSafeFn<
         }
       }
 
-      const handlerRes = await this._internals.handler({
+      const handlerRes = await internals.handler({
         input,
         unsafeRawInput: args as TODO,
         ctx: ctx as TODO,
@@ -558,10 +593,10 @@ export class RunnableSafeFn<
       }
       value = handlerRes.value;
 
-      if (this._internals.outputSchema !== undefined) {
+      if (internals.outputSchema !== undefined) {
         const parsedOutput = await RunnableSafeFn._parseOutput(
           value,
-          this._internals.outputSchema,
+          internals.outputSchema,
         );
         if (!parsedOutput.ok) {
           return await getError(parsedOutput.error);
@@ -569,9 +604,9 @@ export class RunnableSafeFn<
         value = parsedOutput.value;
       }
 
-      if (this._callBacks.onSuccess !== undefined) {
+      if (callBacks.onSuccess !== undefined) {
         callbackPromises.push(
-          RunnableSafeFn.callbackSandbox(this._callBacks.onSuccess)({
+          RunnableSafeFn.callbackSandbox(callBacks.onSuccess)({
             value,
             input,
             ctx: ctx as TODO,
@@ -581,9 +616,9 @@ export class RunnableSafeFn<
         );
       }
 
-      if (this._callBacks.onComplete !== undefined) {
+      if (callBacks.onComplete !== undefined) {
         callbackPromises.push(
-          RunnableSafeFn.callbackSandbox(this._callBacks.onComplete)({
+          RunnableSafeFn.callbackSandbox(callBacks.onComplete)({
             result: ok(value) as TODO,
             ctx: ctx as TODO,
             ctxInput,
@@ -610,14 +645,14 @@ export class RunnableSafeFn<
         throw error;
       }
 
-      const handlerErr = this._internals.uncaughtErrorHandler(error);
+      const handlerErr = internals.uncaughtErrorHandler(error);
       if (handlerErr.isOk()) {
         throw new Error("uncaught error handler returned ok");
       }
 
       if (
         asProcedure &&
-        this._internals.uncaughtErrorHandler ===
+        internals.uncaughtErrorHandler ===
           SafeFnBuilder.safeFnDefaultUncaughtErrorHandler
       ) {
         throw error;
@@ -640,7 +675,13 @@ export class RunnableSafeFn<
   async _runAsAction(
     ...args: TSafeFnActionArgs<TUnparsedInput>
   ): TSafeFnActionReturn<TData, TRunErr, TOutputSchema> {
-    const res = await this._run(args[0], false);
+    const res = await RunnableSafeFn._run(
+      this._internals,
+      this._callBacks,
+      this._mapErrHandler,
+      args[0],
+      false,
+    );
 
     if (res.ok) {
       return actionOk(res.value.value);
