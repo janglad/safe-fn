@@ -1,4 +1,4 @@
-import { ok, type Result, ResultAsync, safeTry } from "neverthrow";
+import { err, ok, type Result, ResultAsync, safeTry } from "neverthrow";
 
 import { actionErr, actionOk, type InferErrError } from "./result";
 
@@ -345,9 +345,17 @@ export class RunnableSafeFn<
   run(
     ...args: TSafeFnRunArgs<TUnparsedInput>
   ): TSafeFnRunReturn<TData, TRunErr, TOutputSchema> {
-    return this._run(args[0], false)
-      .map((res) => res.value)
-      .mapErr((e) => e.public);
+    const resPromise = (async (): Promise<
+      Awaited<TSafeFnRunReturn<TData, TRunErr, TOutputSchema>>
+    > => {
+      const res = await this._run(args[0], false);
+      if (res.isOk()) {
+        return ok(res.value.value);
+      }
+      return err(res.error.public);
+    })();
+
+    return new ResultAsync(resPromise);
   }
 
   /*
@@ -632,13 +640,11 @@ export class RunnableSafeFn<
   async _runAsAction(
     ...args: TSafeFnActionArgs<TUnparsedInput>
   ): TSafeFnActionReturn<TData, TRunErr, TOutputSchema> {
-    const res = await this._run(args[0], false)
-      .map((res) => res.value)
-      .mapErr((e) => e.public);
+    const res = await this._run(args[0], false);
 
     if (res.isOk()) {
-      return actionOk(res.value);
+      return actionOk(res.value.value);
     }
-    return actionErr(res.error);
+    return actionErr(res.error.public);
   }
 }
