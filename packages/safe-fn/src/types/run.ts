@@ -1,4 +1,5 @@
 import type { ResultAsync } from "neverthrow";
+import type { ActionResult } from "../../dist";
 import type { TRunnableSafeFn } from "../runnable-safe-fn";
 import type { AnyCtxInput } from "../types/handler";
 import type {
@@ -155,6 +156,42 @@ export interface TSafeFnInternalRunReturn<
       TUnparsedInput
     >
   > {}
+
+export type AnyTSafeFnInternalRunReturn2 = TSafeFnInternalRunReturn2<
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+>;
+export type TSafeFnInternalRunReturn2<
+  TData,
+  TRunError,
+  TCtx,
+  TCtxInput extends AnyCtxInput,
+  TInputSchema extends TSafeFnInput,
+  TOutputSchema extends TSafeFnOutput,
+  TUnparsedInput,
+> = ActionResult<
+  TSafeFnInternalRunReturnData<
+    TData,
+    TCtx,
+    TCtxInput,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput
+  >,
+  TSafeFnInternalRunReturnError<
+    TRunError,
+    TCtx,
+    TCtxInput,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput
+  >
+>;
 
 export interface TSafeFnInternalRunReturnData<
   in out TData,
