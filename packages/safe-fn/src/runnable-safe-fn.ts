@@ -647,6 +647,7 @@ export class RunnableSafeFn<
   async _run2(
     args: TSafeFnRunArgs<TUnparsedInput>[0],
     asProcedure: boolean,
+    callbackPromises: Promise<void>[] = [],
   ): Promise<
     TSafeFnInternalRunReturn2<
       TData,
@@ -665,19 +666,52 @@ export class RunnableSafeFn<
     let ctxInput: TCtxInput = [] as TODO;
     let unsafeRawInput: TUnparsedInput = args as TUnparsedInput;
 
-    const getError = (
+    const getError = async (
       publicError: any,
-    ): ActionErr<
-      never,
-      TSafeFnInternalRunReturnError<
-        TRunErr,
-        TCtx,
-        TCtxInput,
-        TInputSchema,
-        TOutputSchema,
-        TUnparsedInput
+    ): Promise<
+      ActionErr<
+        never,
+        TSafeFnInternalRunReturnError<
+          TRunErr,
+          TCtx,
+          TCtxInput,
+          TInputSchema,
+          TOutputSchema,
+          TUnparsedInput
+        >
       >
     > => {
+      if (this._callBacks.onError !== undefined) {
+        callbackPromises.push(
+          RunnableSafeFn.callbackSandbox(this._callBacks.onError)({
+            error: publicError,
+            ctx: ctx as TODO,
+            ctxInput,
+            input,
+            // TODO: check if this is correct?
+            unsafeRawInput: unsafeRawInput as TODO,
+          }),
+        );
+      }
+
+      if (this._callBacks.onComplete !== undefined) {
+        callbackPromises.push(
+          RunnableSafeFn.callbackSandbox(this._callBacks.onComplete)({
+            result: err(
+              this._mapErrHandler?.(publicError) ?? publicError,
+            ) as TODO,
+            ctx: ctx as TODO,
+            ctxInput,
+            input,
+            unsafeRawInput: unsafeRawInput as TODO,
+          }),
+        );
+      }
+
+      if (!asProcedure) {
+        await Promise.all(callbackPromises);
+      }
+
       return actionErr({
         public: this._mapErrHandler?.(publicError) ?? publicError,
         private: {
@@ -691,6 +725,14 @@ export class RunnableSafeFn<
     };
 
     try {
+      if (this._callBacks.onStart !== undefined) {
+        callbackPromises.push(
+          RunnableSafeFn.callbackSandbox(this._callBacks.onStart)({
+            unsafeRawInput: args as TODO,
+          }),
+        );
+      }
+
       const parentRes: AnyTSafeFnInternalRunReturn2 | undefined =
         this._internals.parent === undefined
           ? undefined
@@ -712,7 +754,7 @@ export class RunnableSafeFn<
                   parentRes.error.private.input,
                 ] as TODO);
 
-          return getError(parentRes.error.public);
+          return await getError(parentRes.error.public);
         }
       }
 
@@ -723,7 +765,7 @@ export class RunnableSafeFn<
 
       if (parsedInputRes !== undefined) {
         if (parsedInputRes.isErr()) {
-          return getError(parsedInputRes.error);
+          return await getError(parsedInputRes.error);
         }
         input = parsedInputRes.value;
       }
@@ -736,25 +778,46 @@ export class RunnableSafeFn<
       });
 
       if (handlerRes.isErr()) {
-        return getError(handlerRes.error);
+        return await getError(handlerRes.error);
       }
       value = handlerRes.value;
 
-      if (this._internals.outputSchema === undefined) {
-        return actionOk({
-          value,
-          input,
-          ctx: ctx as TODO,
-          ctxInput,
-          unsafeRawInput: args as TUnparsedInput,
-        });
+      if (this._internals.outputSchema !== undefined) {
+        const parsedOutput = await this._parseOutput(value);
+        if (parsedOutput.isErr()) {
+          return await getError(parsedOutput.error);
+        }
+        value = parsedOutput.value;
       }
 
-      const parsedOutput = await this._parseOutput(value);
-      if (parsedOutput.isErr()) {
-        return getError(parsedOutput.error);
+      if (this._callBacks.onSuccess !== undefined) {
+        callbackPromises.push(
+          RunnableSafeFn.callbackSandbox(this._callBacks.onSuccess)({
+            value,
+            input,
+            ctx: ctx as TODO,
+            ctxInput,
+            unsafeRawInput: args as TODO,
+          }),
+        );
       }
-      value = parsedOutput.value;
+
+      if (this._callBacks.onComplete !== undefined) {
+        callbackPromises.push(
+          RunnableSafeFn.callbackSandbox(this._callBacks.onComplete)({
+            result: ok(value) as TODO,
+            ctx: ctx as TODO,
+            ctxInput,
+            input,
+            unsafeRawInput: args as TODO,
+          }),
+        );
+      }
+
+      if (!asProcedure) {
+        await Promise.all(callbackPromises);
+      }
+
       return actionOk({
         value,
         input,
@@ -780,8 +843,18 @@ export class RunnableSafeFn<
         throw error;
       }
 
-      return getError(handlerErr.error);
+      return await getError(handlerErr.error);
     }
+  }
+
+  static callbackSandbox<TFn extends (...args: any[]) => void>(fn: TFn): TFn {
+    return ((...args: Parameters<TFn>) => {
+      try {
+        return fn(...args);
+      } catch (error) {
+        console.error(error);
+      }
+    }) as TFn;
   }
 
   async _runAsAction(

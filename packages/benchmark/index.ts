@@ -1,4 +1,5 @@
 import { safeFnAsyncBench } from "./safe-fn";
+import { safeFnAsyncWithCallbacksBench } from "./safe-fn-callbacks";
 import { safeFnAsyncGenBench } from "./safe-fn-gen";
 import { zsaBench } from "./zsa";
 
@@ -12,6 +13,9 @@ const runBench = async () => {
   await zsaBench.run();
   console.log(zsaBench.name);
   console.table(zsaBench.table());
+  await safeFnAsyncWithCallbacksBench.run();
+  console.log(safeFnAsyncWithCallbacksBench.name);
+  console.table(safeFnAsyncWithCallbacksBench.table());
 };
 
 runBench();
