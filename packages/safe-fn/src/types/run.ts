@@ -206,6 +206,7 @@ export interface TSafeFnInternalRunReturnData<
   ctx: TCtx;
   ctxInput: TCtxInput;
   unsafeRawInput: TUnparsedInput;
+  callbackPromises: Promise<void>[];
 }
 
 export interface TSafeFnInternalRunReturnError<
@@ -223,5 +224,6 @@ export interface TSafeFnInternalRunReturnError<
     ctxInput: TCtxInput | undefined;
     unsafeRawInput: TUnparsedInput;
     handlerRes: TODO;
+    callbackPromises: Promise<void>[];
   };
 }

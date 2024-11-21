@@ -32,7 +32,7 @@ const getSafeFnWithNMiddlewares = (n: number) => {
 const with10 = getSafeFnWithNMiddlewares(10);
 const with100 = getSafeFnWithNMiddlewares(100);
 const with1000 = getSafeFnWithNMiddlewares(1000);
-
+console.log("Done with this");
 export const safeFnAsyncBench = new Bench({
   name: "Safe FN Middleware",
 })

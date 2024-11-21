@@ -487,6 +487,7 @@ export class RunnableSafeFn<
           ctxInput,
           unsafeRawInput,
           handlerRes: value,
+          callbackPromises,
         },
       });
     };
@@ -500,31 +501,6 @@ export class RunnableSafeFn<
         );
       }
 
-      const parentRes: AnyTSafeFnInternalRunReturn2 | undefined =
-        this._internals.parent === undefined
-          ? undefined
-          : await this._internals.parent._run2(args, true);
-
-      if (parentRes !== undefined) {
-        if (parentRes.ok) {
-          ctx = parentRes.value.value;
-          ctxInput = [
-            ...parentRes.value.ctxInput,
-            parentRes.value.input,
-          ] as TODO;
-        } else {
-          ctxInput =
-            parentRes.error.private.ctxInput === undefined
-              ? []
-              : ([
-                  ...parentRes.error.private.ctxInput,
-                  parentRes.error.private.input,
-                ] as TODO);
-
-          return await getError(parentRes.error.public);
-        }
-      }
-
       const parsedInputRes =
         this._internals.inputSchema === undefined
           ? undefined
@@ -535,6 +511,39 @@ export class RunnableSafeFn<
           return await getError(parsedInputRes.error);
         }
         input = parsedInputRes.value;
+      }
+
+      const parentRes: AnyTSafeFnInternalRunReturn2 | undefined =
+        this._internals.parent === undefined
+          ? undefined
+          : await this._internals.parent._run(args, true);
+
+      if (parentRes !== undefined) {
+        if (parentRes.ok) {
+          Array.prototype.push.apply(
+            callbackPromises,
+            parentRes.value.callbackPromises,
+          );
+          ctx = parentRes.value.value;
+          ctxInput = [
+            ...parentRes.value.ctxInput,
+            parentRes.value.input,
+          ] as TODO;
+        } else {
+          Array.prototype.push.apply(
+            callbackPromises,
+            parentRes.error.private.callbackPromises,
+          );
+          ctxInput =
+            parentRes.error.private.ctxInput === undefined
+              ? []
+              : ([
+                  ...parentRes.error.private.ctxInput,
+                  parentRes.error.private.input,
+                ] as TODO);
+
+          return await getError(parentRes.error.public);
+        }
       }
 
       const handlerRes = await this._internals.handler({
@@ -594,6 +603,7 @@ export class RunnableSafeFn<
         ctx: ctx as TODO,
         ctxInput,
         unsafeRawInput: args as TUnparsedInput,
+        callbackPromises,
       });
     } catch (error) {
       if (isFrameworkError(error)) {
