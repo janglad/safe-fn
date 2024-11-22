@@ -530,18 +530,6 @@ export class RunnableSafeFn<
         );
       }
 
-      const parsedInputRes =
-        internals.inputSchema === undefined
-          ? undefined
-          : await RunnableSafeFn._parseInput(args, internals.inputSchema);
-
-      if (parsedInputRes !== undefined) {
-        if (!parsedInputRes.ok) {
-          return await getError(parsedInputRes.error);
-        }
-        input = parsedInputRes.value;
-      }
-
       const parentRes: TAnySafeFnInternalRunReturn | undefined =
         internals.parent === undefined
           ? undefined
@@ -579,6 +567,18 @@ export class RunnableSafeFn<
 
           return await getError(parentRes.error.public);
         }
+      }
+
+      const parsedInputRes =
+        internals.inputSchema === undefined
+          ? undefined
+          : await RunnableSafeFn._parseInput(args, internals.inputSchema);
+
+      if (parsedInputRes !== undefined) {
+        if (!parsedInputRes.ok) {
+          return await getError(parsedInputRes.error);
+        }
+        input = parsedInputRes.value;
       }
 
       const handlerRes = await internals.handler({
