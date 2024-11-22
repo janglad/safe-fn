@@ -7,8 +7,7 @@
     "typescript": "^5.5.4"
   },
   "scripts": {
-    "check-types": "tsc --noEmit",
-    "bench-types": "tsc --noEmit --diagnostics"
+    "bench": "bun run index.ts"
   },
   "dependencies": {
     "neverthrow": "^8.0.0",
