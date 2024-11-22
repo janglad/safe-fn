@@ -1,5 +1,5 @@
 import type { ResultAsync } from "neverthrow";
-import type { ActionResult } from "../../dist";
+import type { ActionResult } from "../result";
 import type { TRunnableSafeFn } from "../runnable-safe-fn";
 import type { AnyCtxInput } from "../types/handler";
 import type {

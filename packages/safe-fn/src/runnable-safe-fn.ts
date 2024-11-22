@@ -4,6 +4,7 @@ import {
   actionErr,
   actionOk,
   type ActionErr,
+  type ActionResult,
   type InferErrError,
 } from "./result";
 
@@ -30,7 +31,7 @@ import type {
 } from "./types/schema";
 
 import type { ZodTypeAny } from "zod";
-import type { ActionResult } from "../dist";
+
 import { SafeFnBuilder } from "./safe-fn-builder";
 import type {
   TSafeFnAction,
