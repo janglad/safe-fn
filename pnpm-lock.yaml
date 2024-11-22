@@ -169,8 +169,8 @@ importers:
   packages/type-tests:
     dependencies:
       neverthrow:
-        specifier: ^8.0.0
-        version: 8.0.0
+        specifier: ^8.1.1
+        version: 8.1.1
       safe-fn:
         specifier: workspace:^
         version: link:../safe-fn
