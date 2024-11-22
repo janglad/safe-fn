@@ -1,18 +1,19 @@
 {
   "private": true,
   "version": "0.0.0",
-  "name": "@repo/type-test",
+  "name": "@repo/benchmark",
   "devDependencies": {
     "@repo/typescript-config": "workspace:^",
     "typescript": "^5.5.4"
   },
   "scripts": {
-    "check-types": "tsc --noEmit",
-    "bench-types": "tsc --noEmit --diagnostics"
+    "bench": "bun run index.ts"
   },
   "dependencies": {
-    "neverthrow": "^8.1.1",
+    "neverthrow": "^8.0.0",
     "safe-fn": "workspace:^",
-    "zod": "^3.23.8"
+    "tinybench": "^3.0.6",
+    "zod": "^3.23.8",
+    "zsa": "^0.6.0"
   }
 }

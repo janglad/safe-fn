@@ -1,4 +1,5 @@
 import type { ResultAsync } from "neverthrow";
+import type { ActionResult } from "../result";
 import type { TRunnableSafeFn } from "../runnable-safe-fn";
 import type { AnyCtxInput } from "../types/handler";
 import type {
@@ -129,32 +130,41 @@ export interface TSafeFnRunReturn<
     TSafeFnReturnError<TRunError, TOutputSchema>
   > {}
 
-export interface TSafeFnInternalRunReturn<
-  in out TData,
-  in out TRunError,
-  in out TCtx,
-  in out TCtxInput extends AnyCtxInput,
-  in out TInputSchema extends TSafeFnInput,
-  in out TOutputSchema extends TSafeFnOutput,
-  in out TUnparsedInput,
-> extends ResultAsync<
-    TSafeFnInternalRunReturnData<
-      TData,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    >,
-    TSafeFnInternalRunReturnError<
-      TRunError,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    >
-  > {}
+export type TAnySafeFnInternalRunReturn = TSafeFnInternalRunReturn<
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+>;
+export type TSafeFnInternalRunReturn<
+  TData,
+  TRunError,
+  TCtx,
+  TCtxInput extends AnyCtxInput,
+  TInputSchema extends TSafeFnInput,
+  TOutputSchema extends TSafeFnOutput,
+  TUnparsedInput,
+> = ActionResult<
+  TSafeFnInternalRunReturnData<
+    TData,
+    TCtx,
+    TCtxInput,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput
+  >,
+  TSafeFnInternalRunReturnError<
+    TRunError,
+    TCtx,
+    TCtxInput,
+    TInputSchema,
+    TOutputSchema,
+    TUnparsedInput
+  >
+>;
 
 export interface TSafeFnInternalRunReturnData<
   in out TData,
@@ -169,6 +179,7 @@ export interface TSafeFnInternalRunReturnData<
   ctx: TCtx;
   ctxInput: TCtxInput;
   unsafeRawInput: TUnparsedInput;
+  callbackPromises: Promise<void>[];
 }
 
 export interface TSafeFnInternalRunReturnError<
@@ -186,5 +197,6 @@ export interface TSafeFnInternalRunReturnError<
     ctxInput: TCtxInput | undefined;
     unsafeRawInput: TUnparsedInput;
     handlerRes: TODO;
+    callbackPromises: Promise<void>[];
   };
 }

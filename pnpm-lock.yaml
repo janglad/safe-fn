@@ -80,6 +80,31 @@ importers:
         specifier: ^5.5.4
         version: 5.5.4
 
+  packages/benchmark:
+    dependencies:
+      neverthrow:
+        specifier: ^8.0.0
+        version: 8.0.0
+      safe-fn:
+        specifier: workspace:^
+        version: link:../safe-fn
+      tinybench:
+        specifier: ^3.0.6
+        version: 3.0.6
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
+      zsa:
+        specifier: ^0.6.0
+        version: 0.6.0(zod@3.23.8)
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:^
+        version: link:../typescript-config
+      typescript:
+        specifier: ^5.5.4
+        version: 5.5.4
+
   packages/eslint-config:
     devDependencies:
       '@vercel/style-guide':
@@ -132,8 +157,8 @@ importers:
         specifier: ^8.57.0
         version: 8.57.0
       neverthrow:
-        specifier: ^8.0.0
-        version: 8.0.0
+        specifier: ^8.1.1
+        version: 8.1.1
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -144,8 +169,8 @@ importers:
   packages/type-tests:
     dependencies:
       neverthrow:
-        specifier: ^8.0.0
-        version: 8.0.0
+        specifier: ^8.1.1
+        version: 8.1.1
       safe-fn:
         specifier: workspace:^
         version: link:../safe-fn
@@ -4168,6 +4193,10 @@ packages:
   tinybench@2.8.0:
     resolution: {integrity: sha512-1/eK7zUnIklz4JUUlL+658n58XO2hHLQfSk1Zf2LKieUjxidN16eKFEoDEfjHc3ohofSSqK3X5yO6VGb6iW8Lw==}
 
+  tinybench@3.0.6:
+    resolution: {integrity: sha512-ljQ0LM7ePiVrjM8KHkHUWH+eVo36hwpE34dqYvOJIvzVJvzqXwTpjjw/bLjduqU50Z8CuhVFgFN1U7yLaSCsCg==}
+    engines: {node: '>=18.0.0'}
+
   tinypool@1.0.0:
     resolution: {integrity: sha512-KIKExllK7jp3uvrNtvRBYBWBOAXSX8ZvoaD8T+7KB/QHIuoJW3Pmr60zucywjAlMb5TeXUkcs/MWeWLu0qvuAQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
@@ -4538,6 +4567,11 @@ packages:
 
   zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+
+  zsa@0.6.0:
+    resolution: {integrity: sha512-Pq3X4T0dna5s4dIevYOJiRdM3DUHRvEHS2q1AH/bvkPSh640u+9veVj5zmzmbL0A6cpXMYagwKsR4keGOc0jPQ==}
+    peerDependencies:
+      zod: ^3.23.5
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -9183,6 +9217,8 @@ snapshots:
 
   tinybench@2.8.0: {}
 
+  tinybench@3.0.6: {}
+
   tinypool@1.0.0: {}
 
   tinyrainbow@1.2.0: {}
@@ -9582,5 +9618,9 @@ snapshots:
       zod: 3.23.8
 
   zod@3.23.8: {}
+
+  zsa@0.6.0(zod@3.23.8):
+    dependencies:
+      zod: 3.23.8
 
   zwitch@2.0.4: {}
