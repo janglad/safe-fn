@@ -130,34 +130,7 @@ export interface TSafeFnRunReturn<
     TSafeFnReturnError<TRunError, TOutputSchema>
   > {}
 
-export interface TSafeFnInternalRunReturn<
-  in out TData,
-  in out TRunError,
-  in out TCtx,
-  in out TCtxInput extends AnyCtxInput,
-  in out TInputSchema extends TSafeFnInput,
-  in out TOutputSchema extends TSafeFnOutput,
-  in out TUnparsedInput,
-> extends ResultAsync<
-    TSafeFnInternalRunReturnData<
-      TData,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    >,
-    TSafeFnInternalRunReturnError<
-      TRunError,
-      TCtx,
-      TCtxInput,
-      TInputSchema,
-      TOutputSchema,
-      TUnparsedInput
-    >
-  > {}
-
-export type AnyTSafeFnInternalRunReturn2 = TSafeFnInternalRunReturn2<
+export type TAnySafeFnInternalRunReturn = TSafeFnInternalRunReturn<
   any,
   any,
   any,
@@ -166,7 +139,7 @@ export type AnyTSafeFnInternalRunReturn2 = TSafeFnInternalRunReturn2<
   any,
   any
 >;
-export type TSafeFnInternalRunReturn2<
+export type TSafeFnInternalRunReturn<
   TData,
   TRunError,
   TCtx,

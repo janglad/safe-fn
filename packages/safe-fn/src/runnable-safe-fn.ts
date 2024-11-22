@@ -13,8 +13,8 @@ import type {
 } from "./types/catch-handler";
 import type { TSafeFnInternals } from "./types/internals";
 import type {
-  AnyTSafeFnInternalRunReturn2,
-  TSafeFnInternalRunReturn2,
+  TAnySafeFnInternalRunReturn,
+  TSafeFnInternalRunReturn,
   TSafeFnInternalRunReturnError,
   TSafeFnReturnData,
   TSafeFnRunArgs,
@@ -447,7 +447,7 @@ export class RunnableSafeFn<
     asProcedure: boolean,
     callbackPromises: Promise<void>[] = [],
   ): Promise<
-    TSafeFnInternalRunReturn2<
+    TSafeFnInternalRunReturn<
       TData,
       TRunErr,
       TCtx,
@@ -542,7 +542,7 @@ export class RunnableSafeFn<
         input = parsedInputRes.value;
       }
 
-      const parentRes: AnyTSafeFnInternalRunReturn2 | undefined =
+      const parentRes: TAnySafeFnInternalRunReturn | undefined =
         internals.parent === undefined
           ? undefined
           : await RunnableSafeFn._run(
