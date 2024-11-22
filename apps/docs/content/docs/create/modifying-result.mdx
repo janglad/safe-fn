@@ -16,9 +16,7 @@ declare const generateText: (
 const generateTodo = createSafeFn()
   .input(z.object({ prompt: z.string() }))
   .safeHandler(async function* (args) {
-    const todo = yield* generateText(
-      `Make todo based on ${args.input.prompt}`,
-    ).safeUnwrap();
+    const todo = yield* generateText(`Make todo based on ${args.input.prompt}`);
     return ok(todo);
   })
   .mapErr((e) => {
