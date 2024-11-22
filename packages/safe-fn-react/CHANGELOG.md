@@ -1,5 +1,12 @@
 # safe-fn-react
 
+## 0.3.4
+
+### Patch Changes
+
+- Updated dependencies [14329b7]
+  - safe-fn@0.5.0
+
 ## 0.3.3
 
 ### Patch Changes

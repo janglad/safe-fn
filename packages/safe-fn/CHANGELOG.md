@@ -1,5 +1,12 @@
 # @safe-fn/safe-fn
 
+## 0.5.0
+
+### Minor Changes
+
+- 14329b7: - About a ~10x performance increase for single `safe-fn` instances
+  - About a ~17x performance increase when testing a `safe-fn` with 10 parents
+
 ## 0.4.2
 
 ### Patch Changes
